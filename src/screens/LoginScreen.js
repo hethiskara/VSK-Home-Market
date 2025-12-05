@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { authAPI, tokenManager } from '../services/api';
+import { authAPI, tokenManager, isWebPlatform } from '../services/api';
 
 const LoginScreen = ({ navigation }) => {
   const [mobile, setMobile] = useState('');
@@ -38,15 +38,25 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
+      // Note: CORS blocks web requests. Works on mobile.
+      if (isWebPlatform) {
+        Alert.alert(
+          'Web Testing Mode',
+          'API calls are blocked by CORS on web browsers. Please test on Android/iOS device or emulator for full functionality.',
+          [{ text: 'OK' }]
+        );
+        setLoading(false);
+        return;
+      }
+
       const response = await authAPI.login({
         mobile: mobile.trim(),
         password: password,
       });
 
-      const result = response[0];
+      const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
-        // Store user data
         if (result.token) {
           await tokenManager.setToken(result.token);
         }
@@ -64,10 +74,11 @@ const LoginScreen = ({ navigation }) => {
           },
         ]);
       } else {
-        Alert.alert('Error', result.message);
+        Alert.alert('Error', result.message || 'Login failed');
       }
     } catch (error) {
-      Alert.alert('Error', 'Network error. Please try again.');
+      const errorMsg = error.response?.data?.message || error.message || 'Network error. Please try again.';
+      Alert.alert('Error', errorMsg);
     } finally {
       setLoading(false);
     }

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { authAPI } from '../services/api';
+import { authAPI, isWebPlatform } from '../services/api';
 
 const SignupScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -62,6 +62,17 @@ const SignupScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
+      // Note: CORS blocks web requests. Works on mobile.
+      if (isWebPlatform) {
+        Alert.alert(
+          'Web Testing Mode',
+          'API calls are blocked by CORS on web browsers. Please test on Android/iOS device or emulator for full functionality.',
+          [{ text: 'OK' }]
+        );
+        setLoading(false);
+        return;
+      }
+
       const response = await authAPI.register({
         name: name.trim(),
         email: email.trim().toLowerCase(),
@@ -69,7 +80,7 @@ const SignupScreen = ({ navigation }) => {
         password: password,
       });
 
-      const result = response[0];
+      const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
         Alert.alert('OTP Sent', result.message, [
@@ -84,10 +95,11 @@ const SignupScreen = ({ navigation }) => {
           },
         ]);
       } else {
-        Alert.alert('Error', result.message);
+        Alert.alert('Error', result.message || 'Registration failed');
       }
     } catch (error) {
-      Alert.alert('Error', 'Network error. Please try again.');
+      const errorMsg = error.response?.data?.message || error.message || 'Network error. Please try again.';
+      Alert.alert('Error', errorMsg);
     } finally {
       setLoading(false);
     }

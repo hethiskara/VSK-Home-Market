@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const BASE_URL = 'https://www.vskhomemarket.com';
 
@@ -8,8 +9,12 @@ const api = axios.create({
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
+
+// Check if running on web (CORS will block requests)
+export const isWebPlatform = Platform.OS === 'web';
 
 // Auth APIs
 export const authAPI = {
