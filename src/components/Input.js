@@ -8,6 +8,7 @@ const Input = ({
   secureTextEntry = false,
   keyboardType = 'default',
   autoCapitalize = 'sentences',
+  maxLength,
   icon,
   style,
 }) => {
@@ -23,6 +24,7 @@ const Input = ({
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
+          maxLength={maxLength}
           placeholderTextColor="#BDC3C7"
         />
       </View>
@@ -56,4 +58,3 @@ const styles = StyleSheet.create({
 });
 
 export default Input;
-

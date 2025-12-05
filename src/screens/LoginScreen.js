@@ -12,26 +12,65 @@ import {
 } from 'react-native';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { authAPI, tokenManager } from '../services/api';
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const validateMobile = (mobile) => {
+    const regex = /^[6-9]\d{9}$/;
+    return regex.test(mobile);
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill all fields');
+    if (!validateMobile(mobile)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    if (!password) {
+      Alert.alert('Error', 'Please enter your password');
       return;
     }
 
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const response = await authAPI.login({
+        mobile: mobile.trim(),
+        password: password,
+      });
+
+      const result = response[0];
+
+      if (result.status === 'SUCCESS') {
+        // Store user data
+        if (result.token) {
+          await tokenManager.setToken(result.token);
+        }
+        if (result.user) {
+          await tokenManager.setUserData(result.user);
+        }
+
+        Alert.alert('Success', result.message || 'Login successful!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to Home screen (to be created)
+              // navigation.replace('Home');
+            },
+          },
+        ]);
+      } else {
+        Alert.alert('Error', result.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
       setLoading(false);
-      Alert.alert('Success', 'Login functionality will be connected to API');
-      // TODO: Connect to https://api.vskhomemarket.com/login
-    }, 1500);
+    }
   };
 
   return (
@@ -42,8 +81,8 @@ const LoginScreen = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/Logos/logo.jpg')}
@@ -54,17 +93,16 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.subtitle}>Login to your account</Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
           <Input
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            icon="📧"
+            placeholder="Mobile Number"
+            value={mobile}
+            onChangeText={setMobile}
+            keyboardType="phone-pad"
+            maxLength={10}
+            icon="📱"
           />
-          
+
           <Input
             placeholder="Password"
             value={password}
@@ -83,14 +121,12 @@ const LoginScreen = ({ navigation }) => {
             loading={loading}
           />
 
-          {/* Divider */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>OR</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Sign Up Link */}
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
@@ -178,4 +214,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-

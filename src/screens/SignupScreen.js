@@ -12,23 +12,40 @@ import {
 } from 'react-native';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { authAPI } from '../services/api';
 
 const SignupScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const validateMobile = (mobile) => {
+    const regex = /^[6-9]\d{9}$/;
+    return regex.test(mobile);
+  };
+
   const handleSignup = async () => {
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all fields');
+    // Validation
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter your name');
       return;
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+    if (!validateEmail(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    if (!validateMobile(mobile)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
       return;
     }
 
@@ -37,14 +54,43 @@ const SignupScreen = ({ navigation }) => {
       return;
     }
 
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const response = await authAPI.register({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        mobile: mobile.trim(),
+        password: password,
+      });
+
+      const result = response[0];
+
+      if (result.status === 'SUCCESS') {
+        Alert.alert('OTP Sent', result.message, [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('OTPVerification', {
+                userId: result.id,
+                mobile: mobile,
+              });
+            },
+          },
+        ]);
+      } else {
+        Alert.alert('Error', result.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
       setLoading(false);
-      Alert.alert('Success', 'Signup functionality will be connected to API');
-      // TODO: Connect to https://api.vskhomemarket.com/register
-    }, 1500);
+    }
   };
 
   return (
@@ -55,8 +101,8 @@ const SignupScreen = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/Logos/logo.jpg')}
@@ -67,7 +113,6 @@ const SignupScreen = ({ navigation }) => {
           <Text style={styles.subtitle}>Sign up to get started</Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
           <Input
             placeholder="Full Name"
@@ -75,9 +120,9 @@ const SignupScreen = ({ navigation }) => {
             onChangeText={setName}
             icon="👤"
           />
-          
+
           <Input
-            placeholder="Email"
+            placeholder="Email Address"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -86,13 +131,14 @@ const SignupScreen = ({ navigation }) => {
           />
 
           <Input
-            placeholder="Phone Number"
-            value={phone}
-            onChangeText={setPhone}
+            placeholder="Mobile Number"
+            value={mobile}
+            onChangeText={setMobile}
             keyboardType="phone-pad"
+            maxLength={10}
             icon="📱"
           />
-          
+
           <Input
             placeholder="Password"
             value={password}
@@ -115,14 +161,12 @@ const SignupScreen = ({ navigation }) => {
             loading={loading}
           />
 
-          {/* Divider */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>OR</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Login Link */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -201,4 +245,3 @@ const styles = StyleSheet.create({
 });
 
 export default SignupScreen;
-
