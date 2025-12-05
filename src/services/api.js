@@ -8,7 +8,7 @@ const api = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
     'Accept': 'application/json',
   },
 });
@@ -16,31 +16,41 @@ const api = axios.create({
 // Check if running on web (CORS will block requests)
 export const isWebPlatform = Platform.OS === 'web';
 
+// Convert object to form data string
+const toFormData = (obj) => {
+  return Object.keys(obj)
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
+    .join('&');
+};
+
 // Auth APIs
 export const authAPI = {
   register: async (data) => {
-    const response = await api.post('/register-json', {
+    const formData = toFormData({
       name: data.name,
       email: data.email,
       mobile: data.mobile,
       password: data.password,
     });
+    const response = await api.post('/register-json', formData);
     return response.data;
   },
 
   verifyOTP: async (data) => {
-    const response = await api.post('/register-otp-json', {
+    const formData = toFormData({
       id: data.id,
       otp: data.otp,
     });
+    const response = await api.post('/register-otp-json', formData);
     return response.data;
   },
 
   login: async (data) => {
-    const response = await api.post('/login-json', {
+    const formData = toFormData({
       mobile: data.mobile,
       password: data.password,
     });
+    const response = await api.post('/login-json', formData);
     return response.data;
   },
 };

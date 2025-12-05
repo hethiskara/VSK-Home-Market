@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { authAPI, isWebPlatform } from '../services/api';
+import { authAPI } from '../services/api';
 
 const SignupScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -62,17 +62,6 @@ const SignupScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
-      // Note: CORS blocks web requests. Works on mobile.
-      if (isWebPlatform) {
-        Alert.alert(
-          'Web Testing Mode',
-          'API calls are blocked by CORS on web browsers. Please test on Android/iOS device or emulator for full functionality.',
-          [{ text: 'OK' }]
-        );
-        setLoading(false);
-        return;
-      }
-
       const response = await authAPI.register({
         name: name.trim(),
         email: email.trim().toLowerCase(),
