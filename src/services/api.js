@@ -56,10 +56,8 @@ export const authAPI = {
   },
 
   forgotPassword: async (data) => {
-    const formData = toFormData({
-      mobile_no: data.mobile_no,
-    });
-    const response = await api.post('/forgot-password-json', formData);
+    const params = `?mobile_no=${encodeURIComponent(data.mobile_no)}`;
+    const response = await api.get('/forgot-password-json' + params);
     console.log('FORGOT PASSWORD RESPONSE:', response.data);
     return response.data;
   },
