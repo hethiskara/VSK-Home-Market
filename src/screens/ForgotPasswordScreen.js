@@ -38,12 +38,16 @@ const ForgotPasswordScreen = ({ navigation }) => {
       const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
-        Alert.alert('Success', result.message, [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Login'),
-          },
-        ]);
+        Alert.alert(
+          'Password Sent!', 
+          'A new password has been sent to your WhatsApp. Please use that password to login.',
+          [
+            {
+              text: 'Go to Login',
+              onPress: () => navigation.navigate('Login'),
+            },
+          ]
+        );
       } else {
         Alert.alert('Error', result.message || 'Failed to send password');
       }
