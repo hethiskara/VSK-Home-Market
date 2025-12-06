@@ -1,6 +1,5 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
 const BASE_URL = 'https://www.vskhomemarket.com';
 
@@ -13,9 +12,6 @@ const api = axios.create({
   },
 });
 
-// Check if running on web (CORS will block requests)
-export const isWebPlatform = Platform.OS === 'web';
-
 // Convert object to form data string
 const toFormData = (obj) => {
   return Object.keys(obj)
@@ -27,10 +23,14 @@ const toFormData = (obj) => {
 export const authAPI = {
   register: async (data) => {
     const formData = toFormData({
-      name: data.name,
-      email: data.email,
-      mobile: data.mobile,
+      mobile_no: data.mobile_no,
+      firstname: data.firstname,
+      lastname: data.lastname,
       password: data.password,
+      state: data.state,
+      city: data.city,
+      postalcode: data.postalcode,
+      address: data.address,
     });
     const response = await api.post('/register-json', formData);
     return response.data;
@@ -47,7 +47,7 @@ export const authAPI = {
 
   login: async (data) => {
     const formData = toFormData({
-      mobile: data.mobile,
+      mobile_no: data.mobile_no,
       password: data.password,
     });
     const response = await api.post('/login-json', formData);
@@ -84,4 +84,3 @@ export const tokenManager = {
 };
 
 export default api;
-

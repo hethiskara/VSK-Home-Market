@@ -15,7 +15,7 @@ import Button from '../components/Button';
 import { authAPI, tokenManager } from '../services/api';
 
 const LoginScreen = ({ navigation }) => {
-  const [mobile, setMobile] = useState('');
+  const [mobileNo, setMobileNo] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +25,7 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    if (!validateMobile(mobile)) {
+    if (!validateMobile(mobileNo)) {
       Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
       return;
     }
@@ -39,7 +39,7 @@ const LoginScreen = ({ navigation }) => {
 
     try {
       const response = await authAPI.login({
-        mobile: mobile.trim(),
+        mobile_no: mobileNo.trim(),
         password: password,
       });
 
@@ -96,8 +96,8 @@ const LoginScreen = ({ navigation }) => {
         <View style={styles.form}>
           <Input
             placeholder="Mobile Number"
-            value={mobile}
-            onChangeText={setMobile}
+            value={mobileNo}
+            onChangeText={setMobileNo}
             keyboardType="phone-pad"
             maxLength={10}
             icon="📱"

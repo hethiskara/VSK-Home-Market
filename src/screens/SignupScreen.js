@@ -15,17 +15,16 @@ import Button from '../components/Button';
 import { authAPI } from '../services/api';
 
 const SignupScreen = ({ navigation }) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [mobile, setMobile] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [mobileNo, setMobileNo] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [state, setState] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
 
   const validateMobile = (mobile) => {
     const regex = /^[6-9]\d{9}$/;
@@ -34,17 +33,17 @@ const SignupScreen = ({ navigation }) => {
 
   const handleSignup = async () => {
     // Validation
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter your name');
+    if (!firstName.trim()) {
+      Alert.alert('Error', 'Please enter your first name');
       return;
     }
 
-    if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+    if (!lastName.trim()) {
+      Alert.alert('Error', 'Please enter your last name');
       return;
     }
 
-    if (!validateMobile(mobile)) {
+    if (!validateMobile(mobileNo)) {
       Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
       return;
     }
@@ -59,14 +58,38 @@ const SignupScreen = ({ navigation }) => {
       return;
     }
 
+    if (!state.trim()) {
+      Alert.alert('Error', 'Please enter your state');
+      return;
+    }
+
+    if (!city.trim()) {
+      Alert.alert('Error', 'Please enter your city');
+      return;
+    }
+
+    if (!postalCode.trim()) {
+      Alert.alert('Error', 'Please enter your postal code');
+      return;
+    }
+
+    if (!address.trim()) {
+      Alert.alert('Error', 'Please enter your address');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await authAPI.register({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        mobile: mobile.trim(),
+        mobile_no: mobileNo.trim(),
+        firstname: firstName.trim(),
+        lastname: lastName.trim(),
         password: password,
+        state: state.trim(),
+        city: city.trim(),
+        postalcode: postalCode.trim(),
+        address: address.trim(),
       });
 
       const result = Array.isArray(response) ? response[0] : response;
@@ -78,7 +101,7 @@ const SignupScreen = ({ navigation }) => {
             onPress: () => {
               navigation.navigate('OTPVerification', {
                 userId: result.id,
-                mobile: mobile,
+                mobile: mobileNo,
               });
             },
           },
@@ -115,26 +138,29 @@ const SignupScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.form}>
-          <Input
-            placeholder="Full Name"
-            value={name}
-            onChangeText={setName}
-            icon="👤"
-          />
-
-          <Input
-            placeholder="Email Address"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            icon="📧"
-          />
+          <View style={styles.row}>
+            <View style={styles.halfInput}>
+              <Input
+                placeholder="First Name"
+                value={firstName}
+                onChangeText={setFirstName}
+                icon="👤"
+              />
+            </View>
+            <View style={styles.halfInput}>
+              <Input
+                placeholder="Last Name"
+                value={lastName}
+                onChangeText={setLastName}
+                icon="👤"
+              />
+            </View>
+          </View>
 
           <Input
             placeholder="Mobile Number"
-            value={mobile}
-            onChangeText={setMobile}
+            value={mobileNo}
+            onChangeText={setMobileNo}
             keyboardType="phone-pad"
             maxLength={10}
             icon="📱"
@@ -154,6 +180,41 @@ const SignupScreen = ({ navigation }) => {
             onChangeText={setConfirmPassword}
             secureTextEntry
             icon="🔒"
+          />
+
+          <View style={styles.row}>
+            <View style={styles.halfInput}>
+              <Input
+                placeholder="State"
+                value={state}
+                onChangeText={setState}
+                icon="🏛️"
+              />
+            </View>
+            <View style={styles.halfInput}>
+              <Input
+                placeholder="City"
+                value={city}
+                onChangeText={setCity}
+                icon="🏙️"
+              />
+            </View>
+          </View>
+
+          <Input
+            placeholder="Postal Code"
+            value={postalCode}
+            onChangeText={setPostalCode}
+            keyboardType="number-pad"
+            maxLength={6}
+            icon="📮"
+          />
+
+          <Input
+            placeholder="Address"
+            value={address}
+            onChangeText={setAddress}
+            icon="🏠"
           />
 
           <Button
@@ -188,35 +249,42 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 30,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
-  },
-  logo: {
-    width: 200,
-    height: 70,
     marginBottom: 24,
   },
+  logo: {
+    width: 180,
+    height: 65,
+    marginBottom: 16,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#2C3E50',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#7F8C8D',
   },
   form: {
     flex: 1,
   },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  halfInput: {
+    flex: 1,
+  },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: 24,
   },
   dividerLine: {
     flex: 1,
