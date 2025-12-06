@@ -49,11 +49,8 @@ export const authAPI = {
   },
 
   login: async (data) => {
-    const formData = toFormData({
-      mobile_no: data.mobile_no,
-      password: data.password,
-    });
-    const response = await api.post('/login-json', formData);
+    const params = `?mobile_no=${encodeURIComponent(data.mobile_no)}&password=${encodeURIComponent(data.password)}`;
+    const response = await api.get('/login-json' + params);
     console.log('LOGIN RESPONSE:', response.data);
     return response.data;
   },

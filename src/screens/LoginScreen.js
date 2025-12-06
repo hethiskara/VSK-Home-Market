@@ -46,22 +46,14 @@ const LoginScreen = ({ navigation }) => {
       const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
-        if (result.token) {
-          await tokenManager.setToken(result.token);
-        }
-        if (result.user) {
-          await tokenManager.setUserData(result.user);
-        }
+        // Store user data
+        await tokenManager.setUserData({
+          userid: result.userid,
+          mobile_no: result.mobile_no,
+        });
 
-        Alert.alert('Success', result.message || 'Login successful!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate to Home screen (to be created)
-              // navigation.replace('Home');
-            },
-          },
-        ]);
+        console.log('Login successful, navigating to Home');
+        navigation.replace('Home');
       } else {
         Alert.alert('Error', result.message || 'Login failed');
       }
