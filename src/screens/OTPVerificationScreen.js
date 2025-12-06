@@ -22,7 +22,6 @@ const OTPVerificationScreen = ({ route, navigation }) => {
   const inputRefs = useRef([]);
 
   useEffect(() => {
-    // Log OTP for debugging in Metro terminal
     console.log('=================================');
     console.log('OTP VERIFICATION SCREEN');
     console.log('User ID:', userId);
@@ -49,7 +48,6 @@ const OTPVerificationScreen = ({ route, navigation }) => {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Auto focus next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -77,7 +75,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
         otp: otpString,
       });
 
-      const result = response[0];
+      const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
         Alert.alert('Success', result.message, [
@@ -159,7 +157,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backText}>← Back to Signup</Text>
+          <Text style={styles.backText}>Back to Signup</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -245,9 +243,9 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 14,
-    color: '#7F8C8D',
+    color: '#FF6B35',
+    fontWeight: '600',
   },
 });
 
 export default OTPVerificationScreen;
-

@@ -62,7 +62,9 @@ const HomeScreen = ({ navigation }) => {
         )}
         
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderIcon}>🏠</Text>
+          <View style={styles.iconContainer}>
+            <Text style={styles.iconText}>VSK</Text>
+          </View>
           <Text style={styles.placeholderTitle}>Home Screen</Text>
           <Text style={styles.placeholderSubtitle}>
             Products and categories will be displayed here
@@ -124,9 +126,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 100,
   },
-  placeholderIcon: {
-    fontSize: 60,
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  iconText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   placeholderTitle: {
     fontSize: 22,
@@ -143,4 +155,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-

@@ -46,7 +46,6 @@ const LoginScreen = ({ navigation }) => {
       const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
-        // Store user data
         await tokenManager.setUserData({
           userid: result.userid,
           mobile_no: result.mobile_no,
@@ -92,7 +91,6 @@ const LoginScreen = ({ navigation }) => {
             onChangeText={setMobileNo}
             keyboardType="phone-pad"
             maxLength={10}
-            icon="📱"
           />
 
           <Input
@@ -100,7 +98,6 @@ const LoginScreen = ({ navigation }) => {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            icon="🔒"
           />
 
           <TouchableOpacity 

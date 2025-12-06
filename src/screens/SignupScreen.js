@@ -32,7 +32,6 @@ const SignupScreen = ({ navigation }) => {
   };
 
   const handleSignup = async () => {
-    // Validation
     if (!firstName.trim()) {
       Alert.alert('Error', 'Please enter your first name');
       return;
@@ -103,7 +102,7 @@ const SignupScreen = ({ navigation }) => {
               navigation.navigate('OTPVerification', {
                 userId: result.id,
                 mobile: mobileNo,
-                otp: result.otp, // Pass OTP for debugging
+                otp: result.otp,
               });
             },
           },
@@ -146,7 +145,6 @@ const SignupScreen = ({ navigation }) => {
                 placeholder="First Name"
                 value={firstName}
                 onChangeText={setFirstName}
-                icon="👤"
               />
             </View>
             <View style={styles.halfInput}>
@@ -154,7 +152,6 @@ const SignupScreen = ({ navigation }) => {
                 placeholder="Last Name"
                 value={lastName}
                 onChangeText={setLastName}
-                icon="👤"
               />
             </View>
           </View>
@@ -165,7 +162,6 @@ const SignupScreen = ({ navigation }) => {
             onChangeText={setMobileNo}
             keyboardType="phone-pad"
             maxLength={10}
-            icon="📱"
           />
 
           <Input
@@ -173,7 +169,6 @@ const SignupScreen = ({ navigation }) => {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            icon="🔒"
           />
 
           <Input
@@ -181,7 +176,6 @@ const SignupScreen = ({ navigation }) => {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
-            icon="🔒"
           />
 
           <View style={styles.row}>
@@ -190,7 +184,6 @@ const SignupScreen = ({ navigation }) => {
                 placeholder="State"
                 value={state}
                 onChangeText={setState}
-                icon="🏛️"
               />
             </View>
             <View style={styles.halfInput}>
@@ -198,7 +191,6 @@ const SignupScreen = ({ navigation }) => {
                 placeholder="City"
                 value={city}
                 onChangeText={setCity}
-                icon="🏙️"
               />
             </View>
           </View>
@@ -209,14 +201,12 @@ const SignupScreen = ({ navigation }) => {
             onChangeText={setPostalCode}
             keyboardType="number-pad"
             maxLength={6}
-            icon="📮"
           />
 
           <Input
             placeholder="Address"
             value={address}
             onChangeText={setAddress}
-            icon="🏠"
           />
 
           <Button

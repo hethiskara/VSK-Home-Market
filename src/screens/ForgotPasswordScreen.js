@@ -84,7 +84,6 @@ const ForgotPasswordScreen = ({ navigation }) => {
             onChangeText={setMobileNo}
             keyboardType="phone-pad"
             maxLength={10}
-            icon="📱"
           />
 
           <Button
@@ -98,7 +97,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backText}>← Back to Login</Text>
+          <Text style={styles.backText}>Back to Login</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -142,9 +141,9 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 14,
-    color: '#7F8C8D',
+    color: '#FF6B35',
+    fontWeight: '600',
   },
 });
 
 export default ForgotPasswordScreen;
-
