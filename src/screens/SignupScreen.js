@@ -95,6 +95,7 @@ const SignupScreen = ({ navigation }) => {
       const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
+        console.log('Navigating to OTP screen with:', { id: result.id, otp: result.otp });
         Alert.alert('OTP Sent', result.message, [
           {
             text: 'OK',
@@ -102,6 +103,7 @@ const SignupScreen = ({ navigation }) => {
               navigation.navigate('OTPVerification', {
                 userId: result.id,
                 mobile: mobileNo,
+                otp: result.otp, // Pass OTP for debugging
               });
             },
           },

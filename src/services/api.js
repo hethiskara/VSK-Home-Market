@@ -33,6 +33,8 @@ export const authAPI = {
       address: data.address,
     });
     const response = await api.post('/register-json', formData);
+    console.log('REGISTER RESPONSE:', response.data);
+    console.log('OTP:', response.data?.otp || response.data?.[0]?.otp);
     return response.data;
   },
 
@@ -42,6 +44,7 @@ export const authAPI = {
       otp: data.otp,
     });
     const response = await api.post('/register-otp-json', formData);
+    console.log('VERIFY OTP RESPONSE:', response.data);
     return response.data;
   },
 
@@ -51,6 +54,16 @@ export const authAPI = {
       password: data.password,
     });
     const response = await api.post('/login-json', formData);
+    console.log('LOGIN RESPONSE:', response.data);
+    return response.data;
+  },
+
+  forgotPassword: async (data) => {
+    const formData = toFormData({
+      mobile_no: data.mobile_no,
+    });
+    const response = await api.post('/forgot-password-json', formData);
+    console.log('FORGOT PASSWORD RESPONSE:', response.data);
     return response.data;
   },
 };

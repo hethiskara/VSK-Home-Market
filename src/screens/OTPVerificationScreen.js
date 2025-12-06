@@ -15,11 +15,21 @@ import Button from '../components/Button';
 import { authAPI } from '../services/api';
 
 const OTPVerificationScreen = ({ route, navigation }) => {
-  const { userId, mobile } = route.params;
+  const { userId, mobile, otp: debugOtp } = route.params;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    // Log OTP for debugging in Metro terminal
+    console.log('=================================');
+    console.log('OTP VERIFICATION SCREEN');
+    console.log('User ID:', userId);
+    console.log('Mobile:', mobile);
+    console.log('OTP passed from signup:', debugOtp);
+    console.log('=================================');
+  }, []);
 
   useEffect(() => {
     if (timer > 0) {
