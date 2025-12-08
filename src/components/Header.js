@@ -19,7 +19,7 @@ const Header = ({ onMenuPress, showSearch = true }) => {
 
           {/* Logo */}
           <Image
-            source={require('../../assets/Logos/app-icon.jpg')}
+            source={require('../../assets/Logos/logo.jpg')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   logo: {
-    width: 100,
-    height: 55,
+    width: 160,
+    height: 50,
   },
   rightIcons: {
     flexDirection: 'row',
