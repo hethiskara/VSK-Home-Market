@@ -6,7 +6,7 @@ const SplashScreen = () => {
     <View style={styles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={require('../../assets/Logos/logo.jpg')}
+          source={require('../../assets/Logos/app-icon.jpg')}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -36,9 +36,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   logo: {
-    width: 280,
-    height: 100,
-    marginBottom: 30,
+    width: 200,
+    height: 180,
+    marginBottom: 20,
   },
   subtitle: {
     fontSize: 14,
@@ -58,4 +58,3 @@ const styles = StyleSheet.create({
 });
 
 export default SplashScreen;
-

@@ -130,7 +130,7 @@ const SignupScreen = ({ navigation }) => {
       >
         <View style={styles.header}>
           <Image
-            source={require('../../assets/Logos/logo.jpg')}
+            source={require('../../assets/Logos/app-icon.jpg')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -249,8 +249,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   logo: {
-    width: 180,
-    height: 65,
+    width: 120,
+    height: 100,
     marginBottom: 16,
   },
   title: {

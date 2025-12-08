@@ -76,7 +76,7 @@ const LoginScreen = ({ navigation }) => {
       >
         <View style={styles.header}>
           <Image
-            source={require('../../assets/Logos/logo.jpg')}
+            source={require('../../assets/Logos/app-icon.jpg')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -147,9 +147,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 200,
-    height: 70,
-    marginBottom: 24,
+    width: 140,
+    height: 120,
+    marginBottom: 20,
   },
   title: {
     fontSize: 28,

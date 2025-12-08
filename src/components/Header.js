@@ -19,7 +19,7 @@ const Header = ({ onMenuPress, showSearch = true }) => {
 
           {/* Logo */}
           <Image
-            source={require('../../assets/Logos/logo.jpg')}
+            source={require('../../assets/Logos/app-icon.jpg')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   menuButton: {
     width: 28,
@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   logo: {
-    width: 160,
-    height: 50,
+    width: 100,
+    height: 55,
   },
   rightIcons: {
     flexDirection: 'row',

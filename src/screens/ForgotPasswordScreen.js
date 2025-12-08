@@ -66,7 +66,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
     >
       <View style={styles.content}>
         <Image
-          source={require('../../assets/Logos/logo.jpg')}
+          source={require('../../assets/Logos/app-icon.jpg')}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -116,9 +116,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 180,
-    height: 65,
-    marginBottom: 40,
+    width: 120,
+    height: 100,
+    marginBottom: 30,
   },
   title: {
     fontSize: 28,
