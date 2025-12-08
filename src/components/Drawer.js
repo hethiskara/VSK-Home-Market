@@ -9,6 +9,7 @@ import {
   Modal,
   Dimensions,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { tokenManager, productAPI } from '../services/api';
@@ -23,10 +24,22 @@ const Drawer = ({ visible, onClose, navigation }) => {
   const [categories, setCategories] = useState({});
   const [subcategories, setSubcategories] = useState({});
   const [loading, setLoading] = useState({});
+  const slideAnim = useState(new Animated.Value(-DRAWER_WIDTH))[0];
 
   useEffect(() => {
     if (visible) {
       fetchSections();
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: -DRAWER_WIDTH,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
     }
   }, [visible]);
 
@@ -172,11 +185,13 @@ const Drawer = ({ visible, onClose, navigation }) => {
     });
   };
 
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="none"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
@@ -185,12 +200,21 @@ const Drawer = ({ visible, onClose, navigation }) => {
           activeOpacity={1} 
           onPress={onClose}
         />
-        <View style={styles.drawer}>
+        <Animated.View style={[styles.drawer, { transform: [{ translateX: slideAnim }] }]}>
           <SafeAreaView style={styles.container} edges={['top']}>
             {/* Close Button */}
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeIcon}>×</Text>
             </TouchableOpacity>
+
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../../assets/Logos/app-icon.jpg')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
 
             {/* Menu Items */}
             <ScrollView style={styles.menuContainer} showsVerticalScrollIndicator={false}>
@@ -270,7 +294,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
               <View style={{ height: 40 }} />
             </ScrollView>
           </SafeAreaView>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -312,9 +336,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '300',
   },
+  logoContainer: {
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  logo: {
+    width: 120,
+    height: 100,
+  },
   menuContainer: {
     flex: 1,
-    paddingTop: 80,
+    paddingTop: 8,
   },
   menuItem: {
     flexDirection: 'row',

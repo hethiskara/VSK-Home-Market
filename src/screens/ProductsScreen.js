@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   TouchableOpacity,
   Image,
@@ -63,12 +62,6 @@ const ProductsScreen = ({ navigation, route }) => {
           {item.productname}
         </Text>
         
-        <View style={styles.ratingRow}>
-          <Text style={styles.ratingIcon}>👍 0</Text>
-          <Text style={styles.ratingIcon}>👎 0</Text>
-          <Text style={styles.ratingIcon}>💬 0</Text>
-        </View>
-
         <View style={styles.actionsRow}>
           <Text style={styles.actionText}>Compare</Text>
           <Text style={styles.actionText}>Wishlist</Text>
@@ -111,12 +104,9 @@ const ProductsScreen = ({ navigation, route }) => {
       {/* Filter Bar */}
       <View style={styles.filterBar}>
         <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterIcon}>☰</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
           <Text style={styles.filterText}>↕ Products By</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
+        <TouchableOpacity style={[styles.filterButton, styles.filterButtonLast]}>
           <Text style={styles.filterText}>🔻 Filter</Text>
         </TouchableOpacity>
       </View>
@@ -195,9 +185,8 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#E8E8E8',
   },
-  filterIcon: {
-    fontSize: 18,
-    color: '#3498DB',
+  filterButtonLast: {
+    borderRightWidth: 0,
   },
   filterText: {
     fontSize: 14,
@@ -248,20 +237,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#C0392B',
-    marginBottom: 8,
+    marginBottom: 10,
     lineHeight: 20,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#27AE60',
-    paddingBottom: 8,
-  },
-  ratingIcon: {
-    fontSize: 12,
-    color: '#666',
   },
   actionsRow: {
     flexDirection: 'row',
