@@ -63,6 +63,15 @@ export const authAPI = {
   },
 };
 
+// Home APIs
+export const homeAPI = {
+  getBanners: async () => {
+    const response = await api.get('/banner-json');
+    console.log('BANNERS RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Token management
 export const tokenManager = {
   setToken: async (token) => {

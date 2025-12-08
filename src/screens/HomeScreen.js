@@ -3,75 +3,116 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
-  TouchableOpacity,
-  Alert,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { tokenManager } from '../services/api';
+import Header from '../components/Header';
+import BannerCarousel from '../components/BannerCarousel';
+import { homeAPI } from '../services/api';
 
 const HomeScreen = ({ navigation }) => {
-  const [userData, setUserData] = useState(null);
+  const [banners, setBanners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadUserData();
+    fetchData();
   }, []);
 
-  const loadUserData = async () => {
-    const data = await tokenManager.getUserData();
-    setUserData(data);
-    console.log('HOME SCREEN - User Data:', data);
+  const fetchData = async () => {
+    try {
+      const bannerResponse = await homeAPI.getBanners();
+      if (bannerResponse.status && bannerResponse.data?.products) {
+        setBanners(bannerResponse.data.products);
+      }
+    } catch (error) {
+      console.log('Error fetching banners:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          await tokenManager.clearAll();
-          navigation.replace('Login');
-        },
-      },
-    ]);
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF6B35" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar style="dark" />
+    <View style={styles.container}>
+      <Header navigation={navigation} />
       
-      <View style={styles.header}>
-        <Image
-          source={require('../../assets/Logos/logo.jpg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#FF6B35']}
+            tintColor="#FF6B35"
+          />
+        }
+      >
+        <BannerCarousel banners={banners} />
 
-      <View style={styles.content}>
-        <Text style={styles.welcomeText}>Welcome!</Text>
-        {userData && (
-          <Text style={styles.userInfo}>
-            Mobile: {userData.mobile_no}
-          </Text>
-        )}
-        
-        <View style={styles.placeholder}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.iconText}>VSK</Text>
+        {/* Top Sellers Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Top sellers of the day</Text>
+            <Text style={styles.viewAll}>View All »</Text>
           </View>
-          <Text style={styles.placeholderTitle}>Home Screen</Text>
-          <Text style={styles.placeholderSubtitle}>
-            Products and categories will be displayed here
-          </Text>
+          <View style={styles.productPlaceholder}>
+            <Text style={styles.placeholderText}>Products loading...</Text>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+
+        {/* Featured Products Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Feature Products of the Day</Text>
+            <Text style={styles.viewAll}>View All »</Text>
+          </View>
+          <View style={styles.productPlaceholder}>
+            <Text style={styles.placeholderText}>Products loading...</Text>
+          </View>
+        </View>
+
+        {/* Latest Products Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Latest Products</Text>
+            <Text style={styles.viewAll}>View All »</Text>
+          </View>
+          <View style={styles.productPlaceholder}>
+            <Text style={styles.placeholderText}>Products loading...</Text>
+          </View>
+        </View>
+
+        {/* Best Selling Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Best Selling Products</Text>
+            <Text style={styles.viewAll}>View All »</Text>
+          </View>
+          <View style={styles.productPlaceholder}>
+            <Text style={styles.placeholderText}>Products loading...</Text>
+          </View>
+        </View>
+
+        {/* Footer spacing */}
+        <View style={styles.footerSpace} />
+      </ScrollView>
+    </View>
   );
 };
 
@@ -80,77 +121,58 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  section: {
+    marginTop: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
   },
-  logo: {
-    width: 150,
-    height: 50,
-  },
-  logoutButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#FFF5F2',
-    borderRadius: 8,
-  },
-  logoutText: {
-    color: '#FF6B35',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 30,
-  },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  userInfo: {
+  sectionTitle: {
     fontSize: 16,
-    color: '#7F8C8D',
-    marginBottom: 40,
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 100,
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FF6B35',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  iconText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  placeholderTitle: {
-    fontSize: 22,
     fontWeight: '600',
     color: '#2C3E50',
-    marginBottom: 10,
   },
-  placeholderSubtitle: {
-    fontSize: 15,
-    color: '#7F8C8D',
-    textAlign: 'center',
-    paddingHorizontal: 40,
+  viewAll: {
+    fontSize: 14,
+    color: '#3498DB',
+    fontWeight: '500',
+  },
+  productPlaceholder: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: '#999',
+  },
+  footerSpace: {
+    height: 40,
   },
 });
 
