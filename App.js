@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogBox } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 
 import SplashScreen from './src/screens/SplashScreen';
@@ -13,30 +11,13 @@ import SignupScreen from './src/screens/SignupScreen';
 import OTPVerificationScreen from './src/screens/OTPVerificationScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import HomeScreen from './src/screens/HomeScreen';
-import DrawerContent from './src/navigation/DrawerContent';
+import AboutUsScreen from './src/screens/AboutUsScreen';
+import ContactUsScreen from './src/screens/ContactUsScreen';
+import ProductsScreen from './src/screens/ProductsScreen';
 
-LogBox.ignoreLogs(['Reanimated', 'AsyncStorage', 'Sending']);
+LogBox.ignoreLogs(['AsyncStorage', 'Sending']);
 
 const Stack = createNativeStackNavigator();
-const Drawer = createDrawerNavigator();
-
-// Drawer Navigator for main app screens
-const DrawerNavigator = () => {
-  return (
-    <Drawer.Navigator
-      drawerContent={(props) => <DrawerContent {...props} />}
-      screenOptions={{
-        headerShown: false,
-        drawerType: 'front',
-        drawerStyle: {
-          width: '80%',
-        },
-      }}
-    >
-      <Drawer.Screen name="HomeMain" component={HomeScreen} />
-    </Drawer.Navigator>
-  );
-};
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -57,24 +38,25 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <StatusBar style="dark" />
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              animation: 'slide_from_right',
-            }}
-          >
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Signup" component={SignupScreen} />
-            <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="Home" component={DrawerNavigator} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <StatusBar style="dark" />
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="AboutUs" component={AboutUsScreen} />
+          <Stack.Screen name="ContactUs" component={ContactUsScreen} />
+          <Stack.Screen name="Products" component={ProductsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

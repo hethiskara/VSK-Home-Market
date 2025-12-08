@@ -1,27 +1,30 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, TextInput, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const Header = ({ navigation, showSearch = true }) => {
+const Header = ({ onMenuPress, showSearch = true }) => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.topRow}>
+          {/* Hamburger Menu */}
           <TouchableOpacity
             style={styles.menuButton}
-            onPress={() => navigation.openDrawer()}
+            onPress={onMenuPress}
           >
             <View style={styles.menuLine} />
             <View style={styles.menuLine} />
             <View style={styles.menuLine} />
           </TouchableOpacity>
 
+          {/* Logo */}
           <Image
             source={require('../../assets/Logos/logo.jpg')}
             style={styles.logo}
             resizeMode="contain"
           />
 
+          {/* Right Icons */}
           <View style={styles.rightIcons}>
             <TouchableOpacity style={styles.iconButton}>
               <View style={styles.cartIcon}>
@@ -40,9 +43,10 @@ const Header = ({ navigation, showSearch = true }) => {
           </View>
         </View>
 
+        {/* Search Bar */}
         {showSearch && (
           <View style={styles.searchContainer}>
-            <View style={styles.searchIcon}>
+            <View style={styles.searchIconContainer}>
               <View style={styles.searchCircle} />
               <View style={styles.searchHandle} />
             </View>
@@ -52,9 +56,7 @@ const Header = ({ navigation, showSearch = true }) => {
               placeholderTextColor="#999"
             />
             <TouchableOpacity style={styles.goButton}>
-              <View style={styles.goText}>
-                <View style={styles.goDot} />
-              </View>
+              <Text style={styles.goText}>Go</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -174,9 +176,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     height: 44,
-    paddingHorizontal: 12,
+    paddingLeft: 12,
   },
-  searchIcon: {
+  searchIconContainer: {
     width: 20,
     height: 20,
     marginRight: 10,
@@ -190,8 +192,8 @@ const styles = StyleSheet.create({
   },
   searchHandle: {
     position: 'absolute',
-    bottom: 0,
-    right: 2,
+    bottom: 1,
+    right: 3,
     width: 6,
     height: 2,
     backgroundColor: '#999',
@@ -204,24 +206,18 @@ const styles = StyleSheet.create({
   },
   goButton: {
     backgroundColor: '#2C3E50',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  goText: {
-    width: 20,
-    height: 14,
+    paddingHorizontal: 20,
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    borderTopRightRadius: 7,
+    borderBottomRightRadius: 7,
   },
-  goDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
+  goText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 
 export default Header;
-

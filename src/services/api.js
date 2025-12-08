@@ -72,6 +72,52 @@ export const homeAPI = {
   },
 };
 
+// Content APIs
+export const contentAPI = {
+  getAboutUs: async () => {
+    const response = await api.get('/aboutus-json');
+    console.log('ABOUT US RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getContactUs: async () => {
+    const response = await api.get('/contactus-json');
+    console.log('CONTACT US RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
+// Product APIs
+export const productAPI = {
+  // Get all product sections (e.g., Pickles, Garments)
+  getSections: async () => {
+    const response = await api.get('/regularproducts');
+    console.log('PRODUCT SECTIONS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get categories within a section
+  getCategories: async (sectionId) => {
+    const response = await api.get(`/category-detail?section_id=${sectionId}`);
+    console.log('CATEGORIES RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get subcategories within a category
+  getSubcategories: async (sectionId, categoryId) => {
+    const response = await api.get(`/subcategory-detail?section_id=${sectionId}&category_id=${categoryId}`);
+    console.log('SUBCATEGORIES RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get products within a subcategory
+  getProducts: async (sectionId, categoryId, subcategoryId) => {
+    const response = await api.get(`/moreproduct-detail?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}`);
+    console.log('PRODUCTS RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Token management
 export const tokenManager = {
   setToken: async (token) => {

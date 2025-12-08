@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Header from '../components/Header';
+import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
 import { homeAPI } from '../services/api';
 
@@ -15,6 +16,7 @@ const HomeScreen = ({ navigation }) => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -23,6 +25,7 @@ const HomeScreen = ({ navigation }) => {
   const fetchData = async () => {
     try {
       const bannerResponse = await homeAPI.getBanners();
+      console.log('BANNERS:', bannerResponse);
       if (bannerResponse.status && bannerResponse.data?.products) {
         setBanners(bannerResponse.data.products);
       }
@@ -49,7 +52,13 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header navigation={navigation} />
+      <Header onMenuPress={() => setDrawerVisible(true)} />
+      
+      <Drawer 
+        visible={drawerVisible} 
+        onClose={() => setDrawerVisible(false)}
+        navigation={navigation}
+      />
       
       <ScrollView
         style={styles.scrollView}
@@ -72,7 +81,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.viewAll}>View All »</Text>
           </View>
           <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products loading...</Text>
+            <Text style={styles.placeholderText}>Products coming soon...</Text>
           </View>
         </View>
 
@@ -83,7 +92,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.viewAll}>View All »</Text>
           </View>
           <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products loading...</Text>
+            <Text style={styles.placeholderText}>Products coming soon...</Text>
           </View>
         </View>
 
@@ -94,7 +103,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.viewAll}>View All »</Text>
           </View>
           <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products loading...</Text>
+            <Text style={styles.placeholderText}>Products coming soon...</Text>
           </View>
         </View>
 
@@ -105,7 +114,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.viewAll}>View All »</Text>
           </View>
           <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products loading...</Text>
+            <Text style={styles.placeholderText}>Products coming soon...</Text>
           </View>
         </View>
 
