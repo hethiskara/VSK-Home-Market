@@ -10,8 +10,35 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentAPI } from '../services/api';
 
+// Simple HTML tag stripper
+const parseHtmlContent = (html) => {
+  if (!html) return '';
+  
+  // Replace <br>, <br/>, <br /> with newlines
+  let text = html.replace(/<br\s*\/?>/gi, '\n');
+  // Replace </p> with double newlines
+  text = text.replace(/<\/p>/gi, '\n\n');
+  // Replace <p> tags
+  text = text.replace(/<p[^>]*>/gi, '');
+  // Remove all other HTML tags
+  text = text.replace(/<[^>]*>/g, '');
+  // Decode HTML entities
+  text = text.replace(/&amp;/g, '&');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&#39;/g, "'");
+  // Trim whitespace and remove extra newlines
+  text = text.replace(/\n{3,}/g, '\n\n');
+  text = text.trim();
+  
+  return text;
+};
+
 const AboutUsScreen = ({ navigation }) => {
   const [content, setContent] = useState(null);
+  const [parsedContent, setParsedContent] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,7 +48,17 @@ const AboutUsScreen = ({ navigation }) => {
   const fetchContent = async () => {
     try {
       const response = await contentAPI.getAboutUs();
+      console.log('About Us response:', response);
       setContent(response);
+      
+      // Parse the HTML content
+      if (Array.isArray(response) && response[0]?.content) {
+        setParsedContent(parseHtmlContent(response[0].content));
+      } else if (response?.content) {
+        setParsedContent(parseHtmlContent(response.content));
+      } else if (typeof response === 'string') {
+        setParsedContent(parseHtmlContent(response));
+      }
     } catch (error) {
       console.log('Error fetching about us:', error);
     } finally {
@@ -50,19 +87,12 @@ const AboutUsScreen = ({ navigation }) => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          {content ? (
-            <>
-              {content.title && <Text style={styles.title}>{content.title}</Text>}
-              {content.description && <Text style={styles.description}>{content.description}</Text>}
-              {content.content && <Text style={styles.description}>{content.content}</Text>}
-              {Array.isArray(content) && content.map((item, index) => (
-                <View key={index} style={styles.section}>
-                  {item.title && <Text style={styles.sectionTitle}>{item.title}</Text>}
-                  {item.description && <Text style={styles.description}>{item.description}</Text>}
-                  {item.content && <Text style={styles.description}>{item.content}</Text>}
-                </View>
-              ))}
-            </>
+          <Text style={styles.title}>About VSK Home Market</Text>
+          
+          {parsedContent ? (
+            <View style={styles.card}>
+              <Text style={styles.description}>{parsedContent}</Text>
+            </View>
           ) : (
             <Text style={styles.noContent}>Content not available</Text>
           )}
@@ -120,20 +150,18 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2C3E50',
-    marginBottom: 16,
-  },
-  section: {
     marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 8,
+  card: {
+    backgroundColor: '#F8F9FA',
+    padding: 20,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF6B35',
   },
   description: {
     fontSize: 15,
-    lineHeight: 24,
+    lineHeight: 26,
     color: '#555',
   },
   noContent: {
@@ -145,4 +173,3 @@ const styles = StyleSheet.create({
 });
 
 export default AboutUsScreen;
-

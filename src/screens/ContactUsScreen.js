@@ -11,8 +11,43 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentAPI } from '../services/api';
 
+// Simple HTML tag stripper and parser
+const parseHtmlContent = (html) => {
+  if (!html) return [];
+  
+  // Replace <br>, <br/>, <br /> with newlines
+  let text = html.replace(/<br\s*\/?>/gi, '\n');
+  // Replace </p> with double newlines
+  text = text.replace(/<\/p>/gi, '\n\n');
+  // Remove all other HTML tags
+  text = text.replace(/<[^>]*>/g, '');
+  // Decode HTML entities
+  text = text.replace(/&amp;/g, '&');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&quot;/g, '"');
+  // Trim whitespace
+  text = text.trim();
+  
+  return text;
+};
+
+// Extract phone and email from text
+const extractContactInfo = (text) => {
+  const phoneMatch = text.match(/(?:Phone\s*:\s*|Tel\s*:\s*)?(\d{10,11})/i);
+  const emailMatch = text.match(/(?:Email\s*:\s*)?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+  
+  return {
+    phone: phoneMatch ? phoneMatch[1] : null,
+    email: emailMatch ? emailMatch[1] : null,
+  };
+};
+
 const ContactUsScreen = ({ navigation }) => {
   const [content, setContent] = useState(null);
+  const [parsedContent, setParsedContent] = useState('');
+  const [contactInfo, setContactInfo] = useState({ phone: null, email: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +57,19 @@ const ContactUsScreen = ({ navigation }) => {
   const fetchContent = async () => {
     try {
       const response = await contentAPI.getContactUs();
+      console.log('Contact response:', response);
       setContent(response);
+      
+      // Parse the HTML content
+      if (Array.isArray(response) && response[0]?.content) {
+        const parsed = parseHtmlContent(response[0].content);
+        setParsedContent(parsed);
+        setContactInfo(extractContactInfo(parsed));
+      } else if (response?.content) {
+        const parsed = parseHtmlContent(response.content);
+        setParsedContent(parsed);
+        setContactInfo(extractContactInfo(parsed));
+      }
     } catch (error) {
       console.log('Error fetching contact us:', error);
     } finally {
@@ -30,12 +77,16 @@ const ContactUsScreen = ({ navigation }) => {
     }
   };
 
-  const handlePhone = (phone) => {
-    Linking.openURL(`tel:${phone}`);
+  const handlePhone = () => {
+    if (contactInfo.phone) {
+      Linking.openURL(`tel:${contactInfo.phone}`);
+    }
   };
 
-  const handleEmail = (email) => {
-    Linking.openURL(`mailto:${email}`);
+  const handleEmail = () => {
+    if (contactInfo.email) {
+      Linking.openURL(`mailto:${contactInfo.email}`);
+    }
   };
 
   if (loading) {
@@ -59,52 +110,35 @@ const ContactUsScreen = ({ navigation }) => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          {content ? (
-            <>
-              {content.title && <Text style={styles.title}>{content.title}</Text>}
-              
-              {content.phone && (
-                <TouchableOpacity style={styles.contactItem} onPress={() => handlePhone(content.phone)}>
-                  <Text style={styles.contactLabel}>Phone</Text>
-                  <Text style={styles.contactValue}>{content.phone}</Text>
-                </TouchableOpacity>
-              )}
+          <Text style={styles.title}>Get In Touch</Text>
+          
+          {/* Address Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Our Address</Text>
+            <Text style={styles.addressText}>{parsedContent}</Text>
+          </View>
 
-              {content.email && (
-                <TouchableOpacity style={styles.contactItem} onPress={() => handleEmail(content.email)}>
-                  <Text style={styles.contactLabel}>Email</Text>
-                  <Text style={styles.contactValue}>{content.email}</Text>
-                </TouchableOpacity>
-              )}
+          {/* Quick Contact Buttons */}
+          {contactInfo.phone && (
+            <TouchableOpacity style={styles.contactButton} onPress={handlePhone}>
+              <Text style={styles.contactIcon}>📞</Text>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactLabel}>Call Us</Text>
+                <Text style={styles.contactValue}>{contactInfo.phone}</Text>
+              </View>
+              <Text style={styles.contactArrow}>→</Text>
+            </TouchableOpacity>
+          )}
 
-              {content.address && (
-                <View style={styles.contactItem}>
-                  <Text style={styles.contactLabel}>Address</Text>
-                  <Text style={styles.contactValue}>{content.address}</Text>
-                </View>
-              )}
-
-              {content.description && <Text style={styles.description}>{content.description}</Text>}
-
-              {Array.isArray(content) && content.map((item, index) => (
-                <View key={index} style={styles.section}>
-                  {item.title && <Text style={styles.sectionTitle}>{item.title}</Text>}
-                  {item.phone && (
-                    <TouchableOpacity onPress={() => handlePhone(item.phone)}>
-                      <Text style={styles.contactValue}>{item.phone}</Text>
-                    </TouchableOpacity>
-                  )}
-                  {item.email && (
-                    <TouchableOpacity onPress={() => handleEmail(item.email)}>
-                      <Text style={styles.contactValue}>{item.email}</Text>
-                    </TouchableOpacity>
-                  )}
-                  {item.address && <Text style={styles.description}>{item.address}</Text>}
-                </View>
-              ))}
-            </>
-          ) : (
-            <Text style={styles.noContent}>Content not available</Text>
+          {contactInfo.email && (
+            <TouchableOpacity style={styles.contactButton} onPress={handleEmail}>
+              <Text style={styles.contactIcon}>✉️</Text>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactLabel}>Email Us</Text>
+                <Text style={styles.contactValue}>{contactInfo.email}</Text>
+              </View>
+              <Text style={styles.contactArrow}>→</Text>
+            </TouchableOpacity>
           )}
         </View>
       </ScrollView>
@@ -162,44 +196,61 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 24,
   },
-  contactItem: {
+  card: {
     backgroundColor: '#F8F9FA',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  contactLabel: {
-    fontSize: 12,
-    color: '#7F8C8D',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-  },
-  contactValue: {
-    fontSize: 16,
-    color: '#3498DB',
-    fontWeight: '500',
-  },
-  section: {
+    padding: 20,
+    borderRadius: 12,
     marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF6B35',
   },
-  sectionTitle: {
-    fontSize: 18,
+  cardTitle: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#2C3E50',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  description: {
+  addressText: {
     fontSize: 15,
     lineHeight: 24,
     color: '#555',
   },
-  noContent: {
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+  },
+  contactIcon: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactLabel: {
+    fontSize: 12,
+    color: '#7F8C8D',
+    marginBottom: 2,
+  },
+  contactValue: {
     fontSize: 16,
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 40,
+    color: '#3498DB',
+    fontWeight: '600',
+  },
+  contactArrow: {
+    fontSize: 20,
+    color: '#3498DB',
   },
 });
 
 export default ContactUsScreen;
-

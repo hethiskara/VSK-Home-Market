@@ -14,131 +14,79 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { productAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2;
 
 const ProductsScreen = ({ navigation, route }) => {
   const { sectionId, sectionTitle, categoryId, categoryTitle, subcategoryId, subcategoryTitle } = route.params || {};
   
-  const [data, setData] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [screenType, setScreenType] = useState('sections'); // sections, categories, subcategories, products
 
   useEffect(() => {
-    fetchData();
+    fetchProducts();
   }, [sectionId, categoryId, subcategoryId]);
 
-  const fetchData = async () => {
+  const fetchProducts = async () => {
     setLoading(true);
     try {
-      if (subcategoryId) {
-        // Fetch products
-        setScreenType('products');
-        const response = await productAPI.getProducts(sectionId, categoryId, subcategoryId);
-        setData(Array.isArray(response) ? response : response.data || []);
-      } else if (categoryId) {
-        // Fetch subcategories
-        setScreenType('subcategories');
-        const response = await productAPI.getSubcategories(sectionId, categoryId);
-        setData(Array.isArray(response) ? response : []);
-      } else if (sectionId) {
-        // Fetch categories
-        setScreenType('categories');
-        const response = await productAPI.getCategories(sectionId);
-        setData(Array.isArray(response) ? response.filter(item => item.id !== '0') : []);
-      } else {
-        // Fetch sections
-        setScreenType('sections');
-        const response = await productAPI.getSections();
-        setData(Array.isArray(response) ? response : []);
-      }
+      const response = await productAPI.getProducts(sectionId, categoryId, subcategoryId);
+      console.log('Products fetched:', response);
+      setProducts(Array.isArray(response) ? response : []);
     } catch (error) {
-      console.log('Error fetching data:', error);
+      console.log('Error fetching products:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getTitle = () => {
-    if (subcategoryTitle) return subcategoryTitle;
-    if (categoryTitle) return categoryTitle;
-    if (sectionTitle) return sectionTitle;
-    return 'Products';
-  };
-
-  const handleItemPress = (item) => {
-    if (screenType === 'sections') {
-      navigation.push('Products', {
-        sectionId: item.id,
-        sectionTitle: item.title,
-      });
-    } else if (screenType === 'categories') {
-      navigation.push('Products', {
-        sectionId,
-        sectionTitle,
-        categoryId: item.id,
-        categoryTitle: item.title,
-      });
-    } else if (screenType === 'subcategories') {
-      navigation.push('Products', {
-        sectionId,
-        sectionTitle,
-        categoryId,
-        categoryTitle,
-        subcategoryId: item.id,
-        subcategoryTitle: item.subcategorytitle || item.title,
-      });
-    } else if (screenType === 'products') {
-      // Navigate to product detail (when API available)
-      console.log('Product selected:', item);
-    }
-  };
-
-  const renderCategoryItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.categoryCard}
-      onPress={() => handleItemPress(item)}
-      activeOpacity={0.7}
-    >
-      {item.image && (
-        <Image source={{ uri: item.image }} style={styles.categoryImage} resizeMode="cover" />
-      )}
-      <View style={styles.categoryContent}>
-        <Text style={styles.categoryTitle} numberOfLines={2}>
-          {item.subcategorytitle || item.title}
+  const renderBreadcrumb = () => {
+    return (
+      <View style={styles.breadcrumb}>
+        <Text style={styles.breadcrumbText}>
+          <Text style={styles.breadcrumbLink}>Home</Text>
+          {sectionTitle && <Text> » <Text style={styles.breadcrumbLink}>{sectionTitle}</Text></Text>}
+          {categoryTitle && <Text> » <Text style={styles.breadcrumbLink}>{categoryTitle}</Text></Text>}
+          {subcategoryTitle && <Text> » {subcategoryTitle}</Text>}
         </Text>
-        {screenType !== 'products' && (
-          <Text style={styles.viewMore}>View →</Text>
-        )}
       </View>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   const renderProductItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.productCard}
-      onPress={() => handleItemPress(item)}
-      activeOpacity={0.7}
-    >
-      {item.image && (
-        <Image source={{ uri: item.image }} style={styles.productImage} resizeMode="cover" />
-      )}
+    <View style={styles.productCard}>
+      <Image 
+        source={{ uri: item.productimage }} 
+        style={styles.productImage} 
+        resizeMode="cover"
+      />
       <View style={styles.productContent}>
         <Text style={styles.productTitle} numberOfLines={2}>
-          {item.title || item.name || item.product_name}
+          {item.productname}
         </Text>
-        {item.code && (
-          <Text style={styles.productCode}>Code: {item.code}</Text>
-        )}
-        {(item.price || item.selling_price) && (
-          <View style={styles.priceContainer}>
-            {item.mrp && item.mrp !== item.selling_price && (
-              <Text style={styles.oldPrice}>Rs. {item.mrp}</Text>
-            )}
-            <Text style={styles.price}>Rs. {item.selling_price || item.price}</Text>
-          </View>
-        )}
+        
+        <View style={styles.ratingRow}>
+          <Text style={styles.ratingIcon}>👍 0</Text>
+          <Text style={styles.ratingIcon}>👎 0</Text>
+          <Text style={styles.ratingIcon}>💬 0</Text>
+        </View>
+
+        <View style={styles.actionsRow}>
+          <Text style={styles.actionText}>Compare</Text>
+          <Text style={styles.actionText}>Wishlist</Text>
+        </View>
+
+        <Text style={styles.productCode}>Product Code : {item.productcode}</Text>
+        
+        <View style={styles.priceRow}>
+          <Text style={styles.price}>₹ {item.productprice}</Text>
+          {item.mrp && item.mrp !== item.productprice && (
+            <Text style={styles.oldPrice}>₹ {item.mrp}</Text>
+          )}
+          {item.percentage && (
+            <Text style={styles.discount}>{item.percentage}</Text>
+          )}
+        </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   if (loading) {
@@ -156,21 +104,36 @@ const ProductsScreen = ({ navigation, route }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{getTitle()}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{subcategoryTitle || categoryTitle || sectionTitle}</Text>
         <View style={styles.placeholder} />
       </View>
 
-      {data.length === 0 ? (
+      {/* Filter Bar */}
+      <View style={styles.filterBar}>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterIcon}>☰</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterText}>↕ Products By</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterText}>🔻 Filter</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Breadcrumb */}
+      {renderBreadcrumb()}
+
+      {/* Products List */}
+      {products.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No items found</Text>
+          <Text style={styles.emptyText}>No products found</Text>
         </View>
       ) : (
         <FlatList
-          data={data}
-          renderItem={screenType === 'products' ? renderProductItem : renderCategoryItem}
-          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
+          data={products}
+          renderItem={renderProductItem}
+          keyExtractor={(item) => item.id?.toString()}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
@@ -219,86 +182,120 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 60,
   },
+  filterBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  filterButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#E8E8E8',
+  },
+  filterIcon: {
+    fontSize: 18,
+    color: '#3498DB',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#2C3E50',
+    fontWeight: '500',
+  },
+  breadcrumb: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FAFAFA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  breadcrumbText: {
+    fontSize: 13,
+    color: '#666',
+  },
+  breadcrumbLink: {
+    color: '#3498DB',
+  },
   listContent: {
     padding: 16,
   },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  categoryCard: {
-    width: CARD_WIDTH,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    overflow: 'hidden',
-  },
-  categoryImage: {
-    width: '100%',
-    height: 100,
-    backgroundColor: '#F0F0F0',
-  },
-  categoryContent: {
-    padding: 12,
-  },
-  categoryTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 4,
-  },
-  viewMore: {
-    fontSize: 12,
-    color: '#3498DB',
-  },
   productCard: {
-    width: CARD_WIDTH,
+    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 8,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
   },
   productImage: {
-    width: '100%',
-    height: 120,
+    width: 130,
+    height: 150,
     backgroundColor: '#F0F0F0',
   },
   productContent: {
+    flex: 1,
     padding: 12,
   },
   productTitle: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 4,
+    color: '#C0392B',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#27AE60',
+    paddingBottom: 8,
+  },
+  ratingIcon: {
+    fontSize: 12,
+    color: '#666',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 8,
+  },
+  actionText: {
+    fontSize: 12,
+    color: '#3498DB',
   },
   productCode: {
-    fontSize: 11,
-    color: '#7F8C8D',
-    marginBottom: 6,
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
   },
-  priceContainer: {
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexWrap: 'wrap',
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#C0392B',
   },
   oldPrice: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#999',
     textDecorationLine: 'line-through',
   },
-  price: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#FF6B35',
+  discount: {
+    fontSize: 12,
+    color: '#666',
   },
   emptyContainer: {
     flex: 1,
@@ -312,4 +309,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProductsScreen;
-
