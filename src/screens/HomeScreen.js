@@ -68,8 +68,8 @@ const HomeScreen = ({ navigation }) => {
         homeAPI.getTopSellersGarments(),
       ]);
       
-      const regularProducts = topRegular?.data?.products || [];
-      const garmentsProducts = topGarments?.data?.products || [];
+      const regularProducts = Array.isArray(topRegular) ? topRegular : [];
+      const garmentsProducts = Array.isArray(topGarments) ? topGarments : [];
       setTopSellers([...regularProducts, ...garmentsProducts]);
 
       // Fetch featured products (regular + garments)
@@ -78,8 +78,8 @@ const HomeScreen = ({ navigation }) => {
         homeAPI.getFeaturedGarments(),
       ]);
       
-      const featuredRegularProducts = featuredRegular?.data?.products || [];
-      const featuredGarmentsProducts = featuredGarments?.data?.products || [];
+      const featuredRegularProducts = Array.isArray(featuredRegular) ? featuredRegular : [];
+      const featuredGarmentsProducts = Array.isArray(featuredGarments) ? featuredGarments : [];
       setFeaturedProducts([...featuredRegularProducts, ...featuredGarmentsProducts]);
 
     } catch (error) {
