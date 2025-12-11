@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
   Modal,
   Dimensions,
   ActivityIndicator,
@@ -207,14 +206,8 @@ const Drawer = ({ visible, onClose, navigation }) => {
               <Text style={styles.closeIcon}>×</Text>
             </TouchableOpacity>
 
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-              <Image
-                source={require('../../assets/Logos/app-icon.jpg')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
+            {/* Header Spacer */}
+            <View style={styles.headerSpacer} />
 
             {/* Menu Items */}
             <ScrollView style={styles.menuContainer} showsVerticalScrollIndicator={false}>
@@ -336,17 +329,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '300',
   },
-  logoContainer: {
-    paddingTop: 60,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  logo: {
-    width: 120,
-    height: 100,
+  headerSpacer: {
+    height: 20,
   },
   menuContainer: {
     flex: 1,

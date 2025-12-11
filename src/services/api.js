@@ -70,6 +70,30 @@ export const homeAPI = {
     console.log('BANNERS RESPONSE:', response.data);
     return response.data;
   },
+
+  getTopSellersRegular: async () => {
+    const response = await api.get('/top-sellers-of-the-day-regular');
+    console.log('TOP SELLERS REGULAR RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getTopSellersGarments: async () => {
+    const response = await api.get('/top-sellers-of-the-day-garments');
+    console.log('TOP SELLERS GARMENTS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getFeaturedRegular: async () => {
+    const response = await api.get('/feature-products-of-the-day-regular');
+    console.log('FEATURED REGULAR RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getFeaturedGarments: async () => {
+    const response = await api.get('/feature-products-of-the-day-garments');
+    console.log('FEATURED GARMENTS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Content APIs

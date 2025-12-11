@@ -6,14 +6,46 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  Image,
+  TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import Header from '../components/Header';
 import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
 import { homeAPI } from '../services/api';
 
+const ProductCard = ({ product }) => {
+  const discountPercent = product.percentage?.replace(/[()]/g, '') || '';
+  
+  return (
+    <TouchableOpacity style={styles.productCard}>
+      <Image
+        source={{ uri: product.productimage }}
+        style={styles.productImage}
+        resizeMode="cover"
+      />
+      <View style={styles.productInfo}>
+        <Text style={styles.productName} numberOfLines={2}>
+          {product.productname}
+        </Text>
+        <Text style={styles.productCode}>Code : {product.productcode}</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.mrp}>Rs. {product.mrp}</Text>
+          <Text style={styles.price}>Rs. {product.productprice}</Text>
+        </View>
+        {discountPercent ? (
+          <Text style={styles.discount}>{discountPercent}</Text>
+        ) : null}
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 const HomeScreen = ({ navigation }) => {
   const [banners, setBanners] = useState([]);
+  const [topSellers, setTopSellers] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -24,13 +56,34 @@ const HomeScreen = ({ navigation }) => {
 
   const fetchData = async () => {
     try {
+      // Fetch banners
       const bannerResponse = await homeAPI.getBanners();
-      console.log('BANNERS:', bannerResponse);
       if (bannerResponse.status && bannerResponse.data?.products) {
         setBanners(bannerResponse.data.products);
       }
+
+      // Fetch top sellers (regular + garments)
+      const [topRegular, topGarments] = await Promise.all([
+        homeAPI.getTopSellersRegular(),
+        homeAPI.getTopSellersGarments(),
+      ]);
+      
+      const regularProducts = topRegular?.data?.products || [];
+      const garmentsProducts = topGarments?.data?.products || [];
+      setTopSellers([...regularProducts, ...garmentsProducts]);
+
+      // Fetch featured products (regular + garments)
+      const [featuredRegular, featuredGarments] = await Promise.all([
+        homeAPI.getFeaturedRegular(),
+        homeAPI.getFeaturedGarments(),
+      ]);
+      
+      const featuredRegularProducts = featuredRegular?.data?.products || [];
+      const featuredGarmentsProducts = featuredGarments?.data?.products || [];
+      setFeaturedProducts([...featuredRegularProducts, ...featuredGarmentsProducts]);
+
     } catch (error) {
-      console.log('Error fetching banners:', error);
+      console.log('Error fetching data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -41,6 +94,8 @@ const HomeScreen = ({ navigation }) => {
     setRefreshing(true);
     fetchData();
   };
+
+  const renderProductItem = ({ item }) => <ProductCard product={item} />;
 
   if (loading) {
     return (
@@ -78,44 +133,48 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Top sellers of the day</Text>
-            <Text style={styles.viewAll}>View All »</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products coming soon...</Text>
-          </View>
+          {topSellers.length > 0 ? (
+            <FlatList
+              data={topSellers}
+              renderItem={renderProductItem}
+              keyExtractor={(item, index) => `top-${item.id}-${index}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productList}
+            />
+          ) : (
+            <View style={styles.productPlaceholder}>
+              <Text style={styles.placeholderText}>No products available</Text>
+            </View>
+          )}
         </View>
 
         {/* Featured Products Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Feature Products of the Day</Text>
-            <Text style={styles.viewAll}>View All »</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products coming soon...</Text>
-          </View>
-        </View>
-
-        {/* Latest Products Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Latest Products</Text>
-            <Text style={styles.viewAll}>View All »</Text>
-          </View>
-          <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products coming soon...</Text>
-          </View>
-        </View>
-
-        {/* Best Selling Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Best Selling Products</Text>
-            <Text style={styles.viewAll}>View All »</Text>
-          </View>
-          <View style={styles.productPlaceholder}>
-            <Text style={styles.placeholderText}>Products coming soon...</Text>
-          </View>
+          {featuredProducts.length > 0 ? (
+            <FlatList
+              data={featuredProducts}
+              renderItem={renderProductItem}
+              keyExtractor={(item, index) => `featured-${item.id}-${index}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productList}
+            />
+          ) : (
+            <View style={styles.productPlaceholder}>
+              <Text style={styles.placeholderText}>No products available</Text>
+            </View>
+          )}
         </View>
 
         {/* Footer spacing */}
@@ -128,13 +187,13 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
   scrollView: {
     flex: 1,
@@ -142,34 +201,79 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    overflow: 'hidden',
+    marginHorizontal: 0,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#E8E8E8',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: '#333333',
   },
   viewAll: {
     fontSize: 14,
-    color: '#3498DB',
+    color: '#2196F3',
     fontWeight: '500',
+  },
+  productList: {
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  productCard: {
+    width: 150,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 6,
+    borderRadius: 4,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  productImage: {
+    width: '100%',
+    height: 130,
+    backgroundColor: '#F8F8F8',
+  },
+  productInfo: {
+    padding: 8,
+  },
+  productName: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#333333',
+    height: 36,
+    lineHeight: 18,
+  },
+  productCode: {
+    fontSize: 11,
+    color: '#666666',
+    marginTop: 2,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 8,
+  },
+  mrp: {
+    fontSize: 12,
+    color: '#999999',
+    textDecorationLine: 'line-through',
+  },
+  price: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2196F3',
+  },
+  discount: {
+    fontSize: 11,
+    color: '#4CAF50',
+    marginTop: 2,
   },
   productPlaceholder: {
     padding: 40,
