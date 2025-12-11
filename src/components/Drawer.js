@@ -114,6 +114,16 @@ const Drawer = ({ visible, onClose, navigation }) => {
     });
   };
 
+  const handleShowAllPress = (sectionId, sectionTitle, categoryTitle) => {
+    onClose();
+    navigation.navigate('Products', {
+      sectionId,
+      sectionTitle,
+      showAll: true,
+      pageTitle: `All ${categoryTitle}`,
+    });
+  };
+
   const handleMenuPress = async (action, screen) => {
     onClose();
     
@@ -141,15 +151,28 @@ const Drawer = ({ visible, onClose, navigation }) => {
       );
     }
 
-    return subs.map((sub) => (
-      <TouchableOpacity
-        key={sub.id}
-        style={styles.subcategoryItem}
-        onPress={() => handleSubcategoryPress(sectionId, sectionTitle, categoryId, categoryTitle, sub)}
-      >
-        <Text style={styles.subcategoryLabel}>{sub.subcategorytitle || sub.title}</Text>
-      </TouchableOpacity>
-    ));
+    return (
+      <>
+        {/* Show All option */}
+        <TouchableOpacity
+          style={styles.subcategoryItem}
+          onPress={() => handleShowAllPress(sectionId, sectionTitle, categoryTitle)}
+        >
+          <Text style={styles.showAllLabel}>Show All {categoryTitle}</Text>
+        </TouchableOpacity>
+        
+        {/* Individual subcategories */}
+        {subs.map((sub) => (
+          <TouchableOpacity
+            key={sub.id}
+            style={styles.subcategoryItem}
+            onPress={() => handleSubcategoryPress(sectionId, sectionTitle, categoryId, categoryTitle, sub)}
+          >
+            <Text style={styles.subcategoryLabel}>{sub.subcategorytitle || sub.title}</Text>
+          </TouchableOpacity>
+        ))}
+      </>
+    );
   };
 
   const renderCategories = (section) => {
@@ -383,6 +406,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '400',
+  },
+  showAllLabel: {
+    fontSize: 14,
+    color: '#FFD700',
+    fontWeight: '600',
   },
   divider: {
     height: 12,

@@ -140,6 +140,13 @@ export const productAPI = {
     console.log('PRODUCTS RESPONSE:', response.data);
     return response.data;
   },
+
+  // Get all products in a section (e.g., all pickles)
+  getAllProductsBySection: async (sectionId) => {
+    const response = await api.get(`/regular-category-allproducts?section_id=${sectionId}`);
+    console.log('ALL PRODUCTS BY SECTION RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Token management

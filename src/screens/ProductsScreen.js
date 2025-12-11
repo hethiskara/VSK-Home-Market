@@ -15,19 +15,26 @@ import { productAPI } from '../services/api';
 const { width } = Dimensions.get('window');
 
 const ProductsScreen = ({ navigation, route }) => {
-  const { sectionId, sectionTitle, categoryId, categoryTitle, subcategoryId, subcategoryTitle } = route.params || {};
+  const { sectionId, sectionTitle, categoryId, categoryTitle, subcategoryId, subcategoryTitle, showAll, pageTitle } = route.params || {};
   
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProducts();
-  }, [sectionId, categoryId, subcategoryId]);
+  }, [sectionId, categoryId, subcategoryId, showAll]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await productAPI.getProducts(sectionId, categoryId, subcategoryId);
+      let response;
+      if (showAll) {
+        // Fetch all products for the section
+        response = await productAPI.getAllProductsBySection(sectionId);
+      } else {
+        // Fetch products for specific subcategory
+        response = await productAPI.getProducts(sectionId, categoryId, subcategoryId);
+      }
       console.log('Products fetched:', response);
       setProducts(Array.isArray(response) ? response : []);
     } catch (error) {
@@ -43,8 +50,9 @@ const ProductsScreen = ({ navigation, route }) => {
         <Text style={styles.breadcrumbText}>
           <Text style={styles.breadcrumbLink}>Home</Text>
           {sectionTitle && <Text> » <Text style={styles.breadcrumbLink}>{sectionTitle}</Text></Text>}
-          {categoryTitle && <Text> » <Text style={styles.breadcrumbLink}>{categoryTitle}</Text></Text>}
-          {subcategoryTitle && <Text> » {subcategoryTitle}</Text>}
+          {showAll && pageTitle && <Text> » {pageTitle}</Text>}
+          {!showAll && categoryTitle && <Text> » <Text style={styles.breadcrumbLink}>{categoryTitle}</Text></Text>}
+          {!showAll && subcategoryTitle && <Text> » {subcategoryTitle}</Text>}
         </Text>
       </View>
     );
@@ -97,7 +105,7 @@ const ProductsScreen = ({ navigation, route }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{subcategoryTitle || categoryTitle || sectionTitle}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{pageTitle || subcategoryTitle || categoryTitle || sectionTitle}</Text>
         <View style={styles.placeholder} />
       </View>
 
