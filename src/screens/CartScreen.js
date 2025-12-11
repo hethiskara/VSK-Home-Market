@@ -204,13 +204,9 @@ const CartScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* Table Header */}
+          {/* Order Details Header */}
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderText, { flex: 2 }]}>Product</Text>
-            <Text style={[styles.tableHeaderText, { flex: 1 }]}>Price</Text>
-            <Text style={[styles.tableHeaderText, { flex: 1 }]}>Qty</Text>
-            <Text style={[styles.tableHeaderText, { flex: 1 }]}>Total</Text>
-            <Text style={[styles.tableHeaderText, { width: 40 }]}></Text>
+            <Text style={styles.orderDetailsTitle}>Order Details</Text>
           </View>
 
           {/* Cart Items */}
@@ -337,19 +333,17 @@ const styles = StyleSheet.create({
     color: '#3498DB',
   },
   tableHeader: {
-    flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: '#F8F8F8',
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: '#E0E0E0',
   },
-  tableHeaderText: {
-    fontSize: 12,
+  orderDetailsTitle: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#666',
-    textAlign: 'center',
+    color: '#333',
   },
   cartList: {
     flex: 1,

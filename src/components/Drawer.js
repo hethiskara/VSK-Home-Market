@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { tokenManager, productAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
@@ -223,13 +222,13 @@ const Drawer = ({ visible, onClose, navigation }) => {
           onPress={onClose}
         />
         <Animated.View style={[styles.drawer, { transform: [{ translateX: slideAnim }] }]}>
-          <SafeAreaView style={styles.container} edges={['top']}>
+          <View style={styles.container}>
             {/* Close Button */}
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeIcon}>×</Text>
             </TouchableOpacity>
 
-            {/* Header Spacer */}
+            {/* Header Spacer - Fixed height for consistency */}
             <View style={styles.headerSpacer} />
 
             {/* Menu Items */}
@@ -309,7 +308,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
 
               <View style={{ height: 40 }} />
             </ScrollView>
-          </SafeAreaView>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -339,7 +338,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 50,
+    top: 55,
     right: 16,
     zIndex: 10,
     width: 36,
@@ -353,11 +352,11 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   headerSpacer: {
-    height: 20,
+    height: 60,
   },
   menuContainer: {
     flex: 1,
-    paddingTop: 8,
+    paddingTop: 0,
   },
   menuItem: {
     flexDirection: 'row',
