@@ -291,11 +291,6 @@ const Drawer = ({ visible, onClose, navigation }) => {
                 <Text style={styles.menuLabel}>Contact Us</Text>
               </TouchableOpacity>
 
-              {/* Resources */}
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuPress(null, 'Resources')}>
-                <Text style={styles.menuLabel}>Resources</Text>
-              </TouchableOpacity>
-
               {/* View all Offers */}
               <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuPress(null, 'Offers')}>
                 <Text style={styles.menuLabel}>View all Offers</Text>
