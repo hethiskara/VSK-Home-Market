@@ -59,13 +59,8 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
 
           {/* Right Icons */}
           <View style={styles.rightIcons}>
-            <TouchableOpacity style={styles.iconButton} onPress={handleCartPress}>
-              <View style={styles.cartIcon}>
-                <View style={styles.cartBody} />
-                <View style={styles.cartHandle} />
-                <View style={styles.cartWheel1} />
-                <View style={styles.cartWheel2} />
-              </View>
+            <TouchableOpacity style={styles.cartButton} onPress={handleCartPress}>
+              <Text style={styles.cartIconText}>🛒</Text>
               {cartCount > 0 && (
                 <View style={styles.cartBadge}>
                   <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
@@ -145,54 +140,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  cartIcon: {
-    width: 26,
-    height: 22,
+  cartButton: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
     position: 'relative',
   },
-  cartBody: {
-    position: 'absolute',
-    bottom: 4,
-    left: 2,
-    width: 20,
-    height: 14,
-    backgroundColor: '#2C3E50',
-    borderRadius: 2,
-  },
-  cartHandle: {
-    position: 'absolute',
-    top: 0,
-    right: 2,
-    width: 10,
-    height: 8,
-    borderWidth: 2,
-    borderColor: '#2C3E50',
-    borderRadius: 4,
-    borderBottomWidth: 0,
-  },
-  cartWheel1: {
-    position: 'absolute',
-    bottom: 0,
-    left: 5,
-    width: 5,
-    height: 5,
-    backgroundColor: '#2C3E50',
-    borderRadius: 3,
-  },
-  cartWheel2: {
-    position: 'absolute',
-    bottom: 0,
-    right: 5,
-    width: 5,
-    height: 5,
-    backgroundColor: '#2C3E50',
-    borderRadius: 3,
+  cartIconText: {
+    fontSize: 24,
   },
   cartBadge: {
     position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#3498DB',
+    top: 0,
+    right: -2,
+    backgroundColor: '#E74C3C',
     borderRadius: 10,
     minWidth: 18,
     height: 18,
