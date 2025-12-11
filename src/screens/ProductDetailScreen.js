@@ -10,9 +10,13 @@ import {
   Dimensions,
   Share,
   Linking,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { productAPI } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { productAPI, cartAPI, tokenManager } from '../services/api';
+
+const CART_STORAGE_KEY = '@vsk_cart';
 
 const { width } = Dimensions.get('window');
 
@@ -68,6 +72,69 @@ const ProductDetailScreen = ({ navigation, route }) => {
     Linking.openURL(url).catch(() => {
       console.log('WhatsApp not installed');
     });
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      // Get user data
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Login Required', 'Please login to add items to cart');
+        navigation.navigate('Login');
+        return;
+      }
+
+      // Call add to cart API
+      const response = await cartAPI.addToCart(
+        product.bcode,
+        userData.userid,
+        product.id,
+        quantity,
+        'pathanjali'
+      );
+
+      if (response.status === true) {
+        // Save to local storage for cart display
+        const cartItem = {
+          cart_id: response.cart_id,
+          productcode: product.productcode,
+          productname: product.productname,
+          productimage: product.productimage1,
+          productprice: product.productprice,
+          mrp: product.mrp,
+          quantity: quantity,
+          cgst: product.cgst,
+          sgst: product.sgst,
+          bcode: product.bcode,
+          prod_id: product.id,
+        };
+
+        // Get existing cart
+        const existingCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
+        let cartItems = existingCart ? JSON.parse(existingCart) : [];
+        
+        // Check if item already exists
+        const existingIndex = cartItems.findIndex(item => item.bcode === product.bcode);
+        if (existingIndex >= 0) {
+          cartItems[existingIndex].quantity += quantity;
+          cartItems[existingIndex].cart_id = response.cart_id;
+        } else {
+          cartItems.push(cartItem);
+        }
+
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+        
+        Alert.alert('Success', response.message || 'Product added to cart', [
+          { text: 'Continue Shopping', style: 'cancel' },
+          { text: 'View Cart', onPress: () => navigation.navigate('Cart') }
+        ]);
+      } else {
+        Alert.alert('Error', response.message || 'Failed to add to cart');
+      }
+    } catch (error) {
+      console.log('Add to cart error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
   };
 
   const images = getProductImages();
@@ -265,10 +332,10 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.addToCartButton}>
+            <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.buyNowButton}>
+            <TouchableOpacity style={styles.buyNowButton} onPress={handleAddToCart}>
               <Text style={styles.buyNowText}>Buy Now</Text>
             </TouchableOpacity>
           </View>

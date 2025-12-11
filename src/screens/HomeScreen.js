@@ -112,7 +112,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header onMenuPress={() => setDrawerVisible(true)} />
+      <Header onMenuPress={() => setDrawerVisible(true)} navigation={navigation} />
       
       <Drawer 
         visible={drawerVisible} 

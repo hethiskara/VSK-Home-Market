@@ -1,8 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, TextInput, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Header = ({ onMenuPress, showSearch = true }) => {
+const CART_STORAGE_KEY = '@vsk_cart';
+
+const Header = ({ onMenuPress, navigation, showSearch = true }) => {
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    loadCartCount();
+    // Set up interval to check cart count periodically
+    const interval = setInterval(loadCartCount, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadCartCount = async () => {
+    try {
+      const cartData = await AsyncStorage.getItem(CART_STORAGE_KEY);
+      if (cartData) {
+        const items = JSON.parse(cartData);
+        const count = items.reduce((total, item) => total + (item.quantity || 1), 0);
+        setCartCount(count);
+      } else {
+        setCartCount(0);
+      }
+    } catch (error) {
+      console.log('Error loading cart count:', error);
+    }
+  };
+
+  const handleCartPress = () => {
+    if (navigation) {
+      navigation.navigate('Cart');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -26,13 +59,18 @@ const Header = ({ onMenuPress, showSearch = true }) => {
 
           {/* Right Icons */}
           <View style={styles.rightIcons}>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity style={styles.iconButton} onPress={handleCartPress}>
               <View style={styles.cartIcon}>
                 <View style={styles.cartBody} />
                 <View style={styles.cartHandle} />
                 <View style={styles.cartWheel1} />
                 <View style={styles.cartWheel2} />
               </View>
+              {cartCount > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconButton}>
               <View style={styles.profileIcon}>
@@ -105,6 +143,7 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
   cartIcon: {
     width: 26,
@@ -148,6 +187,23 @@ const styles = StyleSheet.create({
     height: 5,
     backgroundColor: '#2C3E50',
     borderRadius: 3,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#3498DB',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
   },
   profileIcon: {
     width: 24,

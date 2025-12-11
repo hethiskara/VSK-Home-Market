@@ -156,6 +156,22 @@ export const productAPI = {
   },
 };
 
+// Cart APIs
+export const cartAPI = {
+  // Add item to cart
+  // bcode = barcode (e.g., W2SA31-53-26)
+  // user_id = logged in user's ID
+  // prod_id = product ID
+  // quantity = quantity to add
+  // carttype = product type (e.g., pathanjali, regular)
+  addToCart: async (bcode, userId, prodId, quantity, carttype = 'pathanjali') => {
+    const params = `?bcode=${encodeURIComponent(bcode)}&user_id=${userId}&prod_id=${prodId}&quantity=${quantity}&carttype=${encodeURIComponent(carttype)}`;
+    const response = await api.get('/my-save-cart-json' + params);
+    console.log('ADD TO CART RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Token management
 export const tokenManager = {
   setToken: async (token) => {
