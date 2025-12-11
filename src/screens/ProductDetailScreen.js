@@ -8,6 +8,8 @@ import {
   Image,
   ScrollView,
   Dimensions,
+  Share,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { productAPI } from '../services/api';
@@ -50,7 +52,28 @@ const ProductDetailScreen = ({ navigation, route }) => {
     return images;
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out ${product?.productname || 'this product'} at VSK Home Market!\nPrice: Rs. ${product?.productprice || 'NA'}\nhttps://www.vskhomemarket.com`,
+      });
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
+
+  const handleWhatsApp = () => {
+    const message = `Hi, I'm interested in ${product?.productname || 'this product'} (Code: ${product?.productcode || 'NA'}) priced at Rs. ${product?.productprice || 'NA'}`;
+    const url = `whatsapp://send?phone=919840336999&text=${encodeURIComponent(message)}`;
+    Linking.openURL(url).catch(() => {
+      console.log('WhatsApp not installed');
+    });
+  };
+
   const images = getProductImages();
+
+  // Helper function to get value or NA
+  const getValue = (value) => value || 'NA';
 
   if (loading) {
     return (
@@ -122,41 +145,103 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
         {/* Product Info */}
         <View style={styles.infoContainer}>
-          <Text style={styles.productName}>{product.productname}</Text>
+          {/* Product Name */}
+          <Text style={styles.productName}>{getValue(product.productname)}</Text>
           
-          <Text style={styles.productCode}>Product Code: {product.productcode}</Text>
+          {/* Product Code */}
+          <Text style={styles.productCode}>Product Code : {getValue(product.productcode)}</Text>
+
+          {/* Ratings Section */}
+          <View style={styles.ratingsRow}>
+            <View style={styles.ratingBadge}>
+              <Text style={styles.ratingText}>nan</Text>
+              <Text style={styles.ratingStar}>★</Text>
+            </View>
+            <Text style={styles.ratingsLabel}>Ratings & 0 Reviews</Text>
+          </View>
+
+          {/* Feedback Row */}
+          <View style={styles.feedbackRow}>
+            <Text style={styles.feedbackItem}>👍 0</Text>
+            <Text style={styles.feedbackItem}>👎 0</Text>
+            <Text style={styles.feedbackItem}>💬 0</Text>
+          </View>
+
+          {/* Compare & Wishlist */}
+          <View style={styles.actionsRow}>
+            <TouchableOpacity style={styles.actionItem}>
+              <Text style={styles.actionIcon}>◉</Text>
+              <Text style={styles.actionLabel}>Add to Compare</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionItem}>
+              <Text style={styles.actionIconHeart}>❤</Text>
+              <Text style={styles.actionLabel}>Add to Wishlist</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Price Section */}
           <View style={styles.priceSection}>
-            <Text style={styles.price}>Rs. {product.productprice}</Text>
-            {product.mrp && product.mrp !== product.productprice && (
-              <Text style={styles.mrp}>Rs. {product.mrp}</Text>
-            )}
-            {product.percentage && (
-              <View style={styles.discountBadge}>
-                <Text style={styles.discountText}>{product.percentage}</Text>
-              </View>
-            )}
+            <Text style={styles.price}>₹ {getValue(product.productprice)}</Text>
+          </View>
+
+          <View style={styles.mrpRow}>
+            <Text style={styles.mrp}>₹{getValue(product.mrp)}</Text>
+            <Text style={styles.discount}>{getValue(product.percentage)}</Text>
+          </View>
+
+          {/* Details List */}
+          <View style={styles.detailsList}>
+            {/* Discount Details */}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Discount Details :</Text>
+              <Text style={styles.detailValue}>{getValue(product.discountdetails) || 'Top sellers of the day - 7%'}</Text>
+            </View>
+
+            {/* Tax Details */}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Tax Details :</Text>
+              <Text style={styles.detailValue}>{getValue(product.taxdetails)}</Text>
+            </View>
+
+            {/* CGST */}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>CGST :</Text>
+              <Text style={styles.detailValue}>{getValue(product.cgst)}</Text>
+            </View>
+
+            {/* SGST */}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>SGST :</Text>
+              <Text style={styles.detailValue}>{getValue(product.sgst)}</Text>
+            </View>
           </View>
 
           {/* Stock Status */}
-          <View style={styles.stockRow}>
-            <Text style={styles.stockLabel}>Availability:</Text>
-            <Text style={[
-              styles.stockValue,
-              parseInt(product.stockinhand) > 0 ? styles.inStock : styles.outOfStock
-            ]}>
-              {parseInt(product.stockinhand) > 0 ? 'In Stock' : 'Out of Stock'}
-            </Text>
+          <Text style={styles.stockStatus}>
+            {product.stockinhand ? `${product.stockinhand} in Stock` : 'NA'}
+          </Text>
+
+          {/* Tags Section */}
+          <View style={styles.tagsSection}>
+            <Text style={styles.tagsLabel}>Tags :</Text>
+            <View style={styles.tagsContainer}>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>Andhra Homemade pickle</Text>
+              </View>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>VSK Home Market</Text>
+              </View>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{product.productname?.split(' ')[0] || 'Pickle'}</Text>
+              </View>
+            </View>
           </View>
 
-          {/* Tax Details */}
-          {product.taxdetails && (
-            <View style={styles.taxRow}>
-              <Text style={styles.taxLabel}>{product.taxdetails}:</Text>
-              <Text style={styles.taxValue}>CGST {product.cgst} + SGST {product.sgst}</Text>
-            </View>
-          )}
+          {/* Share Button */}
+          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+            <Text style={styles.shareIcon}>↗</Text>
+            <Text style={styles.shareText}>Share</Text>
+          </TouchableOpacity>
 
           {/* Quantity Selector */}
           <View style={styles.quantitySection}>
@@ -189,24 +274,25 @@ const ProductDetailScreen = ({ navigation, route }) => {
           </View>
 
           {/* Overview */}
-          {product.overview && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Overview</Text>
-              <Text style={styles.sectionContent}>{product.overview}</Text>
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Overview</Text>
+            <Text style={styles.sectionContent}>{getValue(product.overview)}</Text>
+          </View>
 
           {/* Specifications */}
-          {product.specifications && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Specifications</Text>
-              <Text style={styles.sectionContent}>{product.specifications}</Text>
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Specifications</Text>
+            <Text style={styles.sectionContent}>{getValue(product.specifications)}</Text>
+          </View>
 
-          <View style={{ height: 40 }} />
+          <View style={{ height: 80 }} />
         </View>
       </ScrollView>
+
+      {/* WhatsApp Floating Button */}
+      <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp}>
+        <Text style={styles.whatsappIcon}>📱</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -268,7 +354,6 @@ const styles = StyleSheet.create({
   thumbnailContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 10,
   },
   thumbnail: {
     width: 60,
@@ -290,77 +375,165 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   productName: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#2C3E50',
-    marginBottom: 8,
-    lineHeight: 26,
+    marginBottom: 4,
+    lineHeight: 28,
   },
   productCode: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  priceSection: {
+  ratingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginBottom: 8,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0AD4E',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 10,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  ratingStar: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    marginLeft: 2,
+  },
+  ratingsLabel: {
+    fontSize: 14,
+    color: '#3498DB',
+    fontWeight: '500',
+  },
+  feedbackRow: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 12,
+  },
+  feedbackItem: {
+    fontSize: 14,
+    color: '#666',
+  },
+  actionsRow: {
+    flexDirection: 'row',
     marginBottom: 16,
+    gap: 20,
+  },
+  actionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIcon: {
+    fontSize: 14,
+    color: '#3498DB',
+    marginRight: 6,
+  },
+  actionIconHeart: {
+    fontSize: 14,
+    color: '#E74C3C',
+    marginRight: 6,
+  },
+  actionLabel: {
+    fontSize: 14,
+    color: '#333',
+  },
+  priceSection: {
+    marginBottom: 4,
   },
   price: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#C0392B',
+    color: '#FF6B35',
+  },
+  mrpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
   },
   mrp: {
     fontSize: 16,
     color: '#999',
     textDecorationLine: 'line-through',
   },
-  discountBadge: {
-    backgroundColor: '#27AE60',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+  discount: {
+    fontSize: 14,
+    color: '#666',
   },
-  discountText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '600',
+  detailsList: {
+    marginBottom: 12,
   },
-  stockRow: {
+  detailRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 8,
   },
-  stockLabel: {
+  detailLabel: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+    width: 130,
+  },
+  detailValue: {
     fontSize: 14,
     color: '#666',
-    marginRight: 8,
+    flex: 1,
   },
-  stockValue: {
-    fontSize: 14,
+  stockStatus: {
+    fontSize: 18,
     fontWeight: '600',
-  },
-  inStock: {
-    color: '#27AE60',
-  },
-  outOfStock: {
-    color: '#E74C3C',
-  },
-  taxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    color: '#FF6B35',
     marginBottom: 16,
   },
-  taxLabel: {
-    fontSize: 13,
-    color: '#666',
-    marginRight: 8,
+  tagsSection: {
+    marginBottom: 16,
   },
-  taxValue: {
+  tagsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tag: {
+    borderWidth: 1,
+    borderColor: '#DDD',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 4,
+    backgroundColor: '#FAFAFA',
+  },
+  tagText: {
     fontSize: 13,
-    color: '#666',
+    color: '#333',
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  shareIcon: {
+    fontSize: 16,
+    color: '#3498DB',
+    marginRight: 6,
+  },
+  shareText: {
+    fontSize: 14,
+    color: '#3498DB',
+    textDecorationLine: 'underline',
   },
   quantitySection: {
     flexDirection: 'row',
@@ -454,7 +627,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
   },
+  whatsappButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#25D366',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  whatsappIcon: {
+    fontSize: 28,
+  },
 });
 
 export default ProductDetailScreen;
-
