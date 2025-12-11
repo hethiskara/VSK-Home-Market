@@ -59,7 +59,11 @@ const ProductsScreen = ({ navigation, route }) => {
   };
 
   const renderProductItem = ({ item }) => (
-    <View style={styles.productCard}>
+    <TouchableOpacity 
+      style={styles.productCard}
+      onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
+      activeOpacity={0.7}
+    >
       <Image 
         source={{ uri: item.productimage }} 
         style={styles.productImage} 
@@ -78,16 +82,16 @@ const ProductsScreen = ({ navigation, route }) => {
         <Text style={styles.productCode}>Product Code : {item.productcode}</Text>
         
         <View style={styles.priceRow}>
-          <Text style={styles.price}>₹ {item.productprice}</Text>
+          <Text style={styles.price}>Rs. {item.productprice}</Text>
           {item.mrp && item.mrp !== item.productprice && (
-            <Text style={styles.oldPrice}>₹ {item.mrp}</Text>
+            <Text style={styles.oldPrice}>Rs. {item.mrp}</Text>
           )}
           {item.percentage && (
             <Text style={styles.discount}>{item.percentage}</Text>
           )}
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {

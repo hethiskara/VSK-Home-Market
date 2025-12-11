@@ -15,11 +15,11 @@ import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
 import { homeAPI } from '../services/api';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onPress }) => {
   const discountPercent = product.percentage?.replace(/[()]/g, '') || '';
   
   return (
-    <TouchableOpacity style={styles.productCard}>
+    <TouchableOpacity style={styles.productCard} onPress={onPress} activeOpacity={0.7}>
       <Image
         source={{ uri: product.productimage }}
         style={styles.productImage}
@@ -95,7 +95,12 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   };
 
-  const renderProductItem = ({ item }) => <ProductCard product={item} />;
+  const renderProductItem = ({ item }) => (
+    <ProductCard 
+      product={item} 
+      onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
+    />
+  );
 
   if (loading) {
     return (

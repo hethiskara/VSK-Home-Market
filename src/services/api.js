@@ -147,6 +147,13 @@ export const productAPI = {
     console.log('ALL PRODUCTS BY SECTION RESPONSE:', response.data);
     return response.data;
   },
+
+  // Get product details by product code
+  getProductDetails: async (productCode) => {
+    const response = await api.get(`/regular-product-details?product_code=${productCode}`);
+    console.log('PRODUCT DETAILS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Token management
