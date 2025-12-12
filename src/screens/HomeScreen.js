@@ -45,6 +45,25 @@ const ProductCard = ({ product, onPress }) => {
   );
 };
 
+const LatestProductCard = ({ product, onPress }) => {
+  return (
+    <TouchableOpacity style={styles.latestProductCard} onPress={onPress} activeOpacity={0.7}>
+      <Image
+        source={{ uri: product.productimage }}
+        style={styles.latestProductImage}
+        resizeMode="cover"
+      />
+      <Text style={styles.latestProductName} numberOfLines={1}>
+        {product.productname}
+      </Text>
+      <Text style={styles.latestProductCode}>Code : {product.productcode}</Text>
+      <View style={styles.moreButton}>
+        <Text style={styles.moreButtonText}>More</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 const HomeScreen = ({ navigation }) => {
   const [banners, setBanners] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
@@ -157,10 +176,23 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   };
 
-  const handleProductPress = (productCode) => {
-    console.log('Navigating to ProductDetail with code:', productCode);
-    navigation.navigate('ProductDetail', { productCode });
+  const navigateToProduct = (productCode) => {
+    navigation.navigate('ProductDetail', { productCode: productCode });
   };
+
+  const renderProductItem = ({ item }) => (
+    <ProductCard 
+      product={item} 
+      onPress={() => navigateToProduct(item.productcode)}
+    />
+  );
+
+  const renderLatestItem = ({ item }) => (
+    <LatestProductCard 
+      product={item} 
+      onPress={() => navigateToProduct(item.productcode)}
+    />
+  );
 
   if (loading) {
     return (
@@ -203,20 +235,14 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           {topSellers.length > 0 ? (
-            <ScrollView 
-              horizontal 
+            <FlatList
+              data={topSellers}
+              renderItem={renderProductItem}
+              keyExtractor={(item, index) => `top-${item.id}-${index}`}
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
-              nestedScrollEnabled={true}
-            >
-              {topSellers.map((item, index) => (
-                <ProductCard 
-                  key={`top-${item.id}-${index}`}
-                  product={item} 
-                  onPress={() => handleProductPress(item.productcode)}
-                />
-              ))}
-            </ScrollView>
+            />
           ) : (
             <View style={styles.productPlaceholder}>
               <Text style={styles.placeholderText}>No products available</Text>
@@ -233,20 +259,14 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           {featuredProducts.length > 0 ? (
-            <ScrollView 
-              horizontal 
+            <FlatList
+              data={featuredProducts}
+              renderItem={renderProductItem}
+              keyExtractor={(item, index) => `featured-${item.id}-${index}`}
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
-              nestedScrollEnabled={true}
-            >
-              {featuredProducts.map((item, index) => (
-                <ProductCard 
-                  key={`featured-${item.id}-${index}`}
-                  product={item} 
-                  onPress={() => handleProductPress(item.productcode)}
-                />
-              ))}
-            </ScrollView>
+            />
           ) : (
             <View style={styles.productPlaceholder}>
               <Text style={styles.placeholderText}>No products available</Text>
@@ -263,20 +283,14 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           {bestSelling.length > 0 ? (
-            <ScrollView 
-              horizontal 
+            <FlatList
+              data={bestSelling}
+              renderItem={renderProductItem}
+              keyExtractor={(item, index) => `best-${item.id}-${index}`}
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
-              nestedScrollEnabled={true}
-            >
-              {bestSelling.map((item, index) => (
-                <ProductCard 
-                  key={`best-${item.id}-${index}`}
-                  product={item} 
-                  onPress={() => handleProductPress(item.productcode)}
-                />
-              ))}
-            </ScrollView>
+            />
           ) : (
             <View style={styles.productPlaceholder}>
               <Text style={styles.placeholderText}>No products available</Text>
@@ -296,26 +310,7 @@ const HomeScreen = ({ navigation }) => {
             <FlatList
               ref={latestScrollRef}
               data={latestProducts}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity 
-                  style={styles.latestProductCard} 
-                  onPress={() => handleProductPress(item.productcode)}
-                  activeOpacity={0.7}
-                >
-                  <Image
-                    source={{ uri: item.productimage }}
-                    style={styles.latestProductImage}
-                    resizeMode="cover"
-                  />
-                  <Text style={styles.latestProductName} numberOfLines={1}>
-                    {item.productname}
-                  </Text>
-                  <Text style={styles.latestProductCode}>Code : {item.productcode}</Text>
-                  <TouchableOpacity style={styles.moreButton}>
-                    <Text style={styles.moreButtonText}>More</Text>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              )}
+              renderItem={renderLatestItem}
               keyExtractor={(item, index) => `latest-${item.id}-${index}`}
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -377,6 +372,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333333',
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  latestIcon: {
+    fontSize: 18,
+    marginRight: 8,
   },
   viewAll: {
     fontSize: 14,
@@ -448,14 +451,6 @@ const styles = StyleSheet.create({
   },
   footerSpace: {
     height: 40,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  latestIcon: {
-    fontSize: 18,
-    marginRight: 8,
   },
   latestProductCard: {
     width: 150,
