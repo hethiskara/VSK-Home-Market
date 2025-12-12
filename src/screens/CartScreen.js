@@ -662,7 +662,6 @@ const CartScreen = ({ navigation }) => {
               style={styles.razorpayLogoImage}
               resizeMode="contain"
             />
-            <Text style={styles.razorpayMethods}>CREDIT CARD | DEBIT CARD | NETBANKING</Text>
           </View>
           
           <TouchableOpacity 
@@ -1386,9 +1385,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   razorpayLogoImage: {
-    width: 150,
-    height: 40,
-    marginBottom: 8,
+    width: 200,
+    height: 70,
   },
   razorpayMethods: {
     fontSize: 11,

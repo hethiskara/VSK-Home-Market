@@ -269,18 +269,20 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     flexWrap: 'wrap',
   },
   price: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#C0392B',
+    marginRight: 8,
   },
   oldPrice: {
     fontSize: 14,
     color: '#999',
     textDecorationLine: 'line-through',
+    paddingRight: 4,
+    marginRight: 8,
   },
   discount: {
     fontSize: 12,

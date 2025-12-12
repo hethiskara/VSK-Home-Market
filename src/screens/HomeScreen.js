@@ -362,12 +362,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
-    gap: 8,
+    flexWrap: 'wrap',
   },
   mrp: {
     fontSize: 12,
     color: '#999999',
     textDecorationLine: 'line-through',
+    marginRight: 8,
   },
   price: {
     fontSize: 14,
