@@ -9,7 +9,6 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
-  Animated,
   Dimensions,
 } from 'react-native';
 import Header from '../components/Header';
@@ -158,12 +157,10 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   };
 
-  const renderProductItem = ({ item }) => (
-    <ProductCard 
-      product={item} 
-      onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
-    />
-  );
+  const handleProductPress = (productCode) => {
+    console.log('Navigating to ProductDetail with code:', productCode);
+    navigation.navigate('ProductDetail', { productCode });
+  };
 
   if (loading) {
     return (
@@ -206,14 +203,20 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           {topSellers.length > 0 ? (
-            <FlatList
-              data={topSellers}
-              renderItem={renderProductItem}
-              keyExtractor={(item, index) => `top-${item.id}-${index}`}
-              horizontal
+            <ScrollView 
+              horizontal 
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
-            />
+              nestedScrollEnabled={true}
+            >
+              {topSellers.map((item, index) => (
+                <ProductCard 
+                  key={`top-${item.id}-${index}`}
+                  product={item} 
+                  onPress={() => handleProductPress(item.productcode)}
+                />
+              ))}
+            </ScrollView>
           ) : (
             <View style={styles.productPlaceholder}>
               <Text style={styles.placeholderText}>No products available</Text>
@@ -230,14 +233,20 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           {featuredProducts.length > 0 ? (
-            <FlatList
-              data={featuredProducts}
-              renderItem={renderProductItem}
-              keyExtractor={(item, index) => `featured-${item.id}-${index}`}
-              horizontal
+            <ScrollView 
+              horizontal 
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
-            />
+              nestedScrollEnabled={true}
+            >
+              {featuredProducts.map((item, index) => (
+                <ProductCard 
+                  key={`featured-${item.id}-${index}`}
+                  product={item} 
+                  onPress={() => handleProductPress(item.productcode)}
+                />
+              ))}
+            </ScrollView>
           ) : (
             <View style={styles.productPlaceholder}>
               <Text style={styles.placeholderText}>No products available</Text>
@@ -254,14 +263,20 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           {bestSelling.length > 0 ? (
-            <FlatList
-              data={bestSelling}
-              renderItem={renderProductItem}
-              keyExtractor={(item, index) => `best-${item.id}-${index}`}
-              horizontal
+            <ScrollView 
+              horizontal 
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
-            />
+              nestedScrollEnabled={true}
+            >
+              {bestSelling.map((item, index) => (
+                <ProductCard 
+                  key={`best-${item.id}-${index}`}
+                  product={item} 
+                  onPress={() => handleProductPress(item.productcode)}
+                />
+              ))}
+            </ScrollView>
           ) : (
             <View style={styles.productPlaceholder}>
               <Text style={styles.placeholderText}>No products available</Text>
@@ -284,7 +299,7 @@ const HomeScreen = ({ navigation }) => {
               renderItem={({ item, index }) => (
                 <TouchableOpacity 
                   style={styles.latestProductCard} 
-                  onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
+                  onPress={() => handleProductPress(item.productcode)}
                   activeOpacity={0.7}
                 >
                   <Image
