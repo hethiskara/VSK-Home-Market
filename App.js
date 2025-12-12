@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -23,12 +24,28 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2500);
+    checkLoginStatus();
   }, []);
+
+  const checkLoginStatus = async () => {
+    try {
+      // Check if user data exists in AsyncStorage
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        setIsLoggedIn(true);
+      }
+    } catch (error) {
+      console.log('Error checking login status:', error);
+    } finally {
+      // Show splash screen for at least 2 seconds
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -44,6 +61,7 @@ export default function App() {
       <StatusBar style="dark" />
       <NavigationContainer>
         <Stack.Navigator
+          initialRouteName={isLoggedIn ? 'Home' : 'Login'}
           screenOptions={{
             headerShown: false,
             animation: 'slide_from_right',
