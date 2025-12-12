@@ -177,15 +177,61 @@ export const productAPI = {
 // Cart APIs
 export const cartAPI = {
   // Add item to cart
-  // bcode = barcode (e.g., W2SA31-53-26)
-  // user_id = logged in user's ID
-  // prod_id = product ID
-  // quantity = quantity to add
-  // carttype = product type (e.g., pathanjali, regular)
   addToCart: async (bcode, userId, prodId, quantity, carttype = 'pathanjali') => {
     const params = `?bcode=${encodeURIComponent(bcode)}&user_id=${userId}&prod_id=${prodId}&quantity=${quantity}&carttype=${encodeURIComponent(carttype)}`;
     const response = await api.get('/my-save-cart-json' + params);
     console.log('ADD TO CART RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
+// Checkout APIs
+export const checkoutAPI = {
+  // Get user billing address
+  getUserData: async (userId) => {
+    const response = await api.get(`/user-json?user_id=${userId}`);
+    console.log('USER DATA RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Step 1: Save delivery address
+  saveDeliveryAddress: async (data) => {
+    const params = new URLSearchParams({
+      user_id: data.user_id,
+      guest_id: data.guest_id,
+      firstname: data.firstname,
+      lastname: data.lastname,
+      address: data.address,
+      postalcode: data.postalcode,
+      city: data.city,
+      state: data.state,
+      country: data.country,
+      mobile_no: data.mobile_no,
+    }).toString();
+    const response = await api.get(`/my-cart-step-one?${params}`);
+    console.log('STEP ONE RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Step 2: Get cart summary with calculated totals
+  getCartSummary: async (guestId) => {
+    const response = await api.get(`/my-cart-step-two?guest_id=${guestId}`);
+    console.log('STEP TWO RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Step 3: Razorpay payment initiation
+  initiatePayment: async (data) => {
+    const params = new URLSearchParams({
+      billing_name: data.billing_name,
+      billing_mobile: data.billing_mobile,
+      billing_sc: data.billing_sc || '1',
+      billing_ss: data.billing_ss || '0',
+      orginalorderid: data.order_id,
+      payAmount: data.amount,
+    }).toString();
+    const response = await api.get(`/my-cart-step-three?${params}`);
+    console.log('STEP THREE RESPONSE:', response.data);
     return response.data;
   },
 };
