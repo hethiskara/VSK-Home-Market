@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,15 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import Header from '../components/Header';
 import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
 import { homeAPI } from '../services/api';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const ProductCard = ({ product, onPress }) => {
   const discountPercent = product.percentage?.replace(/[()]/g, '') || '';
@@ -46,13 +50,56 @@ const HomeScreen = ({ navigation }) => {
   const [banners, setBanners] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [bestSelling, setBestSelling] = useState([]);
+  const [latestProducts, setLatestProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  
+  // Auto-scroll for latest products
+  const latestScrollRef = useRef(null);
+  const scrollXRef = useRef(0);
+  const scrollIntervalRef = useRef(null);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-scroll effect for latest products
+  useEffect(() => {
+    if (latestProducts.length > 0) {
+      startAutoScroll();
+    }
+    return () => {
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+      }
+    };
+  }, [latestProducts]);
+
+  const startAutoScroll = () => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+    }
+    
+    const itemWidth = 162; // card width + margin
+    const totalWidth = latestProducts.length * itemWidth;
+    
+    scrollIntervalRef.current = setInterval(() => {
+      scrollXRef.current += 1;
+      
+      if (scrollXRef.current >= totalWidth - SCREEN_WIDTH + 20) {
+        scrollXRef.current = 0;
+      }
+      
+      if (latestScrollRef.current) {
+        latestScrollRef.current.scrollToOffset({
+          offset: scrollXRef.current,
+          animated: false,
+        });
+      }
+    }, 30);
+  };
 
   const fetchData = async () => {
     try {
@@ -81,6 +128,22 @@ const HomeScreen = ({ navigation }) => {
       const featuredRegularProducts = Array.isArray(featuredRegular) ? featuredRegular : [];
       const featuredGarmentsProducts = Array.isArray(featuredGarments) ? featuredGarments : [];
       setFeaturedProducts([...featuredRegularProducts, ...featuredGarmentsProducts]);
+
+      // Fetch best selling products (regular + garments)
+      const [bestRegular, bestGarments] = await Promise.all([
+        homeAPI.getBestSellingRegular(),
+        homeAPI.getBestSellingGarments(),
+      ]);
+      
+      const bestRegularProducts = Array.isArray(bestRegular) ? bestRegular : [];
+      const bestGarmentsProducts = Array.isArray(bestGarments) ? bestGarments : [];
+      setBestSelling([...bestRegularProducts, ...bestGarmentsProducts]);
+
+      // Fetch latest products (regular only - will loop/auto-scroll)
+      const latestRegular = await homeAPI.getLatestProductsRegular();
+      const latestRegularProducts = Array.isArray(latestRegular) ? latestRegular : [];
+      // Duplicate for seamless loop
+      setLatestProducts([...latestRegularProducts, ...latestRegularProducts]);
 
     } catch (error) {
       console.log('Error fetching data:', error);
@@ -174,6 +237,85 @@ const HomeScreen = ({ navigation }) => {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
+            />
+          ) : (
+            <View style={styles.productPlaceholder}>
+              <Text style={styles.placeholderText}>No products available</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Best Selling Products Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Best Selling Products</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          {bestSelling.length > 0 ? (
+            <FlatList
+              data={bestSelling}
+              renderItem={renderProductItem}
+              keyExtractor={(item, index) => `best-${item.id}-${index}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productList}
+            />
+          ) : (
+            <View style={styles.productPlaceholder}>
+              <Text style={styles.placeholderText}>No products available</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Latest Products Section - Auto-scrolling */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.latestIcon}>📝</Text>
+              <Text style={styles.sectionTitle}>Latest Products</Text>
+            </View>
+          </View>
+          {latestProducts.length > 0 ? (
+            <FlatList
+              ref={latestScrollRef}
+              data={latestProducts}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity 
+                  style={styles.latestProductCard} 
+                  onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
+                  activeOpacity={0.7}
+                >
+                  <Image
+                    source={{ uri: item.productimage }}
+                    style={styles.latestProductImage}
+                    resizeMode="cover"
+                  />
+                  <Text style={styles.latestProductName} numberOfLines={1}>
+                    {item.productname}
+                  </Text>
+                  <Text style={styles.latestProductCode}>Code : {item.productcode}</Text>
+                  <TouchableOpacity style={styles.moreButton}>
+                    <Text style={styles.moreButtonText}>More</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item, index) => `latest-${item.id}-${index}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productList}
+              onTouchStart={() => {
+                if (scrollIntervalRef.current) {
+                  clearInterval(scrollIntervalRef.current);
+                }
+              }}
+              onTouchEnd={() => {
+                startAutoScroll();
+              }}
+              onMomentumScrollEnd={(e) => {
+                scrollXRef.current = e.nativeEvent.contentOffset.x;
+              }}
             />
           ) : (
             <View style={styles.productPlaceholder}>
@@ -291,6 +433,53 @@ const styles = StyleSheet.create({
   },
   footerSpace: {
     height: 40,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  latestIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  latestProductCard: {
+    width: 150,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 6,
+    borderRadius: 4,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    alignItems: 'center',
+    paddingBottom: 10,
+  },
+  latestProductImage: {
+    width: '100%',
+    height: 130,
+    backgroundColor: '#F8F8F8',
+  },
+  latestProductName: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#333333',
+    marginTop: 8,
+    paddingHorizontal: 8,
+    textAlign: 'center',
+  },
+  latestProductCode: {
+    fontSize: 11,
+    color: '#666666',
+    marginTop: 2,
+  },
+  moreButton: {
+    marginTop: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+  },
+  moreButtonText: {
+    fontSize: 12,
+    color: '#333333',
+    fontWeight: '500',
   },
 });
 

@@ -94,6 +94,24 @@ export const homeAPI = {
     console.log('FEATURED GARMENTS RESPONSE:', response.data);
     return response.data;
   },
+
+  getBestSellingRegular: async () => {
+    const response = await api.get('/best-selling-products-regular');
+    console.log('BEST SELLING REGULAR RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getBestSellingGarments: async () => {
+    const response = await api.get('/best-selling-products-garments');
+    console.log('BEST SELLING GARMENTS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getLatestProductsRegular: async () => {
+    const response = await api.get('/latest-products-regular');
+    console.log('LATEST PRODUCTS REGULAR RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Content APIs
