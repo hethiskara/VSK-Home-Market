@@ -15,6 +15,7 @@ import { orderAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
+const THEME_COLOR = '#2C4A6B';
 
 const OrderDetailScreen = ({ navigation, route }) => {
   const { orderNumber } = route.params;
@@ -140,10 +141,10 @@ const OrderDetailScreen = ({ navigation, route }) => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+        <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
         {renderHeader()}
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B0000" />
+          <ActivityIndicator size="large" color={THEME_COLOR} />
           <Text style={styles.loadingText}>Loading order details...</Text>
         </View>
       </View>
@@ -152,7 +153,7 @@ const OrderDetailScreen = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+      <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
       {renderHeader()}
 
       <FlatList
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#8B0000',
+    backgroundColor: THEME_COLOR,
     paddingHorizontal: 16,
     paddingTop: STATUSBAR_HEIGHT + 10,
     paddingBottom: 16,
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
     }),
   },
   summaryHeader: {
-    backgroundColor: '#8B0000',
+    backgroundColor: THEME_COLOR,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     fontSize: 18,
-    color: '#8B0000',
+    color: THEME_COLOR,
     fontWeight: '700',
   },
   itemsHeader: {
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 16,
-    color: '#8B0000',
+    color: THEME_COLOR,
     fontWeight: '700',
   },
   emptyContainer: {
@@ -414,7 +415,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contactButton: {
-    backgroundColor: '#8B0000',
+    backgroundColor: THEME_COLOR,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,

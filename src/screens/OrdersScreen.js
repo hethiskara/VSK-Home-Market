@@ -16,6 +16,8 @@ import { orderAPI, tokenManager } from '../services/api';
 const { width } = Dimensions.get('window');
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 
+const THEME_COLOR = '#2C4A6B';
+
 const OrdersScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -133,10 +135,10 @@ const OrdersScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+        <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
         {renderHeader()}
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B0000" />
+          <ActivityIndicator size="large" color={THEME_COLOR} />
           <Text style={styles.loadingText}>Loading your orders...</Text>
         </View>
       </View>
@@ -145,7 +147,7 @@ const OrdersScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+      <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
       {renderHeader()}
 
       {orders.length > 0 && (
@@ -166,8 +168,8 @@ const OrdersScreen = ({ navigation }) => {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh} 
-            colors={['#8B0000']} 
-            tintColor="#8B0000"
+            colors={[THEME_COLOR]} 
+            tintColor={THEME_COLOR}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#8B0000',
+    backgroundColor: THEME_COLOR,
     paddingHorizontal: 16,
     paddingTop: STATUSBAR_HEIGHT + 10,
     paddingBottom: 16,
@@ -288,7 +290,7 @@ const styles = StyleSheet.create({
     color: '#333333',
   },
   orderIndexBadge: {
-    backgroundColor: '#8B0000',
+    backgroundColor: THEME_COLOR,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -327,7 +329,7 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     fontSize: 18,
-    color: '#8B0000',
+    color: THEME_COLOR,
     fontWeight: '700',
   },
   viewDetailsButton: {
@@ -341,12 +343,12 @@ const styles = StyleSheet.create({
   },
   viewDetailsText: {
     fontSize: 14,
-    color: '#8B0000',
+    color: THEME_COLOR,
     fontWeight: '600',
   },
   arrowIcon: {
     fontSize: 20,
-    color: '#8B0000',
+    color: THEME_COLOR,
     marginLeft: 4,
     fontWeight: '300',
   },
@@ -385,13 +387,13 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   shopButton: {
-    backgroundColor: '#8B0000',
+    backgroundColor: THEME_COLOR,
     paddingHorizontal: 40,
     paddingVertical: 14,
     borderRadius: 8,
     ...Platform.select({
       ios: {
-        shadowColor: '#8B0000',
+        shadowColor: THEME_COLOR,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
