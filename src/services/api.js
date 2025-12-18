@@ -236,6 +236,23 @@ export const checkoutAPI = {
   },
 };
 
+// Order APIs
+export const orderAPI = {
+  // Get all orders for a user
+  getOrders: async (userId) => {
+    const response = await api.get(`/my-orders?userid=${userId}`);
+    console.log('ORDERS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get order details by order number
+  getOrderDetails: async (orderNumber) => {
+    const response = await api.get(`/my-order-separate?ordnum=${encodeURIComponent(orderNumber)}`);
+    console.log('ORDER DETAILS RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Token management
 export const tokenManager = {
   setToken: async (token) => {

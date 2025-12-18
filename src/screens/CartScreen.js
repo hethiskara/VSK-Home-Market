@@ -239,6 +239,9 @@ const CartScreen = ({ navigation }) => {
       
       // The response might contain a payment URL or gateway redirect
       if (response?.payment_url) {
+        // Clear cart first
+        setCartItems([]);
+        saveCart([]);
         Linking.openURL(response.payment_url);
       } else if (response?.status) {
         Alert.alert(
@@ -246,9 +249,16 @@ const CartScreen = ({ navigation }) => {
           `Your order has been placed.\n\nOrder Number: ${orderNumber}\nTotal Amount: Rs ${grandTotal}`,
           [
             {
-              text: 'OK',
+              text: 'View Orders',
               onPress: () => {
-                // Clear cart and go home
+                setCartItems([]);
+                saveCart([]);
+                navigation.navigate('Orders');
+              }
+            },
+            {
+              text: 'Go Home',
+              onPress: () => {
                 setCartItems([]);
                 saveCart([]);
                 navigation.navigate('Home');
@@ -263,7 +273,15 @@ const CartScreen = ({ navigation }) => {
           `Your order has been placed successfully.\n\nOrder Number: ${orderNumber}\nTotal Amount: Rs ${grandTotal}\n\nYou will receive payment details on WhatsApp.`,
           [
             {
-              text: 'OK',
+              text: 'View Orders',
+              onPress: () => {
+                setCartItems([]);
+                saveCart([]);
+                navigation.navigate('Orders');
+              }
+            },
+            {
+              text: 'Go Home',
               onPress: () => {
                 setCartItems([]);
                 saveCart([]);
@@ -281,7 +299,15 @@ const CartScreen = ({ navigation }) => {
         `Your order has been placed.\n\nOrder Number: ${orderNumber}\nTotal Amount: Rs ${grandTotal}\n\nPayment link will be sent to your WhatsApp.`,
         [
           {
-            text: 'OK',
+            text: 'View Orders',
+            onPress: () => {
+              setCartItems([]);
+              saveCart([]);
+              navigation.navigate('Orders');
+            }
+          },
+          {
+            text: 'Go Home',
             onPress: () => {
               setCartItems([]);
               saveCart([]);
