@@ -7,9 +7,14 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
+  Dimensions,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { orderAPI } from '../services/api';
+
+const { width } = Dimensions.get('window');
+const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 
 const OrderDetailScreen = ({ navigation, route }) => {
   const { orderNumber } = route.params;
@@ -26,7 +31,6 @@ const OrderDetailScreen = ({ navigation, route }) => {
       const response = await orderAPI.getOrderDetails(orderNumber);
       if (Array.isArray(response) && response.length > 0) {
         setOrderItems(response);
-        // Extract order info from first item
         setOrderInfo({
           orderedon: response[0].orderedon,
           ordertotal: response[0].ordertotal,
@@ -42,7 +46,61 @@ const OrderDetailScreen = ({ navigation, route }) => {
     }
   };
 
-  const renderOrderItem = ({ item }) => (
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity 
+        onPress={() => navigation.goBack()} 
+        style={styles.backButton}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Text style={styles.backIcon}>‹</Text>
+        <Text style={styles.backText}>Back</Text>
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Order Details</Text>
+      <View style={styles.headerRight} />
+    </View>
+  );
+
+  const renderOrderSummary = () => (
+    <View style={styles.summaryCard}>
+      <View style={styles.summaryHeader}>
+        <Text style={styles.summaryTitle}>Order Summary</Text>
+      </View>
+      
+      <View style={styles.summaryContent}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Order Number</Text>
+          <Text style={styles.summaryValue}>{orderNumber}</Text>
+        </View>
+        
+        {orderInfo && (
+          <>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Ordered On</Text>
+              <Text style={styles.summaryValue}>{orderInfo.orderedon}</Text>
+            </View>
+            
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>Rs. {orderInfo.ordertotal}</Text>
+            </View>
+          </>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderItemsHeader = () => (
+    <View style={styles.itemsHeader}>
+      <Text style={styles.itemsTitle}>
+        Order Items ({orderItems.length})
+      </Text>
+    </View>
+  );
+
+  const renderOrderItem = ({ item, index }) => (
     <View style={styles.itemCard}>
       <Image
         source={{ uri: item.productimage }}
@@ -54,34 +112,14 @@ const OrderDetailScreen = ({ navigation, route }) => {
           {item.productname}
         </Text>
         <Text style={styles.productCode}>Code: {item.productcode}</Text>
-        <View style={styles.qtyPriceRow}>
-          <Text style={styles.quantity}>Qty: {item.qty}</Text>
-          <Text style={styles.price}>Rs. {item.productprice}</Text>
+        
+        <View style={styles.itemFooter}>
+          <View style={styles.qtyContainer}>
+            <Text style={styles.qtyLabel}>Qty:</Text>
+            <Text style={styles.qtyValue}>{item.qty}</Text>
+          </View>
+          <Text style={styles.itemPrice}>Rs. {item.productprice}</Text>
         </View>
-      </View>
-    </View>
-  );
-
-  const renderHeader = () => (
-    <View style={styles.orderSummary}>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Order Number</Text>
-        <Text style={styles.summaryValue}>{orderNumber}</Text>
-      </View>
-      {orderInfo && (
-        <>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Ordered On</Text>
-            <Text style={styles.summaryValue}>{orderInfo.orderedon}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Order Total</Text>
-            <Text style={styles.totalValue}>Rs. {orderInfo.ordertotal}</Text>
-          </View>
-        </>
-      )}
-      <View style={styles.itemsHeader}>
-        <Text style={styles.itemsTitle}>Order Items ({orderItems.length})</Text>
       </View>
     </View>
   );
@@ -92,62 +130,62 @@ const OrderDetailScreen = ({ navigation, route }) => {
     </View>
   );
 
+  const renderListHeader = () => (
+    <>
+      {renderOrderSummary()}
+      {orderItems.length > 0 && renderItemsHeader()}
+    </>
+  );
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Order Details</Text>
-          <View style={styles.placeholder} />
-        </View>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+        {renderHeader()}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B0000" />
           <Text style={styles.loadingText}>Loading order details...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Order Details</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+      {renderHeader()}
 
       <FlatList
         data={orderItems}
         renderItem={renderOrderItem}
         keyExtractor={(item, index) => `${item.productcode}-${index}`}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderEmptyState}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Help Section */}
+      {/* Bottom Help Section */}
       <View style={styles.helpSection}>
-        <Text style={styles.helpText}>Need help with this order?</Text>
-        <TouchableOpacity
-          style={styles.contactButton}
-          onPress={() => navigation.navigate('ContactUs')}
-        >
-          <Text style={styles.contactButtonText}>Contact Support</Text>
-        </TouchableOpacity>
+        <View style={styles.helpContent}>
+          <Text style={styles.helpText}>Need help with this order?</Text>
+          <TouchableOpacity
+            style={styles.contactButton}
+            onPress={() => navigation.navigate('ContactUs')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.contactButtonText}>Contact Support</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F5F5',
   },
   header: {
     flexDirection: 'row',
@@ -155,24 +193,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#8B0000',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: 50,
+    paddingTop: STATUSBAR_HEIGHT + 10,
+    paddingBottom: 16,
   },
   backButton: {
-    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 70,
+  },
+  backIcon: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '300',
+    marginRight: 2,
+    marginTop: -2,
   },
   backText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
   },
   headerTitle: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
-  placeholder: {
-    width: 60,
+  headerRight: {
+    minWidth: 70,
   },
   loadingContainer: {
     flex: 1,
@@ -180,102 +229,146 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    color: '#666',
+    marginTop: 16,
+    color: '#666666',
     fontSize: 14,
   },
   listContainer: {
     padding: 16,
     paddingBottom: 100,
   },
-  orderSummary: {
-    backgroundColor: '#fff',
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  summaryHeader: {
+    backgroundColor: '#8B0000',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  summaryTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  summaryContent: {
+    padding: 16,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingVertical: 10,
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
+    fontWeight: '400',
   },
   summaryValue: {
     fontSize: 14,
-    color: '#333',
+    color: '#333333',
     fontWeight: '600',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
   },
-  totalValue: {
-    fontSize: 16,
+  summaryDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+  },
+  totalAmount: {
+    fontSize: 18,
     color: '#8B0000',
     fontWeight: '700',
   },
   itemsHeader: {
-    marginTop: 16,
-    paddingTop: 8,
+    marginBottom: 12,
   },
   itemsTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#333',
+    color: '#333333',
   },
   itemCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   productImage: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F0F0F0',
   },
   itemInfo: {
     flex: 1,
     marginLeft: 12,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   productName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: '#333333',
+    lineHeight: 20,
   },
   productCode: {
     fontSize: 12,
-    color: '#999',
-    marginBottom: 8,
+    color: '#999999',
+    marginTop: 4,
   },
-  qtyPriceRow: {
+  itemFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 8,
   },
-  quantity: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
+  qtyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
-  price: {
+  qtyLabel: {
+    fontSize: 12,
+    color: '#666666',
+    marginRight: 4,
+  },
+  qtyValue: {
     fontSize: 14,
+    color: '#333333',
+    fontWeight: '600',
+  },
+  itemPrice: {
+    fontSize: 16,
     color: '#8B0000',
     fontWeight: '700',
   },
@@ -285,42 +378,52 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
   },
   helpSection: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  helpContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
   },
   helpText: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
+    flex: 1,
   },
   contactButton: {
     backgroundColor: '#8B0000',
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 6,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   contactButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
 });
 
 export default OrderDetailScreen;
-

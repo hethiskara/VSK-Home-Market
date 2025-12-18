@@ -6,10 +6,15 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   RefreshControl,
+  Dimensions,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { orderAPI, tokenManager } from '../services/api';
+
+const { width } = Dimensions.get('window');
+const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 
 const OrdersScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
@@ -48,93 +53,108 @@ const OrdersScreen = ({ navigation }) => {
     fetchOrders();
   };
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'delivered':
-        return '#27ae60';
-      case 'shipped':
-        return '#3498db';
-      case 'processing':
-        return '#f39c12';
-      case 'cancelled':
-        return '#e74c3c';
-      default:
-        return '#7f8c8d';
-    }
-  };
-
-  const renderOrderItem = ({ item }) => (
+  const renderOrderItem = ({ item, index }) => (
     <TouchableOpacity
       style={styles.orderCard}
       onPress={() => navigation.navigate('OrderDetail', { orderNumber: item.ordernumber })}
       activeOpacity={0.7}
     >
+      {/* Order Number Header */}
       <View style={styles.orderHeader}>
-        <Text style={styles.orderNumber}>{item.ordernumber}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{item.status || 'Pending'}</Text>
+        <View style={styles.orderNumberContainer}>
+          <Text style={styles.orderLabel}>Order</Text>
+          <Text style={styles.orderNumber}>{item.ordernumber}</Text>
+        </View>
+        <View style={styles.orderIndexBadge}>
+          <Text style={styles.orderIndexText}>#{orders.length - index}</Text>
         </View>
       </View>
       
-      <View style={styles.orderInfo}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Ordered On:</Text>
-          <Text style={styles.infoValue}>{item.orderedon}</Text>
+      {/* Order Details */}
+      <View style={styles.orderDetails}>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Ordered On</Text>
+          <Text style={styles.detailValue}>{item.orderedon}</Text>
         </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Total:</Text>
+        
+        <View style={styles.divider} />
+        
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Order Total</Text>
           <Text style={styles.totalValue}>Rs. {item.ordertotal}</Text>
         </View>
       </View>
 
-      <View style={styles.viewDetails}>
-        <Text style={styles.viewDetailsText}>View Details</Text>
-        <Text style={styles.arrow}>→</Text>
-      </View>
+      {/* View Details Button */}
+      <TouchableOpacity 
+        style={styles.viewDetailsButton}
+        onPress={() => navigation.navigate('OrderDetail', { orderNumber: item.ordernumber })}
+      >
+        <Text style={styles.viewDetailsText}>View Order Details</Text>
+        <Text style={styles.arrowIcon}>›</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>📦</Text>
+      <View style={styles.emptyIconContainer}>
+        <Text style={styles.emptyIconText}>0</Text>
+      </View>
       <Text style={styles.emptyTitle}>No Orders Yet</Text>
-      <Text style={styles.emptyText}>You haven't placed any orders yet.</Text>
+      <Text style={styles.emptyText}>
+        You haven't placed any orders yet.{'\n'}Start shopping to see your orders here.
+      </Text>
       <TouchableOpacity
         style={styles.shopButton}
         onPress={() => navigation.navigate('Home')}
+        activeOpacity={0.8}
       >
-        <Text style={styles.shopButtonText}>Start Shopping</Text>
+        <Text style={styles.shopButtonText}>Browse Products</Text>
       </TouchableOpacity>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity 
+        onPress={() => navigation.goBack()} 
+        style={styles.backButton}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Text style={styles.backIcon}>‹</Text>
+        <Text style={styles.backText}>Back</Text>
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>My Orders</Text>
+      <View style={styles.headerRight} />
     </View>
   );
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Orders</Text>
-          <View style={styles.placeholder} />
-        </View>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+        {renderHeader()}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B0000" />
-          <Text style={styles.loadingText}>Loading orders...</Text>
+          <Text style={styles.loadingText}>Loading your orders...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Orders</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
+      {renderHeader()}
+
+      {orders.length > 0 && (
+        <View style={styles.orderCountBar}>
+          <Text style={styles.orderCountText}>
+            {orders.length} {orders.length === 1 ? 'Order' : 'Orders'} Found
+          </Text>
+        </View>
+      )}
 
       <FlatList
         data={orders}
@@ -143,18 +163,23 @@ const OrdersScreen = ({ navigation }) => {
         contentContainerStyle={orders.length === 0 ? styles.emptyList : styles.listContainer}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#8B0000']} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            colors={['#8B0000']} 
+            tintColor="#8B0000"
+          />
         }
         showsVerticalScrollIndicator={false}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F5F5',
   },
   header: {
     flexDirection: 'row',
@@ -162,150 +187,225 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#8B0000',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: 50,
+    paddingTop: STATUSBAR_HEIGHT + 10,
+    paddingBottom: 16,
   },
   backButton: {
-    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 70,
+  },
+  backIcon: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '300',
+    marginRight: 2,
+    marginTop: -2,
   },
   backText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
   },
   headerTitle: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
-  placeholder: {
-    width: 60,
+  headerRight: {
+    minWidth: 70,
+  },
+  orderCountBar: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  orderCountText: {
+    fontSize: 14,
+    color: '#666666',
+    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F5F5F5',
   },
   loadingText: {
-    marginTop: 12,
-    color: '#666',
+    marginTop: 16,
+    color: '#666666',
     fontSize: 14,
   },
   listContainer: {
     padding: 16,
+    paddingBottom: 32,
   },
   emptyList: {
-    flex: 1,
+    flexGrow: 1,
   },
   orderCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 16,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingBottom: 12,
+    padding: 16,
+    backgroundColor: '#FAFAFA',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F0F0F0',
+  },
+  orderNumberContainer: {
+    flex: 1,
+  },
+  orderLabel: {
+    fontSize: 12,
+    color: '#999999',
+    fontWeight: '500',
+    marginBottom: 2,
   },
   orderNumber: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#333',
+    color: '#333333',
   },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+  orderIndexBadge: {
+    backgroundColor: '#8B0000',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
-  statusText: {
-    color: '#fff',
+  orderIndexText: {
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },
-  orderInfo: {
-    marginBottom: 12,
+  orderDetails: {
+    padding: 16,
   },
-  infoRow: {
+  detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    paddingVertical: 8,
   },
-  infoLabel: {
+  detailLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
+    fontWeight: '400',
   },
-  infoValue: {
+  detailValue: {
     fontSize: 14,
-    color: '#333',
+    color: '#333333',
     fontWeight: '500',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginVertical: 4,
   },
   totalValue: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#8B0000',
     fontWeight: '700',
   },
-  viewDetails: {
+  viewDetailsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingTop: 12,
+    justifyContent: 'center',
+    paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: '#F0F0F0',
+    backgroundColor: '#FAFAFA',
   },
   viewDetailsText: {
     fontSize: 14,
     color: '#8B0000',
     fontWeight: '600',
   },
-  arrow: {
-    fontSize: 16,
+  arrowIcon: {
+    fontSize: 20,
     color: '#8B0000',
     marginLeft: 4,
+    fontWeight: '300',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+    paddingBottom: 100,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyIconText: {
+    fontSize: 32,
+    color: '#CCCCCC',
+    fontWeight: '700',
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333',
-    marginBottom: 8,
+    color: '#333333',
+    marginBottom: 12,
   },
   emptyText: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
     textAlign: 'center',
-    marginBottom: 24,
+    lineHeight: 22,
+    marginBottom: 32,
   },
   shopButton: {
     backgroundColor: '#8B0000',
-    paddingHorizontal: 32,
+    paddingHorizontal: 40,
     paddingVertical: 14,
     borderRadius: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B0000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   shopButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
 });
 
 export default OrdersScreen;
-
