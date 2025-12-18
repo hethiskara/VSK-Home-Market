@@ -10,16 +10,18 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { tokenManager, productAPI } from '../services/api';
+import { tokenManager, productAPI, garmentAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = width * 0.85;
 
 const Drawer = ({ visible, onClose, navigation }) => {
   const [sections, setSections] = useState([]);
+  const [garmentSections, setGarmentSections] = useState([]);
   const [expandedSection, setExpandedSection] = useState(null);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [categories, setCategories] = useState({});
+  const [garmentCategories, setGarmentCategories] = useState([]);
   const [subcategories, setSubcategories] = useState({});
   const [loading, setLoading] = useState({});
   const slideAnim = useState(new Animated.Value(-DRAWER_WIDTH))[0];
@@ -27,6 +29,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
   useEffect(() => {
     if (visible) {
       fetchSections();
+      fetchGarmentSections();
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 250,
@@ -50,6 +53,15 @@ const Drawer = ({ visible, onClose, navigation }) => {
     }
   };
 
+  const fetchGarmentSections = async () => {
+    try {
+      const response = await garmentAPI.getSections();
+      setGarmentSections(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.log('Error fetching garment sections:', error);
+    }
+  };
+
   const fetchCategories = async (sectionId) => {
     if (categories[sectionId]) return;
     
@@ -62,6 +74,20 @@ const Drawer = ({ visible, onClose, navigation }) => {
       console.log('Error fetching categories:', error);
     } finally {
       setLoading(prev => ({ ...prev, [`cat_${sectionId}`]: false }));
+    }
+  };
+
+  const fetchGarmentCategories = async () => {
+    if (garmentCategories.length > 0) return;
+    
+    setLoading(prev => ({ ...prev, 'garment_cat': true }));
+    try {
+      const response = await garmentAPI.getCategories();
+      setGarmentCategories(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.log('Error fetching garment categories:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, 'garment_cat': false }));
     }
   };
 
@@ -91,6 +117,17 @@ const Drawer = ({ visible, onClose, navigation }) => {
     }
   };
 
+  const handleGarmentSectionPress = (section) => {
+    const garmentKey = `garment_${section.id}`;
+    if (expandedSection === garmentKey) {
+      setExpandedSection(null);
+    } else {
+      setExpandedSection(garmentKey);
+      setExpandedCategory(null);
+      fetchGarmentCategories();
+    }
+  };
+
   const handleCategoryPress = (sectionId, category) => {
     const key = `${sectionId}_${category.id}`;
     if (expandedCategory === key) {
@@ -99,6 +136,15 @@ const Drawer = ({ visible, onClose, navigation }) => {
       setExpandedCategory(key);
       fetchSubcategories(sectionId, category.id);
     }
+  };
+
+  const handleGarmentCategoryPress = (category) => {
+    // Navigate to GarmentCategory screen when clicking Women/Mens
+    onClose();
+    navigation.navigate('GarmentCategory', {
+      categoryId: category.id,
+      categoryTitle: category.title,
+    });
   };
 
   const handleSubcategoryPress = (sectionId, sectionTitle, categoryId, categoryTitle, subcategory) => {
@@ -206,6 +252,29 @@ const Drawer = ({ visible, onClose, navigation }) => {
     });
   };
 
+  const renderGarmentCategories = () => {
+    const isLoading = loading['garment_cat'];
+
+    if (isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#FFFFFF" />
+        </View>
+      );
+    }
+
+    return garmentCategories.map((cat) => (
+      <TouchableOpacity
+        key={cat.id}
+        style={styles.categoryItem}
+        onPress={() => handleGarmentCategoryPress(cat)}
+      >
+        <Text style={styles.categoryLabel}>{cat.title}</Text>
+        <Text style={styles.arrow}>›</Text>
+      </TouchableOpacity>
+    ));
+  };
+
   if (!visible) return null;
 
   return (
@@ -241,7 +310,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
                 <Text style={styles.menuLabel}>Home</Text>
               </TouchableOpacity>
 
-              {/* Dynamic Sections (Pickles, Garments, etc.) */}
+              {/* Dynamic Sections (Pickles) */}
               {sections.map((section) => {
                 const isExpanded = expandedSection === section.id;
 
@@ -256,6 +325,26 @@ const Drawer = ({ visible, onClose, navigation }) => {
                     </TouchableOpacity>
                     
                     {isExpanded && renderCategories(section)}
+                  </View>
+                );
+              })}
+
+              {/* Garment Sections */}
+              {garmentSections.map((section) => {
+                const garmentKey = `garment_${section.id}`;
+                const isExpanded = expandedSection === garmentKey;
+
+                return (
+                  <View key={garmentKey}>
+                    <TouchableOpacity
+                      style={styles.menuItem}
+                      onPress={() => handleGarmentSectionPress(section)}
+                    >
+                      <Text style={styles.menuLabel}>{section.title}</Text>
+                      <Text style={styles.arrow}>{isExpanded ? '∨' : '›'}</Text>
+                    </TouchableOpacity>
+                    
+                    {isExpanded && renderGarmentCategories()}
                   </View>
                 );
               })}

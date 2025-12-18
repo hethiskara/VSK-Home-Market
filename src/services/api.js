@@ -186,6 +186,51 @@ export const productAPI = {
   },
 };
 
+// Garment APIs
+export const garmentAPI = {
+  // Get garment sections (e.g., "Garment Products")
+  getSections: async () => {
+    const response = await api.get('/garmentproductsection');
+    console.log('GARMENT SECTIONS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get garment categories (Women, Mens)
+  getCategories: async () => {
+    const response = await api.get('/garment-category-detail');
+    console.log('GARMENT CATEGORIES RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get subcategories within a category (Sarees, Chudidhar, T-shirt)
+  getSubcategories: async (categoryId) => {
+    const response = await api.get(`/garment-subcategory-detail?category_id=${categoryId}`);
+    console.log('GARMENT SUBCATEGORIES RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get product types within a subcategory (Silk Saree, Cotton Saree, etc.)
+  getProductTypes: async (sectionId, categoryId) => {
+    const response = await api.get(`/garmentsection-subcategory-detail?section_id=${sectionId}&category_id=${categoryId}`);
+    console.log('GARMENT PRODUCT TYPES RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get garment products by subcategory
+  getProducts: async (sectionId, categoryId, subcategoryId) => {
+    const response = await api.get(`/garment-moreproduct-detail?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}`);
+    console.log('GARMENT PRODUCTS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get garment product details
+  getProductDetails: async (productCode) => {
+    const response = await api.get(`/garment-product-details?product_code=${productCode}`);
+    console.log('GARMENT PRODUCT DETAILS RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Cart APIs
 export const cartAPI = {
   // Add item to cart
