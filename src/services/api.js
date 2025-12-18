@@ -112,6 +112,18 @@ export const homeAPI = {
     console.log('LATEST PRODUCTS REGULAR RESPONSE:', response.data);
     return response.data;
   },
+
+  getLatestProductsGarments: async () => {
+    const response = await api.get('/latest-products-garments');
+    console.log('LATEST PRODUCTS GARMENTS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getTestimonials: async () => {
+    const response = await api.get('/testimonial-json');
+    console.log('TESTIMONIALS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Content APIs

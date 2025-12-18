@@ -61,12 +61,39 @@ const LatestProductCard = ({ product, onPress }) => {
   );
 };
 
+const TestimonialCard = ({ testimonial }) => {
+  // Decode HTML entities
+  const cleanContent = testimonial.content
+    ?.replace(/&mdash;/g, '—')
+    ?.replace(/&amp;/g, '&')
+    ?.replace(/&quot;/g, '"')
+    ?.replace(/&#39;/g, "'") || '';
+
+  return (
+    <View style={styles.testimonialCard}>
+      <View style={styles.testimonialHeader}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>
+            {testimonial.name?.charAt(0)?.toUpperCase() || 'U'}
+          </Text>
+        </View>
+        <Text style={styles.testimonialName}>{testimonial.name}</Text>
+      </View>
+      <Text style={styles.quoteIcon}>"</Text>
+      <Text style={styles.testimonialContent} numberOfLines={6}>
+        {cleanContent}
+      </Text>
+    </View>
+  );
+};
+
 const HomeScreen = ({ navigation }) => {
   const [banners, setBanners] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [bestSelling, setBestSelling] = useState([]);
   const [latestProducts, setLatestProducts] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -113,10 +140,20 @@ const HomeScreen = ({ navigation }) => {
       const bestGarmentsProducts = Array.isArray(bestGarments) ? bestGarments : [];
       setBestSelling([...bestRegularProducts, ...bestGarmentsProducts]);
 
-      // Fetch latest products (regular only)
-      const latestRegular = await homeAPI.getLatestProductsRegular();
+      // Fetch latest products (regular + garments)
+      const [latestRegular, latestGarments] = await Promise.all([
+        homeAPI.getLatestProductsRegular(),
+        homeAPI.getLatestProductsGarments(),
+      ]);
+      
       const latestRegularProducts = Array.isArray(latestRegular) ? latestRegular : [];
-      setLatestProducts(latestRegularProducts);
+      const latestGarmentsProducts = Array.isArray(latestGarments) ? latestGarments : [];
+      setLatestProducts([...latestRegularProducts, ...latestGarmentsProducts]);
+
+      // Fetch testimonials
+      const testimonialsResponse = await homeAPI.getTestimonials();
+      const testimonialsData = Array.isArray(testimonialsResponse) ? testimonialsResponse : [];
+      setTestimonials(testimonialsData);
 
     } catch (error) {
       console.log('Error fetching data:', error);
@@ -143,6 +180,10 @@ const HomeScreen = ({ navigation }) => {
       product={item} 
       onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
     />
+  );
+
+  const renderTestimonialItem = ({ item }) => (
+    <TestimonialCard testimonial={item} />
   );
 
   if (loading) {
@@ -253,7 +294,6 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
-              <Text style={styles.latestIcon}>📝</Text>
               <Text style={styles.sectionTitle}>Latest Products</Text>
             </View>
           </View>
@@ -269,6 +309,28 @@ const HomeScreen = ({ navigation }) => {
           ) : (
             <View style={styles.productPlaceholder}>
               <Text style={styles.placeholderText}>No products available</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Testimonials Section */}
+        <View style={styles.testimonialSection}>
+          <View style={styles.testimonialSectionHeader}>
+            <Text style={styles.testimonialSectionTitle}>What Our Customers Say</Text>
+            <Text style={styles.testimonialSubtitle}>Testimonials</Text>
+          </View>
+          {testimonials.length > 0 ? (
+            <FlatList
+              data={testimonials}
+              renderItem={renderTestimonialItem}
+              keyExtractor={(item) => `testimonial-${item.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.testimonialList}
+            />
+          ) : (
+            <View style={styles.productPlaceholder}>
+              <Text style={styles.placeholderText}>No testimonials available</Text>
             </View>
           )}
         </View>
@@ -430,6 +492,76 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333333',
     fontWeight: '500',
+  },
+  // Testimonial Styles
+  testimonialSection: {
+    marginTop: 16,
+    backgroundColor: '#2C4A6B',
+    paddingBottom: 20,
+  },
+  testimonialSectionHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  testimonialSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  testimonialSubtitle: {
+    fontSize: 14,
+    color: '#FFD700',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  testimonialList: {
+    paddingHorizontal: 8,
+  },
+  testimonialCard: {
+    width: 280,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 8,
+    borderRadius: 12,
+    padding: 16,
+    minHeight: 180,
+  },
+  testimonialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  avatarContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2C4A6B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  testimonialName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  quoteIcon: {
+    fontSize: 36,
+    color: '#2C4A6B',
+    lineHeight: 30,
+    marginBottom: 4,
+    fontFamily: 'Georgia',
+  },
+  testimonialContent: {
+    fontSize: 14,
+    color: '#555555',
+    lineHeight: 22,
   },
 });
 
