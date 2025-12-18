@@ -79,8 +79,8 @@ const TestimonialCard = ({ testimonial }) => {
         </View>
         <Text style={styles.testimonialName}>{testimonial.name}</Text>
       </View>
-      <Text style={styles.quoteIcon}>"</Text>
-      <Text style={styles.testimonialContent} numberOfLines={6}>
+      <View style={styles.quoteBar} />
+      <Text style={styles.testimonialContent}>
         {cleanContent}
       </Text>
     </View>
@@ -520,12 +520,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   testimonialCard: {
-    width: 280,
+    width: 300,
     backgroundColor: '#FFFFFF',
     marginHorizontal: 8,
     borderRadius: 12,
     padding: 16,
-    minHeight: 180,
   },
   testimonialHeader: {
     flexDirection: 'row',
@@ -551,17 +550,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333333',
   },
-  quoteIcon: {
-    fontSize: 36,
-    color: '#2C4A6B',
-    lineHeight: 30,
-    marginBottom: 4,
-    fontFamily: 'Georgia',
+  quoteBar: {
+    width: 4,
+    height: 30,
+    backgroundColor: '#2C4A6B',
+    borderRadius: 2,
+    position: 'absolute',
+    left: 16,
+    top: 70,
   },
   testimonialContent: {
     fontSize: 14,
     color: '#555555',
     lineHeight: 22,
+    paddingLeft: 12,
   },
 });
 
