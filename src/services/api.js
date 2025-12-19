@@ -225,7 +225,7 @@ export const garmentAPI = {
 
   // Get garment product details
   getProductDetails: async (productCode) => {
-    const response = await api.get(`/garment-product-details?product_code=${productCode}`);
+    const response = await api.get(`/garment-product-details?product_code=${encodeURIComponent(productCode)}`);
     console.log('GARMENT PRODUCT DETAILS RESPONSE:', response.data);
     return response.data;
   },

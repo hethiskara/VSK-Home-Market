@@ -89,7 +89,6 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   const handleProductPress = (product) => {
     navigation.navigate('GarmentProductDetail', { 
       productCode: product.productcode,
-      productName: product.productname,
     });
   };
 
