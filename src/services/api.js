@@ -279,28 +279,20 @@ export const checkoutAPI = {
 
   // Step 3: Razorpay payment initiation (POST request)
   initiatePayment: async (data) => {
-    const formData = new URLSearchParams();
-    formData.append('billing_name', data.billing_name);
-    formData.append('billing_mobile', data.billing_mobile);
-    formData.append('billing_sc', data.billing_sc || '1');
-    formData.append('billing_ss', data.billing_ss || '0');
-    formData.append('orginalorderid', data.order_id);
-    formData.append('payAmount', data.amount);
+    const formData = `billing_name=${encodeURIComponent(data.billing_name)}&billing_mobile=${encodeURIComponent(data.billing_mobile)}&billing_sc=${data.billing_sc || '1'}&billing_ss=${data.billing_ss || '0'}&orginalorderid=${encodeURIComponent(data.order_id)}&payAmount=${data.amount}`;
     
-    const response = await api.post('/submitpayment_android', formData.toString());
+    console.log('RAZORPAY REQUEST:', formData);
+    const response = await api.post('/submitpayment_android', formData);
     console.log('RAZORPAY INIT RESPONSE:', response.data);
     return response.data;
   },
 
   // Step 4: Razorpay payment verification (POST request)
   verifyPayment: async (data) => {
-    const formData = new URLSearchParams();
-    formData.append('razorpay_payment_id', data.razorpay_payment_id);
-    formData.append('razorpay_order_id', data.razorpay_order_id);
-    formData.append('razorpay_signature', data.razorpay_signature);
-    formData.append('orginalorderid', data.orginalorderid);
+    const formData = `razorpay_payment_id=${encodeURIComponent(data.razorpay_payment_id)}&razorpay_order_id=${encodeURIComponent(data.razorpay_order_id)}&razorpay_signature=${encodeURIComponent(data.razorpay_signature)}&orginalorderid=${encodeURIComponent(data.orginalorderid)}`;
     
-    const response = await api.post('/payment_success_android', formData.toString());
+    console.log('VERIFY REQUEST:', formData);
+    const response = await api.post('/payment_success_android', formData);
     console.log('PAYMENT VERIFY RESPONSE:', response.data);
     return response.data;
   },
