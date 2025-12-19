@@ -218,7 +218,7 @@ export const garmentAPI = {
 
   // Get garment products by subcategory
   getProducts: async (sectionId, categoryId, subcategoryId) => {
-    const response = await api.get(`/garment-moreproduct-detail?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}`);
+    const response = await api.get(`/garmentmoreproduct-details?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}`);
     console.log('GARMENT PRODUCTS RESPONSE:', response.data);
     return response.data;
   },
