@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,11 +12,13 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkoutAPI } from '../services/api';
-import RazorpayCheckout from 'react-native-razorpay';
+import { WebView } from 'react-native-webview';
 
 const CART_STORAGE_KEY = '@vsk_cart';
 
@@ -32,6 +34,8 @@ const CartScreen = ({ navigation }) => {
   const [orderNumber, setOrderNumber] = useState(null);
   const [orderSummary, setOrderSummary] = useState([]);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [showPaymentWebView, setShowPaymentWebView] = useState(false);
+  const [razorpayData, setRazorpayData] = useState(null);
   
   // Delivery address fields
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -241,92 +245,18 @@ const CartScreen = ({ navigation }) => {
       console.log('RAZORPAY INIT RESPONSE:', response);
       
       if (response?.status === 'success' && response?.order_id) {
-        // Step 2: Open Razorpay checkout
-        const options = {
-          description: `Order: ${orderNumber}`,
-          image: 'https://www.vskhomemarket.com/assets/images/logo.png',
-          currency: 'INR',
+        // Store razorpay data and show WebView
+        setRazorpayData({
           key: response.razorpay_key || 'rzp_live_RjrJxIcWDEysuR',
-          amount: response.amount, // Amount in paise
-          name: 'VSK Home Market',
           order_id: response.order_id,
-          prefill: {
-            contact: response.mobile || addressToUse.mobile_no,
-            name: response.name || `${addressToUse.firstname} ${addressToUse.lastname || ''}`.trim(),
-          },
-          theme: { color: '#2C4A6B' },
-        };
-
-        RazorpayCheckout.open(options)
-          .then(async (data) => {
-            // Payment successful - verify with backend
-            console.log('RAZORPAY SUCCESS:', data);
-            
-            try {
-              const verifyResponse = await checkoutAPI.verifyPayment({
-                razorpay_payment_id: data.razorpay_payment_id,
-                razorpay_order_id: data.razorpay_order_id,
-                razorpay_signature: data.razorpay_signature,
-                orginalorderid: orderNumber,
-              });
-
-              console.log('VERIFY RESPONSE:', verifyResponse);
-
-              if (verifyResponse?.status === 'success') {
-                // Clear cart and show success
-                setCartItems([]);
-                saveCart([]);
-                Alert.alert(
-                  'Payment Successful! ✅',
-                  `Your payment has been verified successfully.\n\nOrder Number: ${orderNumber}\nPayment ID: ${data.razorpay_payment_id}\nTotal Amount: Rs ${grandTotal}`,
-                  [
-                    {
-                      text: 'View Orders',
-                      onPress: () => navigation.navigate('Orders'),
-                    },
-                    {
-                      text: 'Go Home',
-                      onPress: () => navigation.navigate('Home'),
-                    },
-                  ]
-                );
-              } else {
-                Alert.alert(
-                  'Payment Verification Failed',
-                  'Payment was received but verification failed. Please contact support.',
-                  [{ text: 'OK' }]
-                );
-              }
-            } catch (verifyError) {
-              console.log('Verify error:', verifyError);
-              Alert.alert(
-                'Payment Received',
-                `Payment was successful but verification encountered an issue.\n\nOrder Number: ${orderNumber}\nPayment ID: ${data.razorpay_payment_id}\n\nPlease contact support if needed.`,
-                [
-                  {
-                    text: 'View Orders',
-                    onPress: () => {
-                      setCartItems([]);
-                      saveCart([]);
-                      navigation.navigate('Orders');
-                    },
-                  },
-                ]
-              );
-            }
-          })
-          .catch((error) => {
-            // Payment cancelled or failed
-            console.log('RAZORPAY ERROR:', error);
-            Alert.alert(
-              'Payment Cancelled',
-              error?.description || 'Payment was cancelled. You can try again.',
-              [{ text: 'OK' }]
-            );
-          })
-          .finally(() => {
-            setProcessingPayment(false);
-          });
+          amount: response.amount,
+          name: response.name || `${addressToUse.firstname} ${addressToUse.lastname || ''}`.trim(),
+          mobile: response.mobile || addressToUse.mobile_no,
+          orginalorderid: orderNumber,
+          grandTotal: grandTotal,
+        });
+        setShowPaymentWebView(true);
+        setProcessingPayment(false);
       } else {
         // API error
         Alert.alert(
@@ -344,6 +274,201 @@ const CartScreen = ({ navigation }) => {
         [{ text: 'OK' }]
       );
       setProcessingPayment(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentData) => {
+    setShowPaymentWebView(false);
+    setProcessingPayment(true);
+    
+    try {
+      const verifyResponse = await checkoutAPI.verifyPayment({
+        razorpay_payment_id: paymentData.razorpay_payment_id,
+        razorpay_order_id: paymentData.razorpay_order_id,
+        razorpay_signature: paymentData.razorpay_signature,
+        orginalorderid: razorpayData.orginalorderid,
+      });
+
+      console.log('VERIFY RESPONSE:', verifyResponse);
+
+      if (verifyResponse?.status === 'success') {
+        setCartItems([]);
+        saveCart([]);
+        Alert.alert(
+          'Payment Successful! ✅',
+          `Your payment has been verified successfully.\n\nOrder Number: ${razorpayData.orginalorderid}\nPayment ID: ${paymentData.razorpay_payment_id}\nTotal Amount: Rs ${razorpayData.grandTotal}`,
+          [
+            {
+              text: 'View Orders',
+              onPress: () => navigation.navigate('Orders'),
+            },
+            {
+              text: 'Go Home',
+              onPress: () => navigation.navigate('Home'),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Payment Received',
+          `Payment was successful.\n\nOrder Number: ${razorpayData.orginalorderid}\n\nPlease check your order status.`,
+          [
+            {
+              text: 'View Orders',
+              onPress: () => {
+                setCartItems([]);
+                saveCart([]);
+                navigation.navigate('Orders');
+              },
+            },
+          ]
+        );
+      }
+    } catch (verifyError) {
+      console.log('Verify error:', verifyError);
+      Alert.alert(
+        'Payment Received',
+        `Payment was completed.\n\nOrder Number: ${razorpayData.orginalorderid}\n\nPlease check your order status.`,
+        [
+          {
+            text: 'View Orders',
+            onPress: () => {
+              setCartItems([]);
+              saveCart([]);
+              navigation.navigate('Orders');
+            },
+          },
+        ]
+      );
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentWebView(false);
+    Alert.alert(
+      'Payment Cancelled',
+      'You cancelled the payment. You can try again.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const getPaymentHTML = () => {
+    if (!razorpayData) return '';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #2C4A6B 0%, #1a2d42 100%);
+          }
+          .container {
+            text-align: center;
+            padding: 20px;
+            color: white;
+          }
+          .loader {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .amount {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+          }
+          .order-id {
+            font-size: 14px;
+            opacity: 0.8;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="loader"></div>
+          <p>Initializing Payment...</p>
+          <p class="amount">₹${(razorpayData.amount / 100).toFixed(2)}</p>
+          <p class="order-id">Order: ${razorpayData.orginalorderid}</p>
+        </div>
+        <script>
+          var options = {
+            key: '${razorpayData.key}',
+            amount: ${razorpayData.amount},
+            currency: 'INR',
+            name: 'VSK Home Market',
+            description: 'Order: ${razorpayData.orginalorderid}',
+            order_id: '${razorpayData.order_id}',
+            prefill: {
+              name: '${razorpayData.name}',
+              contact: '${razorpayData.mobile}'
+            },
+            theme: {
+              color: '#2C4A6B'
+            },
+            handler: function(response) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'success',
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              }));
+            },
+            modal: {
+              ondismiss: function() {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'cancelled'
+                }));
+              }
+            }
+          };
+          
+          setTimeout(function() {
+            var rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(response) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'failed',
+                error: response.error
+              }));
+            });
+            rzp.open();
+          }, 1000);
+        </script>
+      </body>
+      </html>
+    `;
+  };
+
+  const handleWebViewMessage = (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      console.log('WebView message:', data);
+      
+      if (data.type === 'success') {
+        handlePaymentSuccess(data);
+      } else if (data.type === 'cancelled' || data.type === 'failed') {
+        handlePaymentCancel();
+      }
+    } catch (error) {
+      console.log('WebView message parse error:', error);
     }
   };
 
@@ -803,6 +928,31 @@ const CartScreen = ({ navigation }) => {
           {currentStep === 3 && renderPaymentStep()}
         </>
       )}
+
+      {/* Razorpay Payment WebView Modal */}
+      <Modal
+        visible={showPaymentWebView}
+        animationType="slide"
+        onRequestClose={handlePaymentCancel}
+      >
+        <SafeAreaView style={styles.paymentModalContainer}>
+          <View style={styles.paymentModalHeader}>
+            <TouchableOpacity onPress={handlePaymentCancel} style={styles.closePaymentButton}>
+              <Text style={styles.closePaymentText}>✕ Cancel Payment</Text>
+            </TouchableOpacity>
+          </View>
+          {razorpayData && (
+            <WebView
+              source={{ html: getPaymentHTML() }}
+              onMessage={handleWebViewMessage}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              startInLoadingState={true}
+              style={styles.paymentWebView}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1467,6 +1617,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Payment Modal Styles
+  paymentModalContainer: {
+    flex: 1,
+    backgroundColor: '#2C4A6B',
+  },
+  paymentModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#2C4A6B',
+  },
+  closePaymentButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+  },
+  closePaymentText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  paymentWebView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
 });
 
