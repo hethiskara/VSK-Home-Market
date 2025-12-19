@@ -227,7 +227,9 @@ const CartScreen = ({ navigation }) => {
     const addressToUse = useBillingAsDelivery ? billingAddress : deliveryAddress;
     const totalAmount = calculateTotal();
     const shippingCost = 1.00;
-    const grandTotal = (parseFloat(totalAmount) + shippingCost).toFixed(2);
+    const grandTotalFloat = parseFloat(totalAmount) + shippingCost;
+    // Round to nearest integer for Razorpay (amount in rupees, backend converts to paise)
+    const grandTotal = Math.round(grandTotalFloat);
     
     try {
       setProcessingPayment(true);
@@ -239,7 +241,7 @@ const CartScreen = ({ navigation }) => {
         billing_sc: '1',
         billing_ss: '0',
         order_id: orderNumber,
-        amount: grandTotal,
+        amount: grandTotal.toString(),
       });
 
       console.log('RAZORPAY INIT RESPONSE:', response);
