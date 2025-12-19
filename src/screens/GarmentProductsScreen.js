@@ -43,9 +43,21 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       // subcategory_id = productTypeId (Tissue Fancy=15)
       const response = await garmentAPI.getProducts(subcategoryId, categoryId, productTypeId);
       console.log('Garment Products fetched:', response);
-      setProducts(Array.isArray(response) ? response : []);
+      
+      // Filter out invalid/empty products - only keep products with valid data
+      const validProducts = Array.isArray(response) 
+        ? response.filter(item => 
+            item && 
+            item.productcode && 
+            item.productname && 
+            item.productprice
+          )
+        : [];
+      
+      setProducts(validProducts);
     } catch (error) {
       console.log('Error fetching garment products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -165,21 +177,26 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       {/* Breadcrumb */}
       {renderBreadcrumb()}
 
-      {/* Products Count */}
-      <View style={styles.countBar}>
-        <Text style={styles.countText}>{products.length} Products Found</Text>
-      </View>
+      {/* Products Count - only show if products exist */}
+      {products.length > 0 && (
+        <View style={styles.countBar}>
+          <Text style={styles.countText}>{products.length} Products Found</Text>
+        </View>
+      )}
 
       {/* Products List */}
       {products.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📦</Text>
-          <Text style={styles.emptyText}>No products found</Text>
+          <Text style={styles.emptyIcon}>🛍️</Text>
+          <Text style={styles.emptyTitle}>No Products Available</Text>
+          <Text style={styles.emptyText}>
+            There are no products in this category yet.{'\n'}Please check back later or browse other categories.
+          </Text>
           <TouchableOpacity 
             style={styles.goBackButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.goBackText}>Go Back</Text>
+            <Text style={styles.goBackText}>Browse Other Categories</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -400,16 +417,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 32,
   },
   emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 12,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666666',
-    marginBottom: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   goBackButton: {
     backgroundColor: THEME_COLOR,
