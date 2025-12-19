@@ -474,6 +474,35 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
+  // Intercept URL navigation to catch payment success redirect
+  const handleWebViewNavigation = (navState) => {
+    console.log('WebView navigation:', navState.url);
+    
+    // Check if redirected to payment-success page
+    if (navState.url && navState.url.includes('payment-success')) {
+      try {
+        const url = new URL(navState.url);
+        const paymentId = url.searchParams.get('rp_payment_id');
+        const orderId = url.searchParams.get('rp_order_id');
+        const signature = url.searchParams.get('rp_signature');
+        
+        console.log('Payment redirect detected:', { paymentId, orderId, signature });
+        
+        if (paymentId && orderId && signature) {
+          handlePaymentSuccess({
+            razorpay_payment_id: paymentId,
+            razorpay_order_id: orderId,
+            razorpay_signature: signature,
+          });
+          return false; // Prevent navigation
+        }
+      } catch (error) {
+        console.log('URL parse error:', error);
+      }
+    }
+    return true;
+  };
+
   const renderSteps = () => (
     <View style={styles.stepsContainer}>
       <View style={[styles.step, currentStep === 1 && styles.stepActive]}>
@@ -947,6 +976,7 @@ const CartScreen = ({ navigation }) => {
             <WebView
               source={{ html: getPaymentHTML() }}
               onMessage={handleWebViewMessage}
+              onNavigationStateChange={handleWebViewNavigation}
               javaScriptEnabled={true}
               domStorageEnabled={true}
               startInLoadingState={true}
