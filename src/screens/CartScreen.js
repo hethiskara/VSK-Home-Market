@@ -11,10 +11,12 @@ import {
   TextInput,
   ActivityIndicator,
   Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkoutAPI } from '../services/api';
+import RazorpayCheckout from 'react-native-razorpay';
 
 const CART_STORAGE_KEY = '@vsk_cart';
 
@@ -226,6 +228,7 @@ const CartScreen = ({ navigation }) => {
     try {
       setProcessingPayment(true);
       
+      // Step 1: Call backend to create Razorpay order
       const response = await checkoutAPI.initiatePayment({
         billing_name: `${addressToUse.firstname} ${addressToUse.lastname || ''}`.trim(),
         billing_mobile: addressToUse.mobile_no,
@@ -235,88 +238,111 @@ const CartScreen = ({ navigation }) => {
         amount: grandTotal,
       });
 
-      console.log('RAZORPAY RESPONSE:', response);
+      console.log('RAZORPAY INIT RESPONSE:', response);
       
-      // The response might contain a payment URL or gateway redirect
-      if (response?.payment_url) {
-        // Clear cart first
-        setCartItems([]);
-        saveCart([]);
-        Linking.openURL(response.payment_url);
-      } else if (response?.status) {
-        Alert.alert(
-          'Order Placed Successfully!',
-          `Your order has been placed.\n\nOrder Number: ${orderNumber}\nTotal Amount: Rs ${grandTotal}`,
-          [
-            {
-              text: 'View Orders',
-              onPress: () => {
+      if (response?.status === 'success' && response?.order_id) {
+        // Step 2: Open Razorpay checkout
+        const options = {
+          description: `Order: ${orderNumber}`,
+          image: 'https://www.vskhomemarket.com/assets/images/logo.png',
+          currency: 'INR',
+          key: response.razorpay_key || 'rzp_live_RjrJxIcWDEysuR',
+          amount: response.amount, // Amount in paise
+          name: 'VSK Home Market',
+          order_id: response.order_id,
+          prefill: {
+            contact: response.mobile || addressToUse.mobile_no,
+            name: response.name || `${addressToUse.firstname} ${addressToUse.lastname || ''}`.trim(),
+          },
+          theme: { color: '#2C4A6B' },
+        };
+
+        RazorpayCheckout.open(options)
+          .then(async (data) => {
+            // Payment successful - verify with backend
+            console.log('RAZORPAY SUCCESS:', data);
+            
+            try {
+              const verifyResponse = await checkoutAPI.verifyPayment({
+                razorpay_payment_id: data.razorpay_payment_id,
+                razorpay_order_id: data.razorpay_order_id,
+                razorpay_signature: data.razorpay_signature,
+                orginalorderid: orderNumber,
+              });
+
+              console.log('VERIFY RESPONSE:', verifyResponse);
+
+              if (verifyResponse?.status === 'success') {
+                // Clear cart and show success
                 setCartItems([]);
                 saveCart([]);
-                navigation.navigate('Orders');
+                Alert.alert(
+                  'Payment Successful! ✅',
+                  `Your payment has been verified successfully.\n\nOrder Number: ${orderNumber}\nPayment ID: ${data.razorpay_payment_id}\nTotal Amount: Rs ${grandTotal}`,
+                  [
+                    {
+                      text: 'View Orders',
+                      onPress: () => navigation.navigate('Orders'),
+                    },
+                    {
+                      text: 'Go Home',
+                      onPress: () => navigation.navigate('Home'),
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert(
+                  'Payment Verification Failed',
+                  'Payment was received but verification failed. Please contact support.',
+                  [{ text: 'OK' }]
+                );
               }
-            },
-            {
-              text: 'Go Home',
-              onPress: () => {
-                setCartItems([]);
-                saveCart([]);
-                navigation.navigate('Home');
-              }
+            } catch (verifyError) {
+              console.log('Verify error:', verifyError);
+              Alert.alert(
+                'Payment Received',
+                `Payment was successful but verification encountered an issue.\n\nOrder Number: ${orderNumber}\nPayment ID: ${data.razorpay_payment_id}\n\nPlease contact support if needed.`,
+                [
+                  {
+                    text: 'View Orders',
+                    onPress: () => {
+                      setCartItems([]);
+                      saveCart([]);
+                      navigation.navigate('Orders');
+                    },
+                  },
+                ]
+              );
             }
-          ]
-        );
+          })
+          .catch((error) => {
+            // Payment cancelled or failed
+            console.log('RAZORPAY ERROR:', error);
+            Alert.alert(
+              'Payment Cancelled',
+              error?.description || 'Payment was cancelled. You can try again.',
+              [{ text: 'OK' }]
+            );
+          })
+          .finally(() => {
+            setProcessingPayment(false);
+          });
       } else {
-        // Show order confirmation even if payment API has issues
+        // API error
         Alert.alert(
-          'Order Placed!',
-          `Your order has been placed successfully.\n\nOrder Number: ${orderNumber}\nTotal Amount: Rs ${grandTotal}\n\nYou will receive payment details on WhatsApp.`,
-          [
-            {
-              text: 'View Orders',
-              onPress: () => {
-                setCartItems([]);
-                saveCart([]);
-                navigation.navigate('Orders');
-              }
-            },
-            {
-              text: 'Go Home',
-              onPress: () => {
-                setCartItems([]);
-                saveCart([]);
-                navigation.navigate('Home');
-              }
-            }
-          ]
+          'Payment Error',
+          response?.message || 'Failed to initiate payment. Please try again.',
+          [{ text: 'OK' }]
         );
+        setProcessingPayment(false);
       }
     } catch (error) {
       console.log('Payment error:', error);
-      // Show order confirmation with manual payment note
       Alert.alert(
-        'Order Placed!',
-        `Your order has been placed.\n\nOrder Number: ${orderNumber}\nTotal Amount: Rs ${grandTotal}\n\nPayment link will be sent to your WhatsApp.`,
-        [
-          {
-            text: 'View Orders',
-            onPress: () => {
-              setCartItems([]);
-              saveCart([]);
-              navigation.navigate('Orders');
-            }
-          },
-          {
-            text: 'Go Home',
-            onPress: () => {
-              setCartItems([]);
-              saveCart([]);
-              navigation.navigate('Home');
-            }
-          }
-        ]
+        'Payment Error',
+        'Something went wrong while initiating payment. Please try again.',
+        [{ text: 'OK' }]
       );
-    } finally {
       setProcessingPayment(false);
     }
   };
