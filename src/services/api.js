@@ -326,19 +326,9 @@ export const wishlistAPI = {
 
   // Add product to wishlist (for regular products)
   addToWishlist: async (data) => {
-    const params = new URLSearchParams({
-      user_id: data.user_id,
-      product_id: data.product_id,
-      category_id: data.category_id,
-      subcategory_id: data.subcategory_id,
-      product_name: data.product_name,
-      color: data.color || '53',
-      size: data.size || '',
-      barcode: data.barcode,
-      quantity: data.quantity || '1',
-      original_price: data.original_price,
-      product_price: data.product_price,
-    }).toString();
+    // Build query string manually to match expected format
+    const params = `user_id=${data.user_id}&product_id=${data.product_id}&category_id=${data.category_id}&subcategory_id=${data.subcategory_id}&product_name=${encodeURIComponent(data.product_name)}&color=${data.color || '53'}&size=${encodeURIComponent(data.size || '')}&barcode=${data.barcode}&quantity=${data.quantity || '1'}&original_price=${data.original_price}&product_price=${data.product_price}`;
+    console.log('WISHLIST REQUEST:', `/wishlistsavejson?${params}`);
     const response = await api.get(`/wishlistsavejson?${params}`);
     console.log('ADD TO WISHLIST RESPONSE:', response.data);
     return response.data;

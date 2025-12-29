@@ -13,19 +13,16 @@ import {
   StatusBar,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { wishlistAPI, cartAPI, tokenManager } from '../services/api';
+import { wishlistAPI, tokenManager } from '../services/api';
 
 const { width } = Dimensions.get('window');
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
-const CART_STORAGE_KEY = '@vsk_cart';
 
 const WishlistScreen = ({ navigation }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [addingToCart, setAddingToCart] = useState(null);
 
   useEffect(() => {
     fetchWishlist();
@@ -62,67 +59,6 @@ const WishlistScreen = ({ navigation }) => {
     fetchWishlist();
   };
 
-  const handleAddToCart = async (item, index) => {
-    try {
-      const userData = await tokenManager.getUserData();
-      if (!userData?.userid) {
-        Alert.alert('Login Required', 'Please login to add items to cart');
-        navigation.navigate('Login');
-        return;
-      }
-
-      if (item.qty !== 'In Stock') {
-        Alert.alert('Out of Stock', 'This item is currently out of stock');
-        return;
-      }
-
-      setAddingToCart(index);
-
-      // Determine if it's a garment product based on size or product name
-      const isGarment = item.size === 'Regular' || 
-                        item.product_name?.toUpperCase().includes('SAREE') || 
-                        item.product_name?.toUpperCase().includes('COTTON') ||
-                        item.product_name?.toUpperCase().includes('SILK');
-      const cartType = isGarment ? 'garments' : 'pathanjali';
-
-      // We don't have full product details in wishlist, so show info
-      Alert.alert(
-        'Add to Cart',
-        'To add this item to cart with all details, please view the product first.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Browse Products', 
-            onPress: () => navigation.navigate('Home')
-          }
-        ]
-      );
-    } catch (error) {
-      console.log('Add to cart error:', error);
-      Alert.alert('Error', 'Failed to add to cart. Please try again.');
-    } finally {
-      setAddingToCart(null);
-    }
-  };
-
-  const handleDelete = (item, index) => {
-    Alert.alert(
-      'Delete from Wishlist',
-      `Remove "${item.product_name}" from wishlist?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            // Placeholder - needs delete API from backend
-            Alert.alert('Coming Soon', 'Delete functionality requires API from backend team.');
-          }
-        },
-      ]
-    );
-  };
-
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity 
@@ -140,32 +76,26 @@ const WishlistScreen = ({ navigation }) => {
 
   const renderWishlistItem = ({ item, index }) => (
     <View style={styles.itemCard}>
-      {/* Product Image */}
       <Image
         source={{ uri: item.productimage }}
         style={styles.productImage}
         resizeMode="cover"
       />
-      
-      {/* Product Details */}
       <View style={styles.itemDetails}>
         <Text style={styles.productName} numberOfLines={2}>
           {item.product_name}
         </Text>
         
-        {/* Size Row */}
         <View style={styles.sizeRow}>
           <Text style={styles.sizeLabel}>Size:</Text>
           <Text style={styles.sizeValue}>{item.size || 'N/A'}</Text>
         </View>
 
-        {/* Price Row */}
         <View style={styles.priceRow}>
           <Text style={styles.price}>₹{item.productprice}</Text>
           <Text style={styles.total}>Total: ₹{item.total}</Text>
         </View>
 
-        {/* Stock Status */}
         <View style={styles.stockRow}>
           <View style={[
             styles.stockBadge,
@@ -180,35 +110,9 @@ const WishlistScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Tax & Discount */}
         <View style={styles.taxDiscountRow}>
           <Text style={styles.taxText}>Tax: {item.tax}</Text>
           <Text style={styles.discountText}>Discount: {item.discount}</Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtonsRow}>
-          <TouchableOpacity 
-            style={[
-              styles.addToCartBtn, 
-              (addingToCart === index || item.qty !== 'In Stock') && styles.btnDisabled
-            ]}
-            onPress={() => handleAddToCart(item, index)}
-            disabled={addingToCart === index || item.qty !== 'In Stock'}
-          >
-            {addingToCart === index ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.addToCartText}>Add to Cart</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.deleteBtn}
-            onPress={() => handleDelete(item, index)}
-          >
-            <Text style={styles.deleteBtnText}>🗑️</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -254,7 +158,7 @@ const WishlistScreen = ({ navigation }) => {
       {wishlistItems.length > 0 && (
         <View style={styles.countBar}>
           <Text style={styles.countText}>
-            Your Wishlist contains: <Text style={styles.countNumber}>{wishlistItems.length} Products</Text>
+            {wishlistItems.length} {wishlistItems.length === 1 ? 'Item' : 'Items'} in Wishlist
           </Text>
         </View>
       )}
@@ -330,10 +234,7 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 14,
     color: '#666666',
-  },
-  countNumber: {
-    fontWeight: '700',
-    color: THEME_COLOR,
+    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
@@ -347,7 +248,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   listContainer: {
-    padding: 12,
+    padding: 16,
     paddingBottom: 32,
   },
   emptyList: {
@@ -356,7 +257,7 @@ const styles = StyleSheet.create({
   itemCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 16,
     flexDirection: 'row',
     overflow: 'hidden',
     ...Platform.select({
@@ -367,37 +268,37 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
       },
       android: {
-        elevation: 3,
+        elevation: 4,
       },
     }),
   },
   productImage: {
-    width: 110,
-    height: 160,
+    width: 120,
+    height: 140,
     backgroundColor: '#F8F8F8',
   },
   itemDetails: {
     flex: 1,
-    padding: 10,
+    padding: 12,
   },
   productName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#333333',
-    marginBottom: 6,
-    lineHeight: 18,
+    marginBottom: 8,
+    lineHeight: 20,
   },
   sizeRow: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   sizeLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666666',
     marginRight: 4,
   },
   sizeValue: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#333333',
     fontWeight: '500',
   },
@@ -405,76 +306,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   price: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: THEME_COLOR,
   },
   total: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666666',
   },
   stockRow: {
-    marginBottom: 6,
+    marginBottom: 8,
   },
   stockBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   stockText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   taxDiscountRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 8,
+    gap: 12,
   },
   taxText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#666666',
   },
   discountText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#27AE60',
     fontWeight: '500',
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  addToCartBtn: {
-    flex: 1,
-    backgroundColor: '#3498DB',
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  btnDisabled: {
-    backgroundColor: '#CCCCCC',
-  },
-  addToCartText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  deleteBtn: {
-    width: 36,
-    height: 36,
-    backgroundColor: '#FFF0F0',
-    borderRadius: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFD0D0',
-  },
-  deleteBtnText: {
-    fontSize: 16,
   },
   emptyContainer: {
     flex: 1,
@@ -533,3 +400,4 @@ const styles = StyleSheet.create({
 });
 
 export default WishlistScreen;
+

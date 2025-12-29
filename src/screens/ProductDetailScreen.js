@@ -173,17 +173,8 @@ const ProductDetailScreen = ({ navigation, route }) => {
   };
 
   const handleAddToWishlist = async () => {
-    console.log('Add to wishlist clicked, product:', product);
-    
-    if (!product) {
-      Alert.alert('Error', 'Product data not available');
-      return;
-    }
-
     try {
       const userData = await tokenManager.getUserData();
-      console.log('User data:', userData);
-      
       if (!userData?.userid) {
         Alert.alert('Login Required', 'Please login to add items to wishlist');
         navigation.navigate('Login');
@@ -192,27 +183,23 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
       setAddingToWishlist(true);
 
-      // Build the barcode if not available
-      const barcode = product.bcode || `${product.productcode}-${product.colorid || '53'}-${product.id}`;
-      
-      const wishlistData = {
+      // Extract size from product name (e.g., "100 Grams" from "Chicken Pickle Andhra 100 Grams")
+      const sizeMatch = product.productname?.match(/(\d+\s*(grams?|kg|ml|l|pieces?|pack))/i);
+      const productSize = product.size || (sizeMatch ? sizeMatch[0] : '');
+
+      const response = await wishlistAPI.addToWishlist({
         user_id: userData.userid,
         product_id: product.id,
         category_id: product.catid || '226',
         subcategory_id: product.subcatid || '385',
         product_name: product.productname,
         color: product.colorid || '53',
-        size: product.size || product.specifications?.match(/\d+\s*(grams?|kg|ml|l)/i)?.[0] || '',
-        barcode: barcode,
+        size: productSize,
+        barcode: product.bcode,
         quantity: '1',
-        original_price: product.mrp || product.productprice,
+        original_price: product.mrp,
         product_price: product.productprice,
-      };
-      
-      console.log('Wishlist data:', wishlistData);
-
-      const response = await wishlistAPI.addToWishlist(wishlistData);
-      console.log('Wishlist response:', response);
+      });
 
       if (response?.[0]?.status === 'SUCCESS') {
         Alert.alert('Success', 'Product added to wishlist!', [
