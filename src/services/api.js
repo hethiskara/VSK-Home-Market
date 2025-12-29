@@ -347,14 +347,14 @@ export const wishlistAPI = {
 
 // Review APIs
 export const reviewAPI = {
-  // Get product reviews (regular)
+  // Get product reviews
   getReviews: async (productCode) => {
     const response = await api.get(`/product-rate-reviews?product_code=${encodeURIComponent(productCode)}`);
     console.log('REVIEWS RESPONSE:', response.data);
     return response.data;
   },
 
-  // Submit product review (regular) - API may need additional fields from backend
+  // Submit product review
   submitReview: async (data) => {
     const params = new URLSearchParams({
       user_id: data.user_id,
@@ -362,40 +362,12 @@ export const reviewAPI = {
       product_code: data.product_code,
       product_id: data.product_id,
       name: data.name,
-      email: data.email || '',
       mobile_no: data.mobile_no,
       ratings: data.ratings,
       review: data.review,
     }).toString();
-    console.log('SUBMIT REVIEW REQUEST:', params);
     const response = await api.get(`/product-rate-review-details?${params}`);
     console.log('SUBMIT REVIEW RESPONSE:', response.data);
-    return response.data;
-  },
-
-  // Get garment product reviews
-  getGarmentReviews: async (productCode) => {
-    const response = await api.get(`/garmentproduct-rate-reviews?product_code=${encodeURIComponent(productCode)}`);
-    console.log('GARMENT REVIEWS RESPONSE:', response.data);
-    return response.data;
-  },
-
-  // Submit garment product review - API may need additional fields from backend
-  submitGarmentReview: async (data) => {
-    const params = new URLSearchParams({
-      user_id: data.user_id,
-      product_name: data.product_name,
-      product_code: data.product_code,
-      product_id: data.product_id,
-      name: data.name,
-      email: data.email || '',
-      mobile_no: data.mobile_no,
-      ratings: data.ratings,
-      review: data.review,
-    }).toString();
-    console.log('SUBMIT GARMENT REVIEW REQUEST:', params);
-    const response = await api.get(`/garmentproduct-rate-review-details?${params}`);
-    console.log('SUBMIT GARMENT REVIEW RESPONSE:', response.data);
     return response.data;
   },
 };
