@@ -11,10 +11,12 @@ import {
   Share,
   Linking,
   Alert,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { productAPI, garmentAPI, cartAPI, tokenManager } from '../services/api';
+import { productAPI, garmentAPI, cartAPI, tokenManager, wishlistAPI, reviewAPI } from '../services/api';
 
 const CART_STORAGE_KEY = '@vsk_cart';
 
@@ -27,9 +29,18 @@ const ProductDetailScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [reviews, setReviews] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [addingToWishlist, setAddingToWishlist] = useState(false);
 
   useEffect(() => {
     fetchProductDetails();
+    if (productCode) {
+      fetchReviews();
+    }
   }, [productCode, productType]);
 
   const fetchProductDetails = async () => {
@@ -150,6 +161,121 @@ const ProductDetailScreen = ({ navigation, route }) => {
     }
   };
 
+  const fetchReviews = async () => {
+    try {
+      const response = await reviewAPI.getReviews(productCode);
+      if (Array.isArray(response)) {
+        setReviews(response);
+      }
+    } catch (error) {
+      console.log('Error fetching reviews:', error);
+    }
+  };
+
+  const handleAddToWishlist = async () => {
+    try {
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Login Required', 'Please login to add items to wishlist');
+        navigation.navigate('Login');
+        return;
+      }
+
+      setAddingToWishlist(true);
+
+      const response = await wishlistAPI.addToWishlist({
+        user_id: userData.userid,
+        product_id: product.id,
+        category_id: product.catid || '226',
+        subcategory_id: product.subcatid || '385',
+        product_name: product.productname,
+        color: product.colorid || '53',
+        size: product.size || '',
+        barcode: product.bcode,
+        quantity: '1',
+        original_price: product.mrp,
+        product_price: product.productprice,
+      });
+
+      if (response?.[0]?.status === 'SUCCESS') {
+        Alert.alert('Success', 'Product added to wishlist!', [
+          { text: 'Continue Shopping', style: 'cancel' },
+          { text: 'View Wishlist', onPress: () => navigation.navigate('Wishlist') }
+        ]);
+      } else {
+        Alert.alert('Info', response?.[0]?.message || 'Product may already be in wishlist');
+      }
+    } catch (error) {
+      console.log('Add to wishlist error:', error);
+      Alert.alert('Error', 'Failed to add to wishlist. Please try again.');
+    } finally {
+      setAddingToWishlist(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewText.trim()) {
+      Alert.alert('Error', 'Please enter a review');
+      return;
+    }
+
+    try {
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Login Required', 'Please login to submit a review');
+        navigation.navigate('Login');
+        return;
+      }
+
+      setSubmittingReview(true);
+
+      const response = await reviewAPI.submitReview({
+        user_id: userData.userid,
+        product_name: product.productname,
+        product_code: product.productcode,
+        product_id: product.id,
+        name: userData.firstname || 'User',
+        mobile_no: userData.mobile_no || '',
+        ratings: reviewRating.toString(),
+        review: reviewText,
+      });
+
+      if (response?.[0]?.status === 'SUCCESS') {
+        Alert.alert('Success', 'Review submitted successfully!');
+        setShowReviewModal(false);
+        setReviewText('');
+        setReviewRating(5);
+        fetchReviews(); // Refresh reviews
+      } else {
+        Alert.alert('Error', response?.[0]?.message || 'Failed to submit review');
+      }
+    } catch (error) {
+      console.log('Submit review error:', error);
+      Alert.alert('Error', 'Failed to submit review. Please try again.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const renderStars = (rating, interactive = false, size = 16) => {
+    const stars = [];
+    const ratingNum = parseFloat(rating) || 0;
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <TouchableOpacity
+          key={i}
+          disabled={!interactive}
+          onPress={() => interactive && setReviewRating(i)}
+        >
+          <Text style={{ fontSize: size, color: i <= ratingNum ? '#FFD700' : '#CCCCCC' }}>
+            ★
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+    return <View style={{ flexDirection: 'row' }}>{stars}</View>;
+  };
+
   const images = getProductImages();
 
   // Helper function to get value or NA
@@ -232,19 +358,26 @@ const ProductDetailScreen = ({ navigation, route }) => {
           <Text style={styles.productCode}>Product Code : {getValue(product.productcode)}</Text>
 
           {/* Ratings Section */}
-          <View style={styles.ratingsRow}>
+          <TouchableOpacity 
+            style={styles.ratingsRow}
+            onPress={() => setShowReviewModal(true)}
+          >
             <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>nan</Text>
+              <Text style={styles.ratingText}>
+                {reviews.length > 0 ? (reviews.reduce((acc, r) => acc + parseFloat(r.ratings || 0), 0) / reviews.length).toFixed(1) : 'New'}
+              </Text>
               <Text style={styles.ratingStar}>★</Text>
             </View>
-            <Text style={styles.ratingsLabel}>Ratings & 0 Reviews</Text>
-          </View>
+            <Text style={styles.ratingsLabel}>
+              {reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'} • Tap to rate
+            </Text>
+          </TouchableOpacity>
 
           {/* Feedback Row */}
           <View style={styles.feedbackRow}>
             <Text style={styles.feedbackItem}>👍 0</Text>
             <Text style={styles.feedbackItem}>👎 0</Text>
-            <Text style={styles.feedbackItem}>💬 0</Text>
+            <Text style={styles.feedbackItem}>💬 {reviews.length}</Text>
           </View>
 
           {/* Compare & Wishlist */}
@@ -253,9 +386,13 @@ const ProductDetailScreen = ({ navigation, route }) => {
               <Text style={styles.actionIcon}>◉</Text>
               <Text style={styles.actionLabel}>Add to Compare</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
-              <Text style={styles.actionIconHeart}>❤</Text>
-              <Text style={styles.actionLabel}>Add to Wishlist</Text>
+            <TouchableOpacity 
+              style={styles.actionItem}
+              onPress={handleAddToWishlist}
+              disabled={addingToWishlist}
+            >
+              <Text style={styles.actionIconHeart}>{addingToWishlist ? '⏳' : '❤'}</Text>
+              <Text style={styles.actionLabel}>{addingToWishlist ? 'Adding...' : 'Add to Wishlist'}</Text>
             </TouchableOpacity>
           </View>
 
@@ -365,6 +502,42 @@ const ProductDetailScreen = ({ navigation, route }) => {
             <Text style={styles.sectionContent}>{getValue(product.specifications)}</Text>
           </View>
 
+          {/* Reviews Section */}
+          <View style={styles.section}>
+            <View style={styles.reviewsHeader}>
+              <Text style={styles.sectionTitle}>Customer Reviews ({reviews.length})</Text>
+              <TouchableOpacity 
+                style={styles.writeReviewButton}
+                onPress={() => setShowReviewModal(true)}
+              >
+                <Text style={styles.writeReviewText}>Write Review</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {reviews.length > 0 ? (
+              reviews.map((review, index) => (
+                <View key={review.id || index} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewerAvatar}>
+                      <Text style={styles.reviewerInitial}>
+                        {review.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </Text>
+                    </View>
+                    <View style={styles.reviewerInfo}>
+                      <Text style={styles.reviewerName}>{review.name}</Text>
+                      {renderStars(review.ratings)}
+                    </View>
+                  </View>
+                  <Text style={styles.reviewText}>{review.review}</Text>
+                </View>
+              ))
+            ) : (
+              <View style={styles.noReviews}>
+                <Text style={styles.noReviewsText}>No reviews yet. Be the first to review!</Text>
+              </View>
+            )}
+          </View>
+
           <View style={{ height: 80 }} />
         </View>
       </ScrollView>
@@ -373,6 +546,55 @@ const ProductDetailScreen = ({ navigation, route }) => {
       <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp}>
         <Text style={styles.whatsappIcon}>📱</Text>
       </TouchableOpacity>
+
+      {/* Review Modal */}
+      <Modal
+        visible={showReviewModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Write a Review</Text>
+              <TouchableOpacity onPress={() => setShowReviewModal(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalProductName}>{product?.productname}</Text>
+
+            <Text style={styles.ratingLabel}>Your Rating</Text>
+            <View style={styles.ratingStars}>
+              {renderStars(reviewRating, true, 32)}
+            </View>
+
+            <Text style={styles.ratingLabel}>Your Review</Text>
+            <TextInput
+              style={styles.reviewInput}
+              placeholder="Write your review here..."
+              value={reviewText}
+              onChangeText={setReviewText}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+
+            <TouchableOpacity 
+              style={[styles.submitReviewButton, submittingReview && styles.submitReviewButtonDisabled]}
+              onPress={handleSubmitReview}
+              disabled={submittingReview}
+            >
+              {submittingReview ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.submitReviewText}>Submit Review</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -725,6 +947,140 @@ const styles = StyleSheet.create({
   },
   whatsappIcon: {
     fontSize: 28,
+  },
+  // Reviews Styles
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  writeReviewButton: {
+    backgroundColor: '#3498DB',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  writeReviewText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  reviewCard: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2C4A6B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  reviewerInitial: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  reviewerInfo: {
+    flex: 1,
+  },
+  reviewerName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  reviewText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  noReviews: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  noReviewsText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#999',
+    padding: 4,
+  },
+  modalProductName: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+  },
+  ratingLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  ratingStars: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  reviewInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 100,
+    marginBottom: 20,
+    backgroundColor: '#F8F9FA',
+  },
+  submitReviewButton: {
+    backgroundColor: '#FF6B35',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  submitReviewButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  submitReviewText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

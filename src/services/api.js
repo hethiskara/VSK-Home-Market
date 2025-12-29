@@ -315,6 +315,63 @@ export const orderAPI = {
   },
 };
 
+// Wishlist APIs
+export const wishlistAPI = {
+  // Get user's wishlist
+  getWishlist: async (userId) => {
+    const response = await api.get(`/my-wishlist-json?userid=${userId}`);
+    console.log('WISHLIST RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Add product to wishlist (for regular products)
+  addToWishlist: async (data) => {
+    const params = new URLSearchParams({
+      user_id: data.user_id,
+      product_id: data.product_id,
+      category_id: data.category_id,
+      subcategory_id: data.subcategory_id,
+      product_name: data.product_name,
+      color: data.color || '53',
+      size: data.size || '',
+      barcode: data.barcode,
+      quantity: data.quantity || '1',
+      original_price: data.original_price,
+      product_price: data.product_price,
+    }).toString();
+    const response = await api.get(`/wishlistsavejson?${params}`);
+    console.log('ADD TO WISHLIST RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
+// Review APIs
+export const reviewAPI = {
+  // Get product reviews
+  getReviews: async (productCode) => {
+    const response = await api.get(`/product-rate-reviews?product_code=${encodeURIComponent(productCode)}`);
+    console.log('REVIEWS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Submit product review
+  submitReview: async (data) => {
+    const params = new URLSearchParams({
+      user_id: data.user_id,
+      product_name: data.product_name,
+      product_code: data.product_code,
+      product_id: data.product_id,
+      name: data.name,
+      mobile_no: data.mobile_no,
+      ratings: data.ratings,
+      review: data.review,
+    }).toString();
+    const response = await api.get(`/product-rate-review-details?${params}`);
+    console.log('SUBMIT REVIEW RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Token management
 export const tokenManager = {
   setToken: async (token) => {

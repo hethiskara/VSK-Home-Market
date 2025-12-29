@@ -362,6 +362,11 @@ const Drawer = ({ visible, onClose, navigation }) => {
                 <Text style={styles.menuLabel}>Order Status</Text>
               </TouchableOpacity>
 
+              {/* My Wishlist */}
+              <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuPress(null, 'Wishlist')}>
+                <Text style={styles.menuLabel}>My Wishlist</Text>
+              </TouchableOpacity>
+
               {/* Logout */}
               <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuPress('logout')}>
                 <Text style={styles.menuLabel}>Logout</Text>
