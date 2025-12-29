@@ -184,8 +184,18 @@ const ProductDetailScreen = ({ navigation, route }) => {
       setAddingToWishlist(true);
 
       // Extract size from product name (e.g., "100 Grams" from "Chicken Pickle Andhra 100 Grams")
+      // For garments, use "Regular" as default
       const sizeMatch = product.productname?.match(/(\d+\s*(grams?|kg|ml|l|pieces?|pack))/i);
-      const productSize = product.size || (sizeMatch ? sizeMatch[0] : '');
+      let productSize = product.size || (sizeMatch ? sizeMatch[0] : '');
+      
+      // For garment products, use "Regular" if size is still empty
+      if (!productSize && productType === 'garment') {
+        productSize = 'Regular';
+      }
+
+      // Build barcode - ensure no double dashes
+      const colorId = product.colorid || '53';
+      const barcode = product.bcode || `${product.productcode}-${colorId}-${product.id}`;
 
       const response = await wishlistAPI.addToWishlist({
         user_id: userData.userid,
@@ -193,9 +203,9 @@ const ProductDetailScreen = ({ navigation, route }) => {
         category_id: product.catid || '226',
         subcategory_id: product.subcatid || '385',
         product_name: product.productname,
-        color: product.colorid || '53',
+        color: colorId,
         size: productSize,
-        barcode: product.bcode,
+        barcode: barcode,
         quantity: '1',
         original_price: product.mrp,
         product_price: product.productprice,
