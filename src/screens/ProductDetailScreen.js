@@ -14,14 +14,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { productAPI, cartAPI, tokenManager } from '../services/api';
+import { productAPI, garmentAPI, cartAPI, tokenManager } from '../services/api';
 
 const CART_STORAGE_KEY = '@vsk_cart';
 
 const { width } = Dimensions.get('window');
 
 const ProductDetailScreen = ({ navigation, route }) => {
-  const { productCode } = route.params || {};
+  const { productCode, productType = 'regular' } = route.params || {};
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,12 +30,21 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchProductDetails();
-  }, [productCode]);
+  }, [productCode, productType]);
 
   const fetchProductDetails = async () => {
     setLoading(true);
     try {
-      const response = await productAPI.getProductDetails(productCode);
+      // Use the appropriate API based on product type
+      let response;
+      if (productType === 'garment') {
+        response = await garmentAPI.getProductDetails(productCode);
+        console.log('GARMENT DETAILS RESPONSE:', response);
+      } else {
+        response = await productAPI.getProductDetails(productCode);
+        console.log('REGULAR DETAILS RESPONSE:', response);
+      }
+      
       if (Array.isArray(response) && response.length > 0) {
         setProduct(response[0]);
       }

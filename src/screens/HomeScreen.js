@@ -116,8 +116,8 @@ const HomeScreen = ({ navigation }) => {
         homeAPI.getTopSellersGarments(),
       ]);
       
-      const regularProducts = Array.isArray(topRegular) ? topRegular : [];
-      const garmentsProducts = Array.isArray(topGarments) ? topGarments : [];
+      const regularProducts = (Array.isArray(topRegular) ? topRegular : []).map(p => ({ ...p, productType: 'regular' }));
+      const garmentsProducts = (Array.isArray(topGarments) ? topGarments : []).map(p => ({ ...p, productType: 'garment' }));
       setTopSellers([...regularProducts, ...garmentsProducts]);
 
       // Fetch featured products (regular + garments)
@@ -126,8 +126,8 @@ const HomeScreen = ({ navigation }) => {
         homeAPI.getFeaturedGarments(),
       ]);
       
-      const featuredRegularProducts = Array.isArray(featuredRegular) ? featuredRegular : [];
-      const featuredGarmentsProducts = Array.isArray(featuredGarments) ? featuredGarments : [];
+      const featuredRegularProducts = (Array.isArray(featuredRegular) ? featuredRegular : []).map(p => ({ ...p, productType: 'regular' }));
+      const featuredGarmentsProducts = (Array.isArray(featuredGarments) ? featuredGarments : []).map(p => ({ ...p, productType: 'garment' }));
       setFeaturedProducts([...featuredRegularProducts, ...featuredGarmentsProducts]);
 
       // Fetch best selling products (regular + garments)
@@ -136,8 +136,8 @@ const HomeScreen = ({ navigation }) => {
         homeAPI.getBestSellingGarments(),
       ]);
       
-      const bestRegularProducts = Array.isArray(bestRegular) ? bestRegular : [];
-      const bestGarmentsProducts = Array.isArray(bestGarments) ? bestGarments : [];
+      const bestRegularProducts = (Array.isArray(bestRegular) ? bestRegular : []).map(p => ({ ...p, productType: 'regular' }));
+      const bestGarmentsProducts = (Array.isArray(bestGarments) ? bestGarments : []).map(p => ({ ...p, productType: 'garment' }));
       setBestSelling([...bestRegularProducts, ...bestGarmentsProducts]);
 
       // Fetch latest products (regular + garments)
@@ -146,8 +146,8 @@ const HomeScreen = ({ navigation }) => {
         homeAPI.getLatestProductsGarments(),
       ]);
       
-      const latestRegularProducts = Array.isArray(latestRegular) ? latestRegular : [];
-      const latestGarmentsProducts = Array.isArray(latestGarments) ? latestGarments : [];
+      const latestRegularProducts = (Array.isArray(latestRegular) ? latestRegular : []).map(p => ({ ...p, productType: 'regular' }));
+      const latestGarmentsProducts = (Array.isArray(latestGarments) ? latestGarments : []).map(p => ({ ...p, productType: 'garment' }));
       setLatestProducts([...latestRegularProducts, ...latestGarmentsProducts]);
 
       // Fetch testimonials
@@ -171,14 +171,20 @@ const HomeScreen = ({ navigation }) => {
   const renderProductItem = ({ item }) => (
     <ProductCard 
       product={item} 
-      onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
+      onPress={() => navigation.navigate('ProductDetail', { 
+        productCode: item.productcode,
+        productType: item.productType || 'regular'
+      })}
     />
   );
 
   const renderLatestItem = ({ item }) => (
     <LatestProductCard 
       product={item} 
-      onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
+      onPress={() => navigation.navigate('ProductDetail', { 
+        productCode: item.productcode,
+        productType: item.productType || 'regular'
+      })}
     />
   );
 
