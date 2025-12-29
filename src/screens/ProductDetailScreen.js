@@ -163,7 +163,12 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
   const fetchReviews = async () => {
     try {
-      const response = await reviewAPI.getReviews(productCode);
+      // Use appropriate API based on product type
+      const response = productType === 'garment'
+        ? await reviewAPI.getGarmentReviews(productCode)
+        : await reviewAPI.getReviews(productCode);
+      
+      console.log('Reviews fetched:', response);
       if (Array.isArray(response)) {
         setReviews(response);
       }
@@ -175,27 +180,42 @@ const ProductDetailScreen = ({ navigation, route }) => {
   const handleAddToWishlist = async () => {
     try {
       const userData = await tokenManager.getUserData();
+      console.log('User data for wishlist:', userData);
+      
       if (!userData?.userid) {
         Alert.alert('Login Required', 'Please login to add items to wishlist');
         navigation.navigate('Login');
         return;
       }
 
+      if (!product) {
+        Alert.alert('Error', 'Product data not available');
+        return;
+      }
+
       setAddingToWishlist(true);
 
-      const response = await wishlistAPI.addToWishlist({
+      // Build barcode if not available
+      const barcode = product.bcode || `${product.productcode}-${product.colorid || '53'}-${product.id}`;
+      
+      const wishlistData = {
         user_id: userData.userid,
         product_id: product.id,
         category_id: product.catid || '226',
         subcategory_id: product.subcatid || '385',
         product_name: product.productname,
         color: product.colorid || '53',
-        size: product.size || '',
-        barcode: product.bcode,
+        size: product.size || product.specifications?.match(/\d+\s*(grams?|kg|ml|l)/i)?.[0] || '',
+        barcode: barcode,
         quantity: '1',
-        original_price: product.mrp,
+        original_price: product.mrp || product.productprice,
         product_price: product.productprice,
-      });
+      };
+      
+      console.log('Wishlist data:', wishlistData);
+
+      const response = await wishlistAPI.addToWishlist(wishlistData);
+      console.log('Wishlist response:', response);
 
       if (response?.[0]?.status === 'SUCCESS') {
         Alert.alert('Success', 'Product added to wishlist!', [
@@ -229,16 +249,26 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
       setSubmittingReview(true);
 
-      const response = await reviewAPI.submitReview({
+      const reviewData = {
         user_id: userData.userid,
         product_name: product.productname,
         product_code: product.productcode,
         product_id: product.id,
         name: userData.firstname || 'User',
+        email: userData.email || '',
         mobile_no: userData.mobile_no || '',
         ratings: reviewRating.toString(),
         review: reviewText,
-      });
+      };
+
+      console.log('Review data:', reviewData);
+
+      // Use appropriate API based on product type
+      const response = productType === 'garment' 
+        ? await reviewAPI.submitGarmentReview(reviewData)
+        : await reviewAPI.submitReview(reviewData);
+
+      console.log('Review response:', response);
 
       if (response?.[0]?.status === 'SUCCESS') {
         Alert.alert('Success', 'Review submitted successfully!');
@@ -247,7 +277,8 @@ const ProductDetailScreen = ({ navigation, route }) => {
         setReviewRating(5);
         fetchReviews(); // Refresh reviews
       } else {
-        Alert.alert('Error', response?.[0]?.message || 'Failed to submit review');
+        // API may need additional fields - show info message
+        Alert.alert('Info', response?.[0]?.message || 'Review submission requires additional information. Please try from the website.');
       }
     } catch (error) {
       console.log('Submit review error:', error);
