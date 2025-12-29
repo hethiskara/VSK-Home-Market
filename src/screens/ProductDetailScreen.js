@@ -93,13 +93,16 @@ const ProductDetailScreen = ({ navigation, route }) => {
         return;
       }
 
+      // Determine cart type based on product type
+      const cartType = productType === 'garment' ? 'garments' : 'pathanjali';
+
       // Call add to cart API
       const response = await cartAPI.addToCart(
         product.bcode,
         userData.userid,
         product.id,
         quantity,
-        'pathanjali'
+        cartType
       );
 
       if (response.status === true) {
@@ -116,6 +119,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
           sgst: product.sgst,
           bcode: product.bcode,
           prod_id: product.id,
+          carttype: cartType,
         };
 
         // Get existing cart
