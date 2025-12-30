@@ -165,7 +165,9 @@ const ProductDetailScreen = ({ navigation, route }) => {
     try {
       const response = await reviewAPI.getReviews(productCode);
       if (Array.isArray(response)) {
-        setReviews(response);
+        // Filter out "NO REVIEWS FOUND" placeholder from API
+        const validReviews = response.filter(r => r.id !== '0' && !r.title?.includes('NO REVIEWS'));
+        setReviews(validReviews);
       }
     } catch (error) {
       console.log('Error fetching reviews:', error);
