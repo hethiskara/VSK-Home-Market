@@ -387,28 +387,15 @@ const ProductDetailScreen = ({ navigation, route }) => {
             </Text>
           </TouchableOpacity>
 
-          {/* Feedback Row */}
-          <View style={styles.feedbackRow}>
-            <Text style={styles.feedbackItem}>👍 0</Text>
-            <Text style={styles.feedbackItem}>👎 0</Text>
-            <Text style={styles.feedbackItem}>💬 {reviews.length}</Text>
-          </View>
-
-          {/* Compare & Wishlist */}
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionItem}>
-              <Text style={styles.actionIcon}>◉</Text>
-              <Text style={styles.actionLabel}>Add to Compare</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.actionItem}
-              onPress={handleAddToWishlist}
-              disabled={addingToWishlist}
-            >
-              <Text style={styles.actionIconHeart}>{addingToWishlist ? '⏳' : '❤'}</Text>
-              <Text style={styles.actionLabel}>{addingToWishlist ? 'Adding...' : 'Add to Wishlist'}</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Wishlist */}
+          <TouchableOpacity 
+            style={styles.wishlistButton}
+            onPress={handleAddToWishlist}
+            disabled={addingToWishlist}
+          >
+            <Text style={styles.actionIconHeart}>{addingToWishlist ? '⏳' : '❤'}</Text>
+            <Text style={styles.actionLabel}>{addingToWishlist ? 'Adding...' : 'Add to Wishlist'}</Text>
+          </TouchableOpacity>
 
           {/* Price Section */}
           <View style={styles.priceSection}>
@@ -731,31 +718,13 @@ const styles = StyleSheet.create({
     color: '#3498DB',
     fontWeight: '500',
   },
-  feedbackRow: {
-    flexDirection: 'row',
-    gap: 20,
-    marginBottom: 12,
-  },
-  feedbackItem: {
-    fontSize: 14,
-    color: '#666',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    gap: 20,
-  },
-  actionItem: {
+  wishlistButton: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  actionIcon: {
-    fontSize: 14,
-    color: '#3498DB',
-    marginRight: 6,
+    marginBottom: 16,
   },
   actionIconHeart: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#E74C3C',
     marginRight: 6,
   },
