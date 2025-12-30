@@ -13,6 +13,10 @@ import {
   Alert,
   TextInput,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -567,46 +571,60 @@ const ProductDetailScreen = ({ navigation, route }) => {
         transparent={true}
         onRequestClose={() => setShowReviewModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Write a Review</Text>
-              <TouchableOpacity onPress={() => setShowReviewModal(false)}>
-                <Text style={styles.modalClose}>✕</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Write a Review</Text>
+                <TouchableOpacity onPress={() => {
+                  Keyboard.dismiss();
+                  setShowReviewModal(false);
+                }}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.modalProductName}>{product?.productname}</Text>
+
+              <Text style={styles.ratingLabel}>Your Rating</Text>
+              <View style={styles.ratingStars}>
+                {renderStars(reviewRating, true, 32)}
+              </View>
+
+              <Text style={styles.ratingLabel}>Your Review</Text>
+              <TextInput
+                style={styles.reviewInput}
+                placeholder="Write your review here..."
+                value={reviewText}
+                onChangeText={setReviewText}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                returnKeyType="done"
+                blurOnSubmit={true}
+                onSubmitEditing={Keyboard.dismiss}
+              />
+
+              <TouchableOpacity 
+                style={[styles.submitReviewButton, submittingReview && styles.submitReviewButtonDisabled]}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  handleSubmitReview();
+                }}
+                disabled={submittingReview}
+              >
+                {submittingReview ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.submitReviewText}>Submit Review</Text>
+                )}
               </TouchableOpacity>
             </View>
-
-            <Text style={styles.modalProductName}>{product?.productname}</Text>
-
-            <Text style={styles.ratingLabel}>Your Rating</Text>
-            <View style={styles.ratingStars}>
-              {renderStars(reviewRating, true, 32)}
-            </View>
-
-            <Text style={styles.ratingLabel}>Your Review</Text>
-            <TextInput
-              style={styles.reviewInput}
-              placeholder="Write your review here..."
-              value={reviewText}
-              onChangeText={setReviewText}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-
-            <TouchableOpacity 
-              style={[styles.submitReviewButton, submittingReview && styles.submitReviewButtonDisabled]}
-              onPress={handleSubmitReview}
-              disabled={submittingReview}
-            >
-              {submittingReview ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.submitReviewText}>Submit Review</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
