@@ -15,7 +15,7 @@ import {
   StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { garmentAPI, cartAPI, tokenManager } from '../services/api';
+import { garmentAPI, cartAPI, tokenManager, wishlistAPI } from '../services/api';
 
 const CART_STORAGE_KEY = '@vsk_cart';
 
@@ -30,6 +30,7 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [addingToWishlist, setAddingToWishlist] = useState(false);
 
   useEffect(() => {
     fetchProductDetails();
@@ -142,6 +143,50 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleAddToWishlist = async () => {
+    try {
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Login Required', 'Please login to add items to wishlist');
+        navigation.navigate('Login');
+        return;
+      }
+
+      setAddingToWishlist(true);
+
+      const colorId = product.colorid || '53';
+      const barcode = product.bcode || `${product.productcode}-${colorId}-${product.id}`;
+
+      const response = await wishlistAPI.addGarmentToWishlist({
+        user_id: userData.userid,
+        product_id: product.id,
+        category_id: product.catid || '1',
+        subcategory_id: product.subcatid || '15',
+        product_name: product.productname,
+        color: colorId,
+        size: 'Regular',
+        barcode: barcode,
+        quantity: '1',
+        original_price: product.mrp,
+        product_price: product.productprice,
+      });
+
+      if (response?.[0]?.status === 'SUCCESS') {
+        Alert.alert('Success', 'Product added to wishlist!', [
+          { text: 'Continue Shopping', style: 'cancel' },
+          { text: 'View Wishlist', onPress: () => navigation.navigate('Wishlist') }
+        ]);
+      } else {
+        Alert.alert('Info', response?.[0]?.message || 'Product may already be in wishlist');
+      }
+    } catch (error) {
+      console.log('Add to wishlist error:', error);
+      Alert.alert('Error', 'Failed to add to wishlist. Please try again.');
+    } finally {
+      setAddingToWishlist(false);
+    }
+  };
+
   const images = getProductImages();
 
   // Helper function to get value or NA
@@ -251,9 +296,13 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           </View>
 
           {/* Wishlist */}
-          <TouchableOpacity style={styles.wishlistButton}>
-            <Text style={styles.actionIconHeart}>❤</Text>
-            <Text style={styles.actionLabel}>Add to Wishlist</Text>
+          <TouchableOpacity 
+            style={styles.wishlistButton}
+            onPress={handleAddToWishlist}
+            disabled={addingToWishlist}
+          >
+            <Text style={styles.actionIconHeart}>{addingToWishlist ? '⏳' : '❤'}</Text>
+            <Text style={styles.actionLabel}>{addingToWishlist ? 'Adding...' : 'Add to Wishlist'}</Text>
           </TouchableOpacity>
 
           {/* Price Section */}

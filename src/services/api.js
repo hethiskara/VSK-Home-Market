@@ -333,6 +333,15 @@ export const wishlistAPI = {
     console.log('ADD TO WISHLIST RESPONSE:', response.data);
     return response.data;
   },
+
+  // Add garment product to wishlist
+  addGarmentToWishlist: async (data) => {
+    const params = `user_id=${data.user_id}&product_id=${data.product_id}&category_id=${data.category_id}&subcategory_id=${data.subcategory_id}&product_name=${encodeURIComponent(data.product_name)}&color=${data.color || '53'}&size=${encodeURIComponent(data.size || 'Regular')}&barcode=${data.barcode}&quantity=${data.quantity || '1'}&original_price=${data.original_price}&product_price=${data.product_price}`;
+    console.log('GARMENT WISHLIST REQUEST:', `/garmentwishlistsavejson?${params}`);
+    const response = await api.get(`/garmentwishlistsavejson?${params}`);
+    console.log('ADD GARMENT TO WISHLIST RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Review APIs

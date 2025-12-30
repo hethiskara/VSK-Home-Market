@@ -197,7 +197,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
       const colorId = product.colorid || '53';
       const barcode = product.bcode || `${product.productcode}-${colorId}-${product.id}`;
 
-      const response = await wishlistAPI.addToWishlist({
+      const wishlistData = {
         user_id: userData.userid,
         product_id: product.id,
         category_id: product.catid || '226',
@@ -209,7 +209,12 @@ const ProductDetailScreen = ({ navigation, route }) => {
         quantity: '1',
         original_price: product.mrp,
         product_price: product.productprice,
-      });
+      };
+
+      // Use different API endpoint for garment products
+      const response = productType === 'garment' 
+        ? await wishlistAPI.addGarmentToWishlist(wishlistData)
+        : await wishlistAPI.addToWishlist(wishlistData);
 
       if (response?.[0]?.status === 'SUCCESS') {
         Alert.alert('Success', 'Product added to wishlist!', [
