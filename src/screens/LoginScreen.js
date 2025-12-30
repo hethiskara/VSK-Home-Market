@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { authAPI, tokenManager } from '../services/api';
+import { authAPI, checkoutAPI, tokenManager } from '../services/api';
 
 const LoginScreen = ({ navigation }) => {
   const [mobileNo, setMobileNo] = useState('');
@@ -46,10 +46,32 @@ const LoginScreen = ({ navigation }) => {
       const result = Array.isArray(response) ? response[0] : response;
 
       if (result.status === 'SUCCESS') {
-        await tokenManager.setUserData({
+        // Fetch full user details to get firstname, lastname etc.
+        let userData = {
           userid: result.userid,
           mobile_no: result.mobile_no,
-        });
+        };
+
+        try {
+          const userDetails = await checkoutAPI.getUserData(result.userid);
+          if (userDetails?.[0]?.userdata?.[0]) {
+            const details = userDetails[0].userdata[0];
+            userData = {
+              ...userData,
+              firstname: details.firstname,
+              lastname: details.lastname,
+              address: details.address,
+              city: details.city,
+              state: details.state,
+              postalcode: details.postalcode,
+              country: details.country,
+            };
+          }
+        } catch (e) {
+          console.log('Could not fetch user details:', e);
+        }
+
+        await tokenManager.setUserData(userData);
 
         console.log('Login successful, navigating to Home');
         navigation.replace('Home');

@@ -248,12 +248,17 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
       setSubmittingReview(true);
 
+      // Build user's full name
+      const userName = userData.firstname 
+        ? `${userData.firstname}${userData.lastname ? ' ' + userData.lastname : ''}`
+        : 'User';
+
       const response = await reviewAPI.submitReview({
         user_id: userData.userid,
         product_name: product.productname,
         product_code: product.productcode,
         product_id: product.id,
-        name: userData.firstname || 'User',
+        name: userName,
         mobile_no: userData.mobile_no || '',
         ratings: reviewRating.toString(),
         review: reviewText,
