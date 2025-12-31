@@ -259,13 +259,8 @@ export const cartAPI = {
 
   // Delete item from cart
   deleteFromCart: async (cartId) => {
-    const formData = new FormData();
-    formData.append('id', cartId.toString());
-    const response = await api.post('/cart-delete-json', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Backend expects id as query parameter
+    const response = await api.post(`/cart-delete-json?id=${cartId}`);
     console.log('DELETE CART RESPONSE:', response.data);
     return response.data;
   },
