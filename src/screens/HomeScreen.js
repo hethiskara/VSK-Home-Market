@@ -415,31 +415,38 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Promotion Section */}
-        <View style={styles.promotionSection}>
-          <View style={styles.promotionContent}>
-            {advertisement && (
-              <TouchableOpacity onPress={() => setShowAdModal(true)}>
-                <Image
-                  source={{ uri: advertisement.image }}
-                  style={styles.promotionBanner}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            )}
-            <View style={styles.subscribeContainer}>
-              <Text style={styles.subscribeTitle}>🔔 Stay Updated!</Text>
-              <Text style={styles.subscribeText}>
-                Subscribe to get notified about our exclusive offers and new arrivals
-              </Text>
-              <TouchableOpacity 
-                style={styles.subscribeButton}
-                onPress={() => Alert.alert('Coming Soon', 'Subscription feature will be available soon!')}
-              >
-                <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Ad Section - Full Square */}
+        {advertisement && (
+          <View style={styles.adSection}>
+            <TouchableOpacity 
+              onPress={() => setShowAdModal(true)}
+              activeOpacity={0.9}
+              style={styles.adTouchable}
+            >
+              <Image
+                source={{ uri: advertisement.image }}
+                style={styles.adBannerFull}
+                resizeMode="cover"
+              />
+              <View style={styles.adOverlay}>
+                <Text style={styles.adTapText}>Tap to view</Text>
+              </View>
+            </TouchableOpacity>
           </View>
+        )}
+
+        {/* Love Our App Section */}
+        <View style={styles.appReviewSection}>
+          <View style={styles.appReviewHeader}>
+            <Text style={styles.appReviewTitle}>❤️ Love Our App?</Text>
+            <Text style={styles.appReviewSubtitle}>Share your experience with us</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.writeReviewButton}
+            onPress={() => setShowReviewModal(true)}
+          >
+            <Text style={styles.writeReviewButtonText}>✍️ Write a Review</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Testimonials Section */}
@@ -464,17 +471,20 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Write App Review Section */}
-        <View style={styles.appReviewSection}>
-          <View style={styles.appReviewHeader}>
-            <Text style={styles.appReviewTitle}>❤️ Love Our App?</Text>
-            <Text style={styles.appReviewSubtitle}>Share your experience with us</Text>
+        {/* Stay Updated Section */}
+        <View style={styles.stayUpdatedSection}>
+          <View style={styles.stayUpdatedIcon}>
+            <Text style={styles.bellIcon}>🔔</Text>
           </View>
+          <Text style={styles.stayUpdatedTitle}>Stay Updated!</Text>
+          <Text style={styles.stayUpdatedText}>
+            Subscribe to get notified about our exclusive offers and new arrivals
+          </Text>
           <TouchableOpacity 
-            style={styles.writeReviewButton}
-            onPress={() => setShowReviewModal(true)}
+            style={styles.subscribeButton}
+            onPress={() => Alert.alert('Coming Soon', 'Subscription feature will be available soon!')}
           >
-            <Text style={styles.writeReviewButtonText}>✍️ Write a Review</Text>
+            <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
           </TouchableOpacity>
         </View>
 
@@ -858,48 +868,91 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
   },
   
-  // Promotion Section Styles
-  promotionSection: {
+  // Ad Section Styles
+  adSection: {
     marginTop: 16,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  promotionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  adTouchable: {
+    width: '100%',
+    aspectRatio: 1,
+    position: 'relative',
   },
-  promotionBanner: {
-    width: 140,
-    height: 120,
-    borderRadius: 8,
+  adBannerFull: {
+    width: '100%',
+    height: '100%',
     backgroundColor: '#F0F0F0',
   },
-  subscribeContainer: {
-    flex: 1,
-    marginLeft: 16,
+  adOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingVertical: 8,
+    alignItems: 'center',
   },
-  subscribeTitle: {
-    fontSize: 16,
+  adTapText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  // Stay Updated Section Styles
+  stayUpdatedSection: {
+    marginTop: 16,
+    backgroundColor: '#E8F4FD',
+    padding: 24,
+    alignItems: 'center',
+  },
+  stayUpdatedIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#2C4A6B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bellIcon: {
+    fontSize: 28,
+  },
+  stayUpdatedTitle: {
+    fontSize: 20,
     fontWeight: '700',
     color: '#2C4A6B',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  subscribeText: {
-    fontSize: 13,
+  stayUpdatedText: {
+    fontSize: 14,
     color: '#666666',
-    lineHeight: 18,
-    marginBottom: 10,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 16,
+    paddingHorizontal: 20,
   },
   subscribeButton: {
     backgroundColor: '#FF6B35',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 25,
   },
   subscribeButtonText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
 
