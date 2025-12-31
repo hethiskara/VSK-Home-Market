@@ -109,6 +109,7 @@ const HomeScreen = ({ navigation }) => {
   
   // App Review Modal states
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showAdModal, setShowAdModal] = useState(false);
   const [reviewName, setReviewName] = useState('');
   const [reviewEmail, setReviewEmail] = useState('');
   const [reviewMobile, setReviewMobile] = useState('');
@@ -418,11 +419,13 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.promotionSection}>
           <View style={styles.promotionContent}>
             {advertisement && (
-              <Image
-                source={{ uri: advertisement.image }}
-                style={styles.promotionBanner}
-                resizeMode="cover"
-              />
+              <TouchableOpacity onPress={() => setShowAdModal(true)}>
+                <Image
+                  source={{ uri: advertisement.image }}
+                  style={styles.promotionBanner}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             )}
             <View style={styles.subscribeContainer}>
               <Text style={styles.subscribeTitle}>🔔 Stay Updated!</Text>
@@ -486,48 +489,27 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.footerBrand}>VSK Home Market</Text>
           </View>
           
-          <View style={styles.footerLinks}>
-            <TouchableOpacity onPress={() => navigation.navigate('About')}>
-              <Text style={styles.footerLink}>About Us</Text>
-            </TouchableOpacity>
-            <Text style={styles.footerDivider}>|</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Contact')}>
-              <Text style={styles.footerLink}>Contact</Text>
-            </TouchableOpacity>
-            <Text style={styles.footerDivider}>|</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('TermsConditions')}>
-              <Text style={styles.footerLink}>Terms</Text>
-            </TouchableOpacity>
-            <Text style={styles.footerDivider}>|</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
-              <Text style={styles.footerLink}>Privacy</Text>
-            </TouchableOpacity>
-          </View>
-
           <View style={styles.footerSocial}>
             <TouchableOpacity 
-              style={styles.socialIcon}
-              onPress={() => Linking.openURL('https://www.facebook.com')}
+              style={[styles.socialIcon, { backgroundColor: '#1877F2' }]}
+              onPress={() => Linking.openURL('https://www.facebook.com/profile.php?id=61577362905796')}
             >
-              <Text style={styles.socialIconText}>📘</Text>
+              <Text style={styles.socialIconText}>f</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.socialIcon}
-              onPress={() => Linking.openURL('https://www.instagram.com')}
+              style={[styles.socialIcon, { backgroundColor: '#E4405F' }]}
+              onPress={() => Linking.openURL('https://www.instagram.com/vsk_homemarket/')}
             >
-              <Text style={styles.socialIconText}>📷</Text>
+              <Image 
+                source={{ uri: 'https://img.icons8.com/ios-filled/50/FFFFFF/instagram-new.png' }}
+                style={styles.socialIconImage}
+              />
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.socialIcon}
-              onPress={() => Linking.openURL('https://www.twitter.com')}
+              style={[styles.socialIcon, { backgroundColor: '#FF0000' }]}
+              onPress={() => Linking.openURL('https://youtube.com/@vskhomemarket?si=v31sQAFHu9O8nZit')}
             >
-              <Text style={styles.socialIconText}>🐦</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.socialIcon}
-              onPress={() => Linking.openURL('https://www.youtube.com')}
-            >
-              <Text style={styles.socialIconText}>📺</Text>
+              <Text style={styles.youtubeIcon}>▶</Text>
             </TouchableOpacity>
           </View>
 
@@ -622,6 +604,36 @@ const HomeScreen = ({ navigation }) => {
             </View>
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Ad Image Modal */}
+      <Modal
+        visible={showAdModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowAdModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.adModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowAdModal(false)}
+        >
+          <View style={styles.adModalContent}>
+            {advertisement && (
+              <Image
+                source={{ uri: advertisement.image }}
+                style={styles.adModalImage}
+                resizeMode="contain"
+              />
+            )}
+            <TouchableOpacity 
+              style={styles.adModalClose}
+              onPress={() => setShowAdModal(false)}
+            >
+              <Text style={styles.adModalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -862,8 +874,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   promotionBanner: {
-    width: 120,
-    height: 100,
+    width: 140,
+    height: 120,
     borderRadius: 8,
     backgroundColor: '#F0F0F0',
   },
@@ -953,38 +965,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  footerLinks: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    flexWrap: 'wrap',
-  },
-  footerLink: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    paddingHorizontal: 8,
-  },
-  footerDivider: {
-    color: '#FFFFFF',
-    opacity: 0.5,
-  },
   footerSocial: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 16,
   },
   socialIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: 10,
   },
   socialIconText: {
-    fontSize: 18,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  socialIconImage: {
+    width: 22,
+    height: 22,
+    tintColor: '#FFFFFF',
+  },
+  youtubeIcon: {
+    fontSize: 16,
+    color: '#FFFFFF',
   },
   footerCopyright: {
     borderTopWidth: 1,
@@ -1076,6 +1082,40 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Ad Modal Styles
+  adModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adModalContent: {
+    width: '90%',
+    height: '70%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adModalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  adModalClose: {
+    position: 'absolute',
+    top: -40,
+    right: 0,
+    width: 36,
+    height: 36,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adModalCloseText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
 
