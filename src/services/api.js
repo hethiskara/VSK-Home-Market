@@ -366,6 +366,13 @@ export const wishlistAPI = {
     console.log('ADD GARMENT TO WISHLIST RESPONSE:', response.data);
     return response.data;
   },
+
+  // Delete item from wishlist
+  deleteFromWishlist: async (wishlistId) => {
+    const response = await api.post(`/wish-delete-json?id=${wishlistId}`);
+    console.log('DELETE WISHLIST RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Review APIs

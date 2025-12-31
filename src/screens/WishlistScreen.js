@@ -23,6 +23,7 @@ const WishlistScreen = ({ navigation }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     fetchWishlist();
@@ -59,6 +60,64 @@ const WishlistScreen = ({ navigation }) => {
     fetchWishlist();
   };
 
+  const handleRemoveFromWishlist = async (item) => {
+    Alert.alert(
+      'Remove from Wishlist',
+      `Are you sure you want to remove "${item.product_name}" from your wishlist?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeletingId(item.id);
+              const response = await wishlistAPI.deleteFromWishlist(item.id);
+              
+              if (response?.status === true || response?.status === 'true') {
+                // Remove item from local state
+                setWishlistItems(prev => prev.filter(i => i.id !== item.id));
+                Alert.alert('Success', 'Item removed from wishlist');
+              } else {
+                Alert.alert('Error', response?.message || 'Failed to remove item');
+              }
+            } catch (error) {
+              console.log('Delete wishlist error:', error);
+              Alert.alert('Error', 'Failed to remove item. Please try again.');
+            } finally {
+              setDeletingId(null);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleProductPress = (item) => {
+    // Determine product type based on barcode pattern or category
+    // Garment products typically have barcode starting with W2SA (like W2SAG84)
+    const isGarment = item.barcode?.startsWith('W2SAG') || 
+                      item.category_id === '1' || 
+                      item.product_name?.toLowerCase().includes('saree') ||
+                      item.product_name?.toLowerCase().includes('kurta') ||
+                      item.product_name?.toLowerCase().includes('shirt');
+    
+    if (isGarment) {
+      // Navigate to garment product detail
+      navigation.navigate('GarmentProductDetail', {
+        productCode: item.barcode?.split('-')[0] || item.productcode,
+        productName: item.product_name,
+      });
+    } else {
+      // Navigate to regular product detail
+      navigation.navigate('ProductDetail', {
+        productCode: item.barcode?.split('-')[0] || item.productcode,
+        productName: item.product_name,
+        productType: 'regular',
+      });
+    }
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity 
@@ -75,16 +134,34 @@ const WishlistScreen = ({ navigation }) => {
   );
 
   const renderWishlistItem = ({ item, index }) => (
-    <View style={styles.itemCard}>
+    <TouchableOpacity 
+      style={styles.itemCard}
+      onPress={() => handleProductPress(item)}
+      activeOpacity={0.7}
+    >
       <Image
         source={{ uri: item.productimage }}
         style={styles.productImage}
         resizeMode="cover"
       />
       <View style={styles.itemDetails}>
-        <Text style={styles.productName} numberOfLines={2}>
-          {item.product_name}
-        </Text>
+        <View style={styles.itemHeader}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.product_name}
+          </Text>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => handleRemoveFromWishlist(item)}
+            disabled={deletingId === item.id}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            {deletingId === item.id ? (
+              <ActivityIndicator size="small" color="#E74C3C" />
+            ) : (
+              <Text style={styles.removeIcon}>×</Text>
+            )}
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.sizeRow}>
           <Text style={styles.sizeLabel}>Size:</Text>
@@ -115,7 +192,7 @@ const WishlistScreen = ({ navigation }) => {
           <Text style={styles.discountText}>Discount: {item.discount}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderEmptyState = () => (
@@ -281,12 +358,33 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
   },
+  itemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
   productName: {
     fontSize: 15,
     fontWeight: '600',
     color: '#333333',
-    marginBottom: 8,
     lineHeight: 20,
+    flex: 1,
+    marginRight: 8,
+  },
+  removeButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFEBEE',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeIcon: {
+    fontSize: 22,
+    color: '#E74C3C',
+    fontWeight: '300',
+    marginTop: -2,
   },
   sizeRow: {
     flexDirection: 'row',

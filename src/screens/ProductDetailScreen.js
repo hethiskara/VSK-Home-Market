@@ -189,6 +189,28 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
       setAddingToWishlist(true);
 
+      // First check if product is already in wishlist
+      try {
+        const existingWishlist = await wishlistAPI.getWishlist(userData.userid);
+        if (Array.isArray(existingWishlist)) {
+          const alreadyExists = existingWishlist.some(item => 
+            item.product_id === product.id?.toString() || 
+            item.product_name === product.productname
+          );
+          if (alreadyExists) {
+            Alert.alert('Already in Wishlist', 'This product is already in your wishlist!', [
+              { text: 'Continue Shopping', style: 'cancel' },
+              { text: 'View Wishlist', onPress: () => navigation.navigate('Wishlist') }
+            ]);
+            setAddingToWishlist(false);
+            return;
+          }
+        }
+      } catch (checkError) {
+        console.log('Error checking wishlist:', checkError);
+        // Continue with add even if check fails
+      }
+
       // Extract size from product name (e.g., "100 Grams" from "Chicken Pickle Andhra 100 Grams")
       // For garments, use "Regular" as default
       const sizeMatch = product.productname?.match(/(\d+\s*(grams?|kg|ml|l|pieces?|pack))/i);

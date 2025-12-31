@@ -154,6 +154,28 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
 
       setAddingToWishlist(true);
 
+      // First check if product is already in wishlist
+      try {
+        const existingWishlist = await wishlistAPI.getWishlist(userData.userid);
+        if (Array.isArray(existingWishlist)) {
+          const alreadyExists = existingWishlist.some(item => 
+            item.product_id === product.id?.toString() || 
+            item.product_name === product.productname
+          );
+          if (alreadyExists) {
+            Alert.alert('Already in Wishlist', 'This product is already in your wishlist!', [
+              { text: 'Continue Shopping', style: 'cancel' },
+              { text: 'View Wishlist', onPress: () => navigation.navigate('Wishlist') }
+            ]);
+            setAddingToWishlist(false);
+            return;
+          }
+        }
+      } catch (checkError) {
+        console.log('Error checking wishlist:', checkError);
+        // Continue with add even if check fails
+      }
+
       const colorId = product.colorid || '53';
       const barcode = product.bcode || `${product.productcode}-${colorId}-${product.id}`;
 
