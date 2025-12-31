@@ -9,11 +9,19 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  Modal,
+  TextInput,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Linking,
 } from 'react-native';
 import Header from '../components/Header';
 import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
-import { homeAPI } from '../services/api';
+import { homeAPI, appReviewAPI, tokenManager } from '../services/api';
 
 const ProductCard = ({ product, onPress }) => {
   const discountPercent = product.percentage?.replace(/[()]/g, '') || '';
@@ -94,9 +102,19 @@ const HomeScreen = ({ navigation }) => {
   const [bestSelling, setBestSelling] = useState([]);
   const [latestProducts, setLatestProducts] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [advertisement, setAdvertisement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  
+  // App Review Modal states
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewName, setReviewName] = useState('');
+  const [reviewEmail, setReviewEmail] = useState('');
+  const [reviewMobile, setReviewMobile] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -155,6 +173,19 @@ const HomeScreen = ({ navigation }) => {
       const testimonialsData = Array.isArray(testimonialsResponse) ? testimonialsResponse : [];
       setTestimonials(testimonialsData);
 
+      // Fetch advertisement
+      const adResponse = await homeAPI.getAdvertisement();
+      if (adResponse?.status && adResponse?.data?.products?.[0]) {
+        setAdvertisement(adResponse.data.products[0]);
+      }
+
+      // Pre-fill user data for review modal if logged in
+      const userData = await tokenManager.getUserData();
+      if (userData) {
+        setReviewName(`${userData.firstname || ''} ${userData.lastname || ''}`.trim());
+        setReviewMobile(userData.mobile_no || '');
+      }
+
     } catch (error) {
       console.log('Error fetching data:', error);
     } finally {
@@ -166,6 +197,70 @@ const HomeScreen = ({ navigation }) => {
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
+  };
+
+  const handleSubmitAppReview = async () => {
+    if (!reviewName.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+    if (!reviewMobile.trim() || reviewMobile.length !== 10) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      return;
+    }
+    if (!reviewText.trim()) {
+      Alert.alert('Error', 'Please enter your review');
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      Keyboard.dismiss();
+
+      const userData = await tokenManager.getUserData();
+      
+      const response = await appReviewAPI.submitReview({
+        user_id: userData?.userid || '0',
+        name: reviewName.trim(),
+        email: reviewEmail.trim(),
+        mobile_no: reviewMobile.trim(),
+        ratings: reviewRating.toString(),
+        review: reviewText.trim(),
+      });
+
+      if (response?.[0]?.status === 'SUCCESS') {
+        Alert.alert('Thank You!', 'Your review has been submitted successfully!');
+        setShowReviewModal(false);
+        setReviewText('');
+        setReviewRating(5);
+      } else {
+        Alert.alert('Error', response?.[0]?.message || 'Failed to submit review');
+      }
+    } catch (error) {
+      console.log('Submit app review error:', error);
+      Alert.alert('Error', 'Failed to submit review. Please try again.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const renderStars = (rating, interactive = false, size = 24) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <TouchableOpacity
+          key={i}
+          disabled={!interactive}
+          onPress={() => interactive && setReviewRating(i)}
+          style={{ marginHorizontal: 2 }}
+        >
+          <Text style={{ fontSize: size, color: i <= rating ? '#FFD700' : '#CCCCCC' }}>
+            ★
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+    return <View style={{ flexDirection: 'row' }}>{stars}</View>;
   };
 
   const renderProductItem = ({ item }) => (
@@ -319,6 +414,31 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
+        {/* Promotion Section */}
+        <View style={styles.promotionSection}>
+          <View style={styles.promotionContent}>
+            {advertisement && (
+              <Image
+                source={{ uri: advertisement.image }}
+                style={styles.promotionBanner}
+                resizeMode="cover"
+              />
+            )}
+            <View style={styles.subscribeContainer}>
+              <Text style={styles.subscribeTitle}>🔔 Stay Updated!</Text>
+              <Text style={styles.subscribeText}>
+                Subscribe to get notified about our exclusive offers and new arrivals
+              </Text>
+              <TouchableOpacity 
+                style={styles.subscribeButton}
+                onPress={() => Alert.alert('Coming Soon', 'Subscription feature will be available soon!')}
+              >
+                <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
         {/* Testimonials Section */}
         <View style={styles.testimonialSection}>
           <View style={styles.testimonialSectionHeader}>
@@ -341,9 +461,168 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Footer spacing */}
-        <View style={styles.footerSpace} />
+        {/* Write App Review Section */}
+        <View style={styles.appReviewSection}>
+          <View style={styles.appReviewHeader}>
+            <Text style={styles.appReviewTitle}>❤️ Love Our App?</Text>
+            <Text style={styles.appReviewSubtitle}>Share your experience with us</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.writeReviewButton}
+            onPress={() => setShowReviewModal(true)}
+          >
+            <Text style={styles.writeReviewButtonText}>✍️ Write a Review</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={styles.footerTop}>
+            <Image
+              source={require('../../assets/Logos/app-icon.jpg')}
+              style={styles.footerLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.footerBrand}>VSK Home Market</Text>
+          </View>
+          
+          <View style={styles.footerLinks}>
+            <TouchableOpacity onPress={() => navigation.navigate('About')}>
+              <Text style={styles.footerLink}>About Us</Text>
+            </TouchableOpacity>
+            <Text style={styles.footerDivider}>|</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Contact')}>
+              <Text style={styles.footerLink}>Contact</Text>
+            </TouchableOpacity>
+            <Text style={styles.footerDivider}>|</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('TermsConditions')}>
+              <Text style={styles.footerLink}>Terms</Text>
+            </TouchableOpacity>
+            <Text style={styles.footerDivider}>|</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
+              <Text style={styles.footerLink}>Privacy</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footerSocial}>
+            <TouchableOpacity 
+              style={styles.socialIcon}
+              onPress={() => Linking.openURL('https://www.facebook.com')}
+            >
+              <Text style={styles.socialIconText}>📘</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.socialIcon}
+              onPress={() => Linking.openURL('https://www.instagram.com')}
+            >
+              <Text style={styles.socialIconText}>📷</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.socialIcon}
+              onPress={() => Linking.openURL('https://www.twitter.com')}
+            >
+              <Text style={styles.socialIconText}>🐦</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.socialIcon}
+              onPress={() => Linking.openURL('https://www.youtube.com')}
+            >
+              <Text style={styles.socialIconText}>📺</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footerCopyright}>
+            <Text style={styles.copyrightText}>
+              Copyright © vskhomemarket.com - All rights reserved
+            </Text>
+          </View>
+        </View>
       </ScrollView>
+
+      {/* App Review Modal */}
+      <Modal
+        visible={showReviewModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Rate VSK Home Market</Text>
+                <TouchableOpacity onPress={() => {
+                  Keyboard.dismiss();
+                  setShowReviewModal(false);
+                }}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.inputLabel}>Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter your name"
+                  value={reviewName}
+                  onChangeText={setReviewName}
+                />
+
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter your email"
+                  value={reviewEmail}
+                  onChangeText={setReviewEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                <Text style={styles.inputLabel}>Mobile No *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter your mobile number"
+                  value={reviewMobile}
+                  onChangeText={setReviewMobile}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+
+                <Text style={styles.inputLabel}>Rating *</Text>
+                <View style={styles.ratingContainer}>
+                  {renderStars(reviewRating, true, 32)}
+                </View>
+
+                <Text style={styles.inputLabel}>Your Review *</Text>
+                <TextInput
+                  style={styles.reviewTextInput}
+                  placeholder="Write your review here..."
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+
+                <TouchableOpacity 
+                  style={[styles.submitButton, submittingReview && styles.submitButtonDisabled]}
+                  onPress={handleSubmitAppReview}
+                  disabled={submittingReview}
+                >
+                  {submittingReview ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.submitButtonText}>Submit Review</Text>
+                  )}
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -570,6 +849,233 @@ const styles = StyleSheet.create({
     color: '#555555',
     lineHeight: 22,
     paddingLeft: 12,
+  },
+  
+  // Promotion Section Styles
+  promotionSection: {
+    marginTop: 16,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+  },
+  promotionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  promotionBanner: {
+    width: 120,
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+  },
+  subscribeContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  subscribeTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C4A6B',
+    marginBottom: 6,
+  },
+  subscribeText: {
+    fontSize: 13,
+    color: '#666666',
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  subscribeButton: {
+    backgroundColor: '#FF6B35',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  subscribeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // App Review Section Styles
+  appReviewSection: {
+    marginTop: 16,
+    backgroundColor: '#FFF8F5',
+    padding: 20,
+    alignItems: 'center',
+  },
+  appReviewHeader: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  appReviewTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2C4A6B',
+    marginBottom: 4,
+  },
+  appReviewSubtitle: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  writeReviewButton: {
+    backgroundColor: '#2C4A6B',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+  },
+  writeReviewButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Footer Styles
+  footer: {
+    backgroundColor: '#1A3A5C',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  footerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  footerLogo: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  footerBrand: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    flexWrap: 'wrap',
+  },
+  footerLink: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    paddingHorizontal: 8,
+  },
+  footerDivider: {
+    color: '#FFFFFF',
+    opacity: 0.5,
+  },
+  footerSocial: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  socialIcon: {
+    width: 40,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  socialIconText: {
+    fontSize: 18,
+  },
+  footerCopyright: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+    paddingTop: 16,
+    alignItems: 'center',
+  },
+  copyrightText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    opacity: 0.8,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    maxHeight: '85%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C4A6B',
+  },
+  modalClose: {
+    fontSize: 22,
+    color: '#999999',
+    padding: 5,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    backgroundColor: '#FAFAFA',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  reviewTextInput: {
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    backgroundColor: '#FAFAFA',
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  submitButton: {
+    backgroundColor: '#2C4A6B',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#AAAAAA',
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

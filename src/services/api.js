@@ -124,6 +124,22 @@ export const homeAPI = {
     console.log('TESTIMONIALS RESPONSE:', response.data);
     return response.data;
   },
+
+  getAdvertisement: async () => {
+    const response = await api.get('/advertisement-json');
+    console.log('ADVERTISEMENT RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
+// App Review API
+export const appReviewAPI = {
+  submitReview: async (data) => {
+    const params = `user_id=${data.user_id}&name=${encodeURIComponent(data.name)}&email=${encodeURIComponent(data.email || '')}&mobile_no=${data.mobile_no}&ratings=${data.ratings}&review=${encodeURIComponent(data.review)}`;
+    const response = await api.get(`/app-rating-json?${params}`);
+    console.log('APP REVIEW RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Content APIs
