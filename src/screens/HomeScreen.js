@@ -481,11 +481,6 @@ const HomeScreen = ({ navigation }) => {
         {/* Footer */}
         <View style={styles.footer}>
           <View style={styles.footerTop}>
-            <Image
-              source={require('../../assets/Logos/app-icon.jpg')}
-              style={styles.footerLogo}
-              resizeMode="contain"
-            />
             <Text style={styles.footerBrand}>VSK Home Market</Text>
           </View>
           
@@ -949,16 +944,9 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   footerTop: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-  },
-  footerLogo: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    marginRight: 10,
   },
   footerBrand: {
     fontSize: 18,
