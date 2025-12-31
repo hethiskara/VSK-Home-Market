@@ -883,7 +883,7 @@ const styles = StyleSheet.create({
   },
   adTouchable: {
     width: '100%',
-    aspectRatio: 1,
+    aspectRatio: 377 / 278, // Matches actual ad image dimensions (377x278)
     position: 'relative',
   },
   adBannerFull: {
