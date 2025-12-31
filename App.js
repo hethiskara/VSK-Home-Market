@@ -23,6 +23,7 @@ import GarmentCategoryScreen from './src/screens/GarmentCategoryScreen';
 import GarmentProductsScreen from './src/screens/GarmentProductsScreen';
 import GarmentProductDetailScreen from './src/screens/GarmentProductDetailScreen';
 import WishlistScreen from './src/screens/WishlistScreen';
+import FeedbackScreen from './src/screens/FeedbackScreen';
 
 LogBox.ignoreLogs(['AsyncStorage', 'Sending']);
 
@@ -89,6 +90,7 @@ export default function App() {
           <Stack.Screen name="GarmentProducts" component={GarmentProductsScreen} />
           <Stack.Screen name="GarmentProductDetail" component={GarmentProductDetailScreen} />
           <Stack.Screen name="Wishlist" component={WishlistScreen} />
+          <Stack.Screen name="Feedback" component={FeedbackScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
