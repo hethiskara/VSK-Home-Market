@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { checkoutAPI } from '../services/api';
+import { checkoutAPI, cartAPI } from '../services/api';
 import { WebView } from 'react-native-webview';
 
 const CART_STORAGE_KEY = '@vsk_cart';
@@ -117,7 +117,19 @@ const CartScreen = ({ navigation }) => {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            try {
+              // Call API to delete from database
+              if (cartId) {
+                const response = await cartAPI.deleteFromCart(cartId);
+                console.log('Delete from DB response:', response);
+              }
+            } catch (error) {
+              console.log('Error deleting from DB:', error);
+              // Continue with local deletion even if API fails
+            }
+            
+            // Remove from local state and storage
             const updatedItems = cartItems.filter(item => item.cart_id !== cartId);
             setCartItems(updatedItems);
             saveCart(updatedItems);

@@ -256,6 +256,19 @@ export const cartAPI = {
     console.log('ADD TO CART RESPONSE:', response.data);
     return response.data;
   },
+
+  // Delete item from cart
+  deleteFromCart: async (cartId) => {
+    const formData = new FormData();
+    formData.append('id', cartId.toString());
+    const response = await api.post('/cart-delete-json', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    console.log('DELETE CART RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Checkout APIs
