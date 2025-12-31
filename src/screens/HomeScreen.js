@@ -415,18 +415,17 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Ad Section - Full Square */}
+        {/* Ad Section - Full Image */}
         {advertisement && (
           <View style={styles.adSection}>
             <TouchableOpacity 
               onPress={() => setShowAdModal(true)}
               activeOpacity={0.9}
-              style={styles.adTouchable}
             >
               <Image
                 source={{ uri: advertisement.image }}
                 style={styles.adBannerFull}
-                resizeMode="cover"
+                resizeMode="contain"
               />
               <View style={styles.adOverlay}>
                 <Text style={styles.adTapText}>Tap to view</Text>
@@ -881,23 +880,15 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  adTouchable: {
-    width: '100%',
-    aspectRatio: 16 / 9, // Wide banner format
-    position: 'relative',
-  },
   adBannerFull: {
     width: '100%',
-    height: '100%',
+    height: undefined,
+    aspectRatio: 377 / 278, // Natural image aspect ratio for full visibility
     backgroundColor: '#F0F0F0',
   },
   adOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    paddingVertical: 8,
+    backgroundColor: 'rgba(44, 74, 107, 0.85)',
+    paddingVertical: 10,
     alignItems: 'center',
   },
   adTapText: {
