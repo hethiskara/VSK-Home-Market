@@ -161,7 +161,7 @@ const OrdersScreen = ({ navigation }) => {
       <FlatList
         data={orders}
         renderItem={renderOrderItem}
-        keyExtractor={(item) => item.ordernumber}
+        keyExtractor={(item, index) => `${item.ordernumber}-${index}`}
         contentContainerStyle={orders.length === 0 ? styles.emptyList : styles.listContainer}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
