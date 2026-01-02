@@ -16,6 +16,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { orderAPI, tokenManager } from '../services/api';
 
@@ -31,8 +32,10 @@ const OrderDetailScreen = ({ navigation, route }) => {
   const [cancellingItem, setCancellingItem] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [cancelQuantity, setCancelQuantity] = useState('1');
   const [submittingCancel, setSubmittingCancel] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [showQuantityPicker, setShowQuantityPicker] = useState(false);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -61,7 +64,15 @@ const OrderDetailScreen = ({ navigation, route }) => {
   const handleCancelPress = (item) => {
     setSelectedItem(item);
     setCancelReason('');
+    setCancelQuantity('1');
+    setShowQuantityPicker(false);
     setShowCancelModal(true);
+  };
+
+  // Generate quantity options based on ordered quantity
+  const getQuantityOptions = () => {
+    const qty = parseInt(selectedItem?.qty || '1');
+    return Array.from({ length: qty }, (_, i) => (i + 1).toString());
   };
 
   const handleSubmitCancel = async () => {
@@ -90,7 +101,7 @@ const OrderDetailScreen = ({ navigation, route }) => {
         productId: selectedItem.id || selectedItem.productcode,
         productName: selectedItem.productname,
         orderedQuantity: selectedItem.qty || '1',
-        cancelQuantity: selectedItem.qty || '1',
+        cancelQuantity: cancelQuantity,
         reason: cancelReason.trim(),
       };
 
@@ -265,61 +276,135 @@ const OrderDetailScreen = ({ navigation, route }) => {
         transparent={true}
         onRequestClose={() => setShowCancelModal(false)}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback onPress={() => {
+          Keyboard.dismiss();
+          setShowQuantityPicker(false);
+        }}>
           <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.modalOverlay}
           >
             <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Cancel Order Item</Text>
-                <TouchableOpacity onPress={() => setShowCancelModal(false)}>
-                  <Text style={styles.modalClose}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              {selectedItem && (
-                <View style={styles.cancelItemInfo}>
-                  <Text style={styles.cancelItemName} numberOfLines={2}>
-                    {selectedItem.productname}
-                  </Text>
-                  <Text style={styles.cancelItemQty}>
-                    Qty: {selectedItem.qty} • Rs. {selectedItem.productprice}
-                  </Text>
-                </View>
-              )}
-
-              <Text style={styles.inputLabel}>Cancellation Reason *</Text>
-              <TextInput
-                style={styles.reasonInput}
-                placeholder="Please tell us why you want to cancel..."
-                value={cancelReason}
-                onChangeText={setCancelReason}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.keepButton}
+              {/* Header */}
+              <View style={styles.formHeader}>
+                <Text style={styles.formTitle}>Reason for Your Order Cancellation</Text>
+                <TouchableOpacity 
+                  style={styles.closeButton}
                   onPress={() => setShowCancelModal(false)}
                 >
-                  <Text style={styles.keepButtonText}>Keep Item</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.confirmCancelButton, submittingCancel && styles.buttonDisabled]}
-                  onPress={handleSubmitCancel}
-                  disabled={submittingCancel}
-                >
-                  {submittingCancel ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <Text style={styles.confirmCancelText}>Confirm Cancel</Text>
-                  )}
+                  <Text style={styles.closeButtonText}>✕</Text>
                 </TouchableOpacity>
               </View>
+
+              <View style={styles.formSubHeader}>
+                <View style={styles.formSubHeaderLine} />
+                <Text style={styles.formSubTitle}>Order Cancellation Form</Text>
+                <View style={styles.formSubHeaderLine} />
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {selectedItem && (
+                  <>
+                    {/* Order Number */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Order Number</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText}>{orderNumber}</Text>
+                      </View>
+                    </View>
+
+                    {/* Product Code */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Product Code</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText}>{selectedItem.productcode}</Text>
+                      </View>
+                    </View>
+
+                    {/* Product Name */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Product Name</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText} numberOfLines={2}>
+                          {selectedItem.productname}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Ordered Quantity */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Ordered Quantity</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText}>{selectedItem.qty}</Text>
+                      </View>
+                    </View>
+
+                    {/* Cancel Quantity - Dropdown */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Cancel Quantity</Text>
+                      <TouchableOpacity 
+                        style={styles.dropdownButton}
+                        onPress={() => setShowQuantityPicker(!showQuantityPicker)}
+                      >
+                        <Text style={styles.dropdownText}>{cancelQuantity}</Text>
+                        <Text style={styles.dropdownArrow}>▼</Text>
+                      </TouchableOpacity>
+                      
+                      {showQuantityPicker && (
+                        <View style={styles.dropdownList}>
+                          {getQuantityOptions().map((qty) => (
+                            <TouchableOpacity
+                              key={qty}
+                              style={[
+                                styles.dropdownItem,
+                                cancelQuantity === qty && styles.dropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setCancelQuantity(qty);
+                                setShowQuantityPicker(false);
+                              }}
+                            >
+                              <Text style={[
+                                styles.dropdownItemText,
+                                cancelQuantity === qty && styles.dropdownItemTextSelected
+                              ]}>
+                                {qty}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Cancellation Reason */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Cancellation Reason</Text>
+                      <TextInput
+                        style={styles.reasonInput}
+                        placeholder="Enter your reason for cancellation..."
+                        value={cancelReason}
+                        onChangeText={setCancelReason}
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                    </View>
+
+                    {/* Submit Button */}
+                    <TouchableOpacity
+                      style={[styles.submitButton, submittingCancel && styles.buttonDisabled]}
+                      onPress={handleSubmitCancel}
+                      disabled={submittingCancel}
+                    >
+                      {submittingCancel ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text style={styles.submitButtonText}>Submit</Text>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                )}
+              </ScrollView>
             </View>
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
@@ -595,88 +680,150 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 20,
     width: '100%',
     maxWidth: 400,
+    maxHeight: '90%',
   },
-  modalHeader: {
+  formHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
-  modalTitle: {
+  formTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333333',
+    color: THEME_COLOR,
+    flex: 1,
+    marginRight: 10,
   },
-  modalClose: {
-    fontSize: 24,
+  closeButton: {
+    padding: 4,
+  },
+  closeButtonText: {
+    fontSize: 22,
     color: '#999999',
     fontWeight: '300',
   },
-  cancelItemInfo: {
-    backgroundColor: '#FFF5F5',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#E74C3C',
+  formSubHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  cancelItemName: {
+  formSubHeaderLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  formSubTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#333333',
-    marginBottom: 4,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFFFFF',
   },
-  cancelItemQty: {
-    fontSize: 13,
-    color: '#666666',
+  formGroup: {
+    marginBottom: 16,
   },
-  inputLabel: {
+  formLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#333333',
     marginBottom: 8,
+  },
+  formInputReadOnly: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#F8F8F8',
+  },
+  formInputText: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  dropdownArrow: {
+    fontSize: 10,
+    color: '#666666',
+  },
+  dropdownList: {
+    position: 'absolute',
+    top: 48,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 6,
+    zIndex: 1000,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  dropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dropdownItemSelected: {
+    backgroundColor: '#E8F4FD',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  dropdownItemTextSelected: {
+    color: THEME_COLOR,
+    fontWeight: '600',
   },
   reasonInput: {
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    borderRadius: 8,
+    borderRadius: 6,
     padding: 12,
     fontSize: 14,
     color: '#333333',
-    minHeight: 80,
-    backgroundColor: '#FAFAFA',
-    marginBottom: 20,
+    minHeight: 100,
+    backgroundColor: '#FFFFFF',
   },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  keepButton: {
-    flex: 1,
+  submitButton: {
+    backgroundColor: THEME_COLOR,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 25,
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    marginTop: 8,
+    marginBottom: 10,
   },
-  keepButtonText: {
-    color: '#666666',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  confirmCancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#E74C3C',
-  },
-  confirmCancelText: {
+  submitButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   buttonDisabled: {
