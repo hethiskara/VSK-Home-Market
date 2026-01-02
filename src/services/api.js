@@ -161,9 +161,9 @@ export const subscribeAPI = {
     return response.data;
   },
 
-  // Step 2: Verify OTP (POST method)
+  // Step 2: Verify OTP (GET method)
   verifyOTP: async (id, otp) => {
-    const response = await api.post(`/subscribe-otp-json?id=${id}&otp=${otp}`);
+    const response = await api.get(`/subscribe-otp-json?id=${id}&otp=${otp}`);
     console.log('SUBSCRIBE OTP RESPONSE:', response.data);
     return response.data;
   },
