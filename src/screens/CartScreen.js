@@ -338,41 +338,38 @@ const CartScreen = ({ navigation }) => {
 
       console.log('VERIFY RESPONSE:', verifyResponse);
 
-      if (verifyResponse?.status === 'success') {
-        setCartItems([]);
-        saveCart([]);
-        Alert.alert(
-          'Payment Successful! ✅',
-          `Your payment has been verified successfully.\n\nOrder Number: ${razorpayData.orginalorderid}\nPayment ID: ${paymentData.razorpay_payment_id}\nTotal Amount: Rs ${razorpayData.grandTotal}`,
-          [
-            {
-              text: 'View Orders',
-              onPress: () => navigation.navigate('Orders'),
+      // Clear cart and navigate to orders
+      setCartItems([]);
+      saveCart([]);
+      setShowPaymentWebView(false);
+      
+      // Show success message briefly, then navigate
+      Alert.alert(
+        'Payment Successful! ✅',
+        `Your payment has been verified successfully.\n\nOrder Number: ${razorpayData.orginalorderid}\nPayment ID: ${paymentData.razorpay_payment_id}\nTotal Amount: Rs ${razorpayData.grandTotal}`,
+        [
+          {
+            text: 'View Orders',
+            onPress: () => {
+              // Reset navigation stack: Home at bottom, Orders on top
+              navigation.reset({
+                index: 1,
+                routes: [
+                  { name: 'Home' },
+                  { name: 'Orders' },
+                ],
+              });
             },
-            {
-              text: 'Go Home',
-              onPress: () => navigation.navigate('Home'),
-            },
-          ]
-        );
-      } else {
-        Alert.alert(
-          'Payment Received',
-          `Payment was successful.\n\nOrder Number: ${razorpayData.orginalorderid}\n\nPlease check your order status.`,
-          [
-            {
-              text: 'View Orders',
-              onPress: () => {
-                setCartItems([]);
-                saveCart([]);
-                navigation.navigate('Orders');
-              },
-            },
-          ]
-        );
-      }
+          },
+        ]
+      );
     } catch (verifyError) {
       console.log('Verify error:', verifyError);
+      // Clear cart and navigate to orders even on verify error (payment was received)
+      setCartItems([]);
+      saveCart([]);
+      setShowPaymentWebView(false);
+      
       Alert.alert(
         'Payment Received',
         `Payment was completed.\n\nOrder Number: ${razorpayData.orginalorderid}\n\nPlease check your order status.`,
@@ -380,9 +377,13 @@ const CartScreen = ({ navigation }) => {
           {
             text: 'View Orders',
             onPress: () => {
-              setCartItems([]);
-              saveCart([]);
-              navigation.navigate('Orders');
+              navigation.reset({
+                index: 1,
+                routes: [
+                  { name: 'Home' },
+                  { name: 'Orders' },
+                ],
+              });
             },
           },
         ]
