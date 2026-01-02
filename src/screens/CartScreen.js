@@ -60,9 +60,19 @@ const CartScreen = ({ navigation }) => {
       if (userData) {
         const parsed = JSON.parse(userData);
         setUserId(parsed.userid);
-        // Generate guest_id for checkout session
-        const newGuestId = generateGuestId();
-        setGuestId(newGuestId);
+        
+        // Try to load existing guest_id from cart session
+        const storedGuestId = await AsyncStorage.getItem('cartGuestId');
+        if (storedGuestId) {
+          console.log('Using stored guest_id:', storedGuestId);
+          setGuestId(storedGuestId);
+        } else {
+          // Generate new guest_id only if none exists
+          const newGuestId = generateGuestId();
+          setGuestId(newGuestId);
+          await AsyncStorage.setItem('cartGuestId', newGuestId);
+          console.log('Generated new guest_id:', newGuestId);
+        }
       }
     } catch (error) {
       console.log('Error loading user data:', error);
@@ -91,6 +101,13 @@ const CartScreen = ({ navigation }) => {
   const saveCart = async (items) => {
     try {
       await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      
+      // Clear guest_id when cart is emptied
+      if (!items || items.length === 0) {
+        await AsyncStorage.removeItem('cartGuestId');
+        setGuestId(null);
+        console.log('Cart cleared - removed guest_id');
+      }
     } catch (error) {
       console.log('Error saving cart:', error);
     }

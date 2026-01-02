@@ -130,6 +130,12 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
 
         await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
         
+        // Save guest_id from cart response for checkout
+        if (response.guest_id) {
+          await AsyncStorage.setItem('cartGuestId', response.guest_id);
+          console.log('Saved cart guest_id:', response.guest_id);
+        }
+        
         Alert.alert('Success', response.message || 'Product added to cart', [
           { text: 'Continue Shopping', style: 'cancel' },
           { text: 'View Cart', onPress: () => navigation.navigate('Cart') }
