@@ -154,16 +154,16 @@ export const feedbackAPI = {
 
 // Subscribe API
 export const subscribeAPI = {
-  // Step 1: Send name and mobile to get OTP
+  // Step 1: Send name and mobile to get OTP (POST method)
   subscribe: async (name, mobileNo) => {
-    const response = await api.get(`/subscribe-json?name=${encodeURIComponent(name)}&mobile_no=${mobileNo}`);
+    const response = await api.post(`/subscribe-json?name=${encodeURIComponent(name)}&mobile_no=${mobileNo}`);
     console.log('SUBSCRIBE RESPONSE:', response.data);
     return response.data;
   },
 
-  // Step 2: Verify OTP
+  // Step 2: Verify OTP (POST method)
   verifyOTP: async (id, otp) => {
-    const response = await api.get(`/subscribe-otp-json?id=${id}&otp=${otp}`);
+    const response = await api.post(`/subscribe-otp-json?id=${id}&otp=${otp}`);
     console.log('SUBSCRIBE OTP RESPONSE:', response.data);
     return response.data;
   },
