@@ -152,6 +152,23 @@ export const feedbackAPI = {
   },
 };
 
+// Subscribe API
+export const subscribeAPI = {
+  // Step 1: Send name and mobile to get OTP
+  subscribe: async (name, mobileNo) => {
+    const response = await api.get(`/subscribe-json?name=${encodeURIComponent(name)}&mobile_no=${mobileNo}`);
+    console.log('SUBSCRIBE RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Step 2: Verify OTP
+  verifyOTP: async (id, otp) => {
+    const response = await api.get(`/subscribe-otp-json?id=${id}&otp=${otp}`);
+    console.log('SUBSCRIBE OTP RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Content APIs
 export const contentAPI = {
   getAboutUs: async () => {

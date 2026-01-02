@@ -21,7 +21,7 @@ import {
 import Header from '../components/Header';
 import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
-import { homeAPI, appReviewAPI, tokenManager } from '../services/api';
+import { homeAPI, appReviewAPI, subscribeAPI, tokenManager } from '../services/api';
 
 const ProductCard = ({ product, onPress }) => {
   const discountPercent = product.percentage?.replace(/[()]/g, '') || '';
@@ -116,6 +116,15 @@ const HomeScreen = ({ navigation }) => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Subscribe Modal states
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [subscribeStep, setSubscribeStep] = useState(1); // 1 = name/mobile, 2 = OTP
+  const [subscribeName, setSubscribeName] = useState('');
+  const [subscribeMobile, setSubscribeMobile] = useState('');
+  const [subscribeOTP, setSubscribeOTP] = useState('');
+  const [subscribeId, setSubscribeId] = useState(null);
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -243,6 +252,73 @@ const HomeScreen = ({ navigation }) => {
     } finally {
       setSubmittingReview(false);
     }
+  };
+
+  // Subscribe handlers
+  const handleSubscribe = async () => {
+    if (!subscribeName.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+    if (!subscribeMobile.trim() || subscribeMobile.length !== 10) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    try {
+      setSubscribing(true);
+      Keyboard.dismiss();
+
+      const response = await subscribeAPI.subscribe(subscribeName.trim(), subscribeMobile.trim());
+
+      if (response?.[0]?.status === 'SUCCESS') {
+        setSubscribeId(response[0].id);
+        setSubscribeStep(2);
+        Alert.alert('OTP Sent', response[0].message || 'OTP sent to your mobile number');
+      } else {
+        Alert.alert('Error', response?.[0]?.message || 'Failed to send OTP');
+      }
+    } catch (error) {
+      console.log('Subscribe error:', error);
+      Alert.alert('Error', 'Failed to subscribe. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+  const handleVerifySubscribeOTP = async () => {
+    if (!subscribeOTP.trim() || subscribeOTP.length < 4) {
+      Alert.alert('Error', 'Please enter a valid OTP');
+      return;
+    }
+
+    try {
+      setSubscribing(true);
+      Keyboard.dismiss();
+
+      const response = await subscribeAPI.verifyOTP(subscribeId, subscribeOTP.trim());
+
+      if (response?.[0]?.status === 'SUCCESS') {
+        Alert.alert('Success!', response[0].message || 'You have successfully subscribed!');
+        resetSubscribeModal();
+      } else {
+        Alert.alert('Error', response?.[0]?.message || 'Invalid OTP. Please try again.');
+      }
+    } catch (error) {
+      console.log('Verify OTP error:', error);
+      Alert.alert('Error', 'Failed to verify OTP. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+  const resetSubscribeModal = () => {
+    setShowSubscribeModal(false);
+    setSubscribeStep(1);
+    setSubscribeName('');
+    setSubscribeMobile('');
+    setSubscribeOTP('');
+    setSubscribeId(null);
   };
 
   const renderStars = (rating, interactive = false, size = 24) => {
@@ -481,7 +557,7 @@ const HomeScreen = ({ navigation }) => {
           </Text>
           <TouchableOpacity 
             style={styles.subscribeButton}
-            onPress={() => Alert.alert('Coming Soon', 'Subscription feature will be available soon!')}
+            onPress={() => setShowSubscribeModal(true)}
           >
             <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
           </TouchableOpacity>
@@ -638,6 +714,110 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Subscribe Modal */}
+      <Modal
+        visible={showSubscribeModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={resetSubscribeModal}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.subscribeModalContent}>
+              <View style={styles.subscribeModalHeader}>
+                <Text style={styles.subscribeModalTitle}>
+                  {subscribeStep === 1 ? '🔔 Subscribe to Updates' : '📱 Verify OTP'}
+                </Text>
+                <TouchableOpacity onPress={resetSubscribeModal}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {subscribeStep === 1 ? (
+                // Step 1: Name and Mobile
+                <View style={styles.subscribeFormContainer}>
+                  <Text style={styles.subscribeSubtitle}>
+                    Get exclusive offers and updates on WhatsApp!
+                  </Text>
+
+                  <Text style={styles.inputLabel}>Name *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your name"
+                    value={subscribeName}
+                    onChangeText={setSubscribeName}
+                  />
+
+                  <Text style={styles.inputLabel}>Mobile Number *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter 10-digit mobile number"
+                    value={subscribeMobile}
+                    onChangeText={setSubscribeMobile}
+                    keyboardType="phone-pad"
+                    maxLength={10}
+                  />
+
+                  <TouchableOpacity 
+                    style={[styles.subscribeSubmitButton, subscribing && styles.submitButtonDisabled]}
+                    onPress={handleSubscribe}
+                    disabled={subscribing}
+                  >
+                    {subscribing ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.subscribeSubmitButtonText}>Get OTP</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                // Step 2: OTP Verification
+                <View style={styles.subscribeFormContainer}>
+                  <Text style={styles.subscribeSubtitle}>
+                    Enter the OTP sent to {subscribeMobile}
+                  </Text>
+
+                  <Text style={styles.inputLabel}>Enter OTP *</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.otpInput]}
+                    placeholder="Enter OTP"
+                    value={subscribeOTP}
+                    onChangeText={setSubscribeOTP}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                  />
+
+                  <TouchableOpacity 
+                    style={[styles.subscribeSubmitButton, subscribing && styles.submitButtonDisabled]}
+                    onPress={handleVerifySubscribeOTP}
+                    disabled={subscribing}
+                  >
+                    {subscribing ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.subscribeSubmitButtonText}>Verify & Subscribe</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={styles.resendOTPButton}
+                    onPress={() => {
+                      setSubscribeStep(1);
+                      setSubscribeOTP('');
+                    }}
+                  >
+                    <Text style={styles.resendOTPText}>← Change Number</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
@@ -1148,6 +1328,62 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+
+  // Subscribe Modal Styles
+  subscribeModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '90%',
+    maxWidth: 400,
+    padding: 20,
+  },
+  subscribeModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  subscribeModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C4A6B',
+  },
+  subscribeFormContainer: {
+    paddingTop: 8,
+  },
+  subscribeSubtitle: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  subscribeSubmitButton: {
+    backgroundColor: '#FF6B35',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  subscribeSubmitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  otpInput: {
+    fontSize: 20,
+    letterSpacing: 8,
+    textAlign: 'center',
+  },
+  resendOTPButton: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  resendOTPText: {
+    color: '#2C4A6B',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
