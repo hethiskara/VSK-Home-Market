@@ -10,8 +10,14 @@ import {
   Dimensions,
   Platform,
   StatusBar,
+  Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
-import { orderAPI } from '../services/api';
+import { orderAPI, tokenManager } from '../services/api';
 
 const { width } = Dimensions.get('window');
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
@@ -22,6 +28,11 @@ const OrderDetailScreen = ({ navigation, route }) => {
   const [orderItems, setOrderItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [orderInfo, setOrderInfo] = useState(null);
+  const [cancellingItem, setCancellingItem] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [submittingCancel, setSubmittingCancel] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -44,6 +55,62 @@ const OrderDetailScreen = ({ navigation, route }) => {
       setOrderItems([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelPress = (item) => {
+    setSelectedItem(item);
+    setCancelReason('');
+    setShowCancelModal(true);
+  };
+
+  const handleSubmitCancel = async () => {
+    if (!cancelReason.trim()) {
+      Alert.alert('Required', 'Please enter a cancellation reason');
+      return;
+    }
+
+    try {
+      setSubmittingCancel(true);
+      Keyboard.dismiss();
+
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Error', 'User not found. Please login again.');
+        return;
+      }
+
+      // Determine if garment or regular product (garment products have code starting with W2SAG)
+      const isGarment = selectedItem.productcode?.startsWith('W2SAG');
+
+      const cancelData = {
+        orderNumber: orderNumber,
+        userId: userData.userid,
+        productCode: selectedItem.productcode,
+        productId: selectedItem.id || selectedItem.productcode,
+        productName: selectedItem.productname,
+        orderedQuantity: selectedItem.qty || '1',
+        cancelQuantity: selectedItem.qty || '1',
+        reason: cancelReason.trim(),
+      };
+
+      const response = isGarment 
+        ? await orderAPI.cancelGarmentOrder(cancelData)
+        : await orderAPI.cancelRegularOrder(cancelData);
+
+      if (response?.status === true || response?.status === 'true') {
+        Alert.alert('Success', response.message || 'Order item cancelled successfully');
+        setShowCancelModal(false);
+        // Refresh order details
+        fetchOrderDetails();
+      } else {
+        Alert.alert('Error', response?.message || 'Failed to cancel order item');
+      }
+    } catch (error) {
+      console.log('Cancel order error:', error);
+      Alert.alert('Error', 'Failed to cancel order. Please try again.');
+    } finally {
+      setSubmittingCancel(false);
     }
   };
 
@@ -103,25 +170,36 @@ const OrderDetailScreen = ({ navigation, route }) => {
 
   const renderOrderItem = ({ item, index }) => (
     <View style={styles.itemCard}>
-      <Image
-        source={{ uri: item.productimage }}
-        style={styles.productImage}
-        resizeMode="cover"
-      />
-      <View style={styles.itemInfo}>
-        <Text style={styles.productName} numberOfLines={2}>
-          {item.productname}
-        </Text>
-        <Text style={styles.productCode}>Code: {item.productcode}</Text>
-        
-        <View style={styles.itemFooter}>
-          <View style={styles.qtyContainer}>
-            <Text style={styles.qtyLabel}>Qty:</Text>
-            <Text style={styles.qtyValue}>{item.qty}</Text>
+      <View style={styles.itemRow}>
+        <Image
+          source={{ uri: item.productimage }}
+          style={styles.productImage}
+          resizeMode="cover"
+        />
+        <View style={styles.itemInfo}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.productname}
+          </Text>
+          <Text style={styles.productCode}>Code: {item.productcode}</Text>
+          
+          <View style={styles.itemFooter}>
+            <View style={styles.qtyContainer}>
+              <Text style={styles.qtyLabel}>Qty:</Text>
+              <Text style={styles.qtyValue}>{item.qty}</Text>
+            </View>
+            <Text style={styles.itemPrice}>Rs. {item.productprice}</Text>
           </View>
-          <Text style={styles.itemPrice}>Rs. {item.productprice}</Text>
         </View>
       </View>
+
+      {/* Cancel Button */}
+      <TouchableOpacity
+        style={styles.cancelButton}
+        onPress={() => handleCancelPress(item)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.cancelButtonText}>✕ Cancel Item</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -179,6 +257,73 @@ const OrderDetailScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Cancel Confirmation Modal */}
+      <Modal
+        visible={showCancelModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCancelModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Cancel Order Item</Text>
+                <TouchableOpacity onPress={() => setShowCancelModal(false)}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {selectedItem && (
+                <View style={styles.cancelItemInfo}>
+                  <Text style={styles.cancelItemName} numberOfLines={2}>
+                    {selectedItem.productname}
+                  </Text>
+                  <Text style={styles.cancelItemQty}>
+                    Qty: {selectedItem.qty} • Rs. {selectedItem.productprice}
+                  </Text>
+                </View>
+              )}
+
+              <Text style={styles.inputLabel}>Cancellation Reason *</Text>
+              <TextInput
+                style={styles.reasonInput}
+                placeholder="Please tell us why you want to cancel..."
+                value={cancelReason}
+                onChangeText={setCancelReason}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.keepButton}
+                  onPress={() => setShowCancelModal(false)}
+                >
+                  <Text style={styles.keepButtonText}>Keep Item</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.confirmCancelButton, submittingCancel && styles.buttonDisabled]}
+                  onPress={handleSubmitCancel}
+                  disabled={submittingCancel}
+                >
+                  {submittingCancel ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.confirmCancelText}>Confirm Cancel</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -309,7 +454,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
-    flexDirection: 'row',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -321,6 +465,9 @@ const styles = StyleSheet.create({
         elevation: 2,
       },
     }),
+  },
+  itemRow: {
+    flexDirection: 'row',
   },
   productImage: {
     width: 80,
@@ -373,6 +520,18 @@ const styles = StyleSheet.create({
     color: THEME_COLOR,
     fontWeight: '700',
   },
+  cancelButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#E74C3C',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   emptyContainer: {
     padding: 32,
     alignItems: 'center',
@@ -424,6 +583,104 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333333',
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#999999',
+    fontWeight: '300',
+  },
+  cancelItemInfo: {
+    backgroundColor: '#FFF5F5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#E74C3C',
+  },
+  cancelItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
+  },
+  cancelItemQty: {
+    fontSize: 13,
+    color: '#666666',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  reasonInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: '#333333',
+    minHeight: 80,
+    backgroundColor: '#FAFAFA',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  keepButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+  },
+  keepButtonText: {
+    color: '#666666',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  confirmCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#E74C3C',
+  },
+  confirmCancelText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
 });
 
