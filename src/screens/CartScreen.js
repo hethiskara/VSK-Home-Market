@@ -217,9 +217,13 @@ const CartScreen = ({ navigation }) => {
       if (stepOneResponse?.status) {
         setOrderNumber(stepOneResponse.order_number);
         
+        // Use guest_id from step 1 response for step 2
+        const returnedGuestId = stepOneResponse.guest_id || guestId;
+        
         // Step 2: Get cart summary
-        const stepTwoResponse = await checkoutAPI.getCartSummary(guestId);
-        if (Array.isArray(stepTwoResponse)) {
+        const stepTwoResponse = await checkoutAPI.getCartSummary(returnedGuestId);
+        console.log('STEP TWO RESPONSE:', stepTwoResponse);
+        if (Array.isArray(stepTwoResponse) && stepTwoResponse.length > 0) {
           setOrderSummary(stepTwoResponse);
         }
         
