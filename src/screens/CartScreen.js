@@ -174,8 +174,10 @@ const CartScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const response = await checkoutAPI.getUserData(userId);
+      console.log('FULL USER DATA RESPONSE:', JSON.stringify(response));
       if (response?.[0]?.userdata?.[0]) {
         const userData = response[0].userdata[0];
+        console.log('USER DATA PARSED:', JSON.stringify(userData));
         setBillingAddress(userData);
         // Pre-fill delivery address with billing
         setDeliveryAddress({
@@ -217,19 +219,29 @@ const CartScreen = ({ navigation }) => {
     try {
       setProcessingPayment(true);
       
-      // Step 1: Save delivery address
-      const stepOneResponse = await checkoutAPI.saveDeliveryAddress({
+      // Log address data being sent
+      console.log('ADDRESS TO USE:', JSON.stringify(addressToUse));
+      console.log('BILLING ADDRESS:', JSON.stringify(billingAddress));
+      console.log('USE BILLING AS DELIVERY:', useBillingAsDelivery);
+      
+      // Build the address data
+      const addressData = {
         user_id: userId,
         guest_id: guestId,
-        firstname: addressToUse.firstname,
+        firstname: addressToUse.firstname || '',
         lastname: addressToUse.lastname || '',
-        address: addressToUse.address,
+        address: addressToUse.address || '',
         postalcode: addressToUse.postalcode || '',
         city: addressToUse.city || '',
         state: addressToUse.state || '',
         country: addressToUse.country || 'India',
-        mobile_no: addressToUse.mobile_no,
-      });
+        mobile_no: addressToUse.mobile_no || '',
+      };
+      
+      console.log('STEP 1 DATA BEING SENT:', JSON.stringify(addressData));
+      
+      // Step 1: Save delivery address
+      const stepOneResponse = await checkoutAPI.saveDeliveryAddress(addressData);
 
       if (stepOneResponse?.status) {
         setOrderNumber(stepOneResponse.order_number);

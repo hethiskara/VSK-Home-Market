@@ -340,7 +340,9 @@ export const checkoutAPI = {
       country: data.country,
       mobile_no: data.mobile_no,
     }).toString();
-    const response = await api.get(`/my-cart-step-one?${params}`);
+    const url = `/my-cart-step-one?${params}`;
+    console.log('STEP ONE URL:', url);
+    const response = await api.get(url);
     console.log('STEP ONE RESPONSE:', response.data);
     return response.data;
   },
