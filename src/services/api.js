@@ -184,6 +184,30 @@ export const contentAPI = {
   },
 };
 
+// Offers API
+export const offersAPI = {
+  // Get all offer categories
+  getAllOffers: async () => {
+    const response = await api.get('/viewalloffers-json');
+    console.log('ALL OFFERS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get regular products for an offer
+  getRegularOfferDetails: async (discountId) => {
+    const response = await api.get(`/viewallofferdetails-json?discount_id=${discountId}`);
+    console.log('REGULAR OFFER DETAILS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get garment products for an offer
+  getGarmentOfferDetails: async (discountId) => {
+    const response = await api.get(`/garmentviewallofferdetails-json?discount_id=${discountId}`);
+    console.log('GARMENT OFFER DETAILS RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Product APIs
 export const productAPI = {
   // Get all product sections (e.g., Pickles, Garments)
