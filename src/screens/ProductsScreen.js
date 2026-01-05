@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,71 +14,82 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { productAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const SLIDER_WIDTH = width - 32;
+const SLIDER_WIDTH = width - 64;
+const THUMB_SIZE = 24;
 
 // Price Range Slider Component
 const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinChange, onMaxChange }) => {
-  const [minPosition, setMinPosition] = useState(0);
-  const [maxPosition, setMaxPosition] = useState(100);
-  const [dragging, setDragging] = useState(null);
-  const [trackWidth, setTrackWidth] = useState(SLIDER_WIDTH);
+  const trackLayoutRef = useRef({ x: 0, width: SLIDER_WIDTH });
+  const activeThumbRef = useRef(null);
 
-  useEffect(() => {
-    const minPercent = ((selectedMin - minPrice) / (maxPrice - minPrice)) * 100;
-    const maxPercent = ((selectedMax - minPrice) / (maxPrice - minPrice)) * 100;
-    setMinPosition(Math.max(0, Math.min(100, minPercent)));
-    setMaxPosition(Math.max(0, Math.min(100, maxPercent)));
-  }, [selectedMin, selectedMax, minPrice, maxPrice]);
+  const minPercent = ((selectedMin - minPrice) / (maxPrice - minPrice)) * 100;
+  const maxPercent = ((selectedMax - minPrice) / (maxPrice - minPrice)) * 100;
 
-  const handleStart = (evt) => {
-    const touchX = evt.nativeEvent.locationX;
-    const minDist = Math.abs((touchX / trackWidth) * 100 - minPosition);
-    const maxDist = Math.abs((touchX / trackWidth) * 100 - maxPosition);
-    setDragging(minDist < maxDist ? 'min' : 'max');
-    handleMove(evt); // Update immediately on start
+  const calculateValue = (pageX) => {
+    const { x, width } = trackLayoutRef.current;
+    const touchX = pageX - x;
+    const percent = Math.max(0, Math.min(100, (touchX / width) * 100));
+    return Math.round(minPrice + (percent / 100) * (maxPrice - minPrice));
   };
 
-  const handleMove = (evt) => {
-    const touchX = evt.nativeEvent.locationX;
-    const percent = Math.max(0, Math.min(100, (touchX / trackWidth) * 100));
-    const value = minPrice + (percent / 100) * (maxPrice - minPrice);
-    
-    if (dragging === 'min') {
-      const newValue = Math.round(Math.max(minPrice, Math.min(value, selectedMax - 1)));
-      onMinChange(newValue);
-    } else if (dragging === 'max') {
-      const newValue = Math.round(Math.max(selectedMin + 1, Math.min(value, maxPrice)));
-      onMaxChange(newValue);
-    }
-  };
+  const minPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => { activeThumbRef.current = 'min'; },
+      onPanResponderMove: (evt) => {
+        const value = calculateValue(evt.nativeEvent.pageX);
+        const newValue = Math.max(minPrice, Math.min(value, selectedMax - 1));
+        onMinChange(newValue);
+      },
+      onPanResponderRelease: () => { activeThumbRef.current = null; },
+    })
+  ).current;
 
-  const trackPanResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: handleStart,
-    onPanResponderMove: handleMove,
-    onPanResponderRelease: () => setDragging(null),
-  });
+  const maxPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => { activeThumbRef.current = 'max'; },
+      onPanResponderMove: (evt) => {
+        const value = calculateValue(evt.nativeEvent.pageX);
+        const newValue = Math.max(selectedMin + 1, Math.min(value, maxPrice));
+        onMaxChange(newValue);
+      },
+      onPanResponderRelease: () => { activeThumbRef.current = null; },
+    })
+  ).current;
+
+  const handleTrackLayout = (evt) => {
+    evt.target.measure((x, y, width, height, pageX, pageY) => {
+      trackLayoutRef.current = { x: pageX, width };
+    });
+  };
 
   return (
     <View style={styles.sliderContainer}>
       <View 
-        {...trackPanResponder.panHandlers}
         style={styles.sliderTrack}
-        onLayout={(evt) => setTrackWidth(evt.nativeEvent.layout.width)}
+        onLayout={handleTrackLayout}
       >
         <View 
           style={[
             styles.sliderActiveTrack,
-            { left: `${minPosition}%`, width: `${maxPosition - minPosition}%` }
+            { left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }
           ]} 
         />
-        <View
-          style={[styles.sliderThumb, { left: `${minPosition}%` }]}
-        />
-        <View
-          style={[styles.sliderThumb, { left: `${maxPosition}%` }]}
-        />
+      </View>
+      <View
+        {...minPanResponder.panHandlers}
+        style={[styles.sliderThumb, { left: `${minPercent}%` }]}
+      >
+        <View style={styles.thumbInner} />
+      </View>
+      <View
+        {...maxPanResponder.panHandlers}
+        style={[styles.sliderThumb, { left: `${maxPercent}%` }]}
+      >
+        <View style={styles.thumbInner} />
       </View>
     </View>
   );
@@ -429,56 +440,68 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#2C3E50',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sliderContainer: {
-    width: '100%',
-    marginBottom: 12,
+    height: 40,
+    marginHorizontal: 12,
+    justifyContent: 'center',
+    position: 'relative',
   },
   sliderTrack: {
     width: '100%',
-    height: 4,
+    height: 6,
     backgroundColor: '#E0E0E0',
-    borderRadius: 2,
-    position: 'relative',
+    borderRadius: 3,
   },
   sliderActiveTrack: {
     position: 'absolute',
-    height: 4,
+    height: 6,
     backgroundColor: '#FF6B35',
-    borderRadius: 2,
+    borderRadius: 3,
+    top: 0,
   },
   sliderThumb: {
     position: 'absolute',
-    width: 20,
-    height: 20,
+    width: 28,
+    height: 28,
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FF6B35',
-    top: -8,
-    marginLeft: -10,
+    borderRadius: 14,
+    top: -11,
+    marginLeft: -14,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  thumbInner: {
+    width: 12,
+    height: 12,
+    backgroundColor: '#FF6B35',
+    borderRadius: 6,
   },
   priceRangeText: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingHorizontal: 4,
   },
   priceRangeValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#FF6B35',
+    color: '#2C3E50',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
   },
   priceRangeSeparator: {
-    fontSize: 16,
-    color: '#666',
-    marginHorizontal: 8,
+    fontSize: 14,
+    color: '#999',
   },
 });
 
