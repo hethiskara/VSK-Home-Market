@@ -251,6 +251,20 @@ export const productAPI = {
     console.log('PRODUCT DETAILS RESPONSE:', response.data);
     return response.data;
   },
+
+  // Get product tags
+  getTags: async (productCode) => {
+    const response = await api.get(`/regular-tags-json?product_code=${encodeURIComponent(productCode)}`);
+    console.log('REGULAR TAGS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get products by tag
+  getProductsByTag: async (tag) => {
+    const response = await api.get(`/regular-tagdetails-json?tags=${encodeURIComponent(tag)}`);
+    console.log('REGULAR TAG DETAILS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Garment APIs
@@ -294,6 +308,20 @@ export const garmentAPI = {
   getProductDetails: async (productCode) => {
     const response = await api.get(`/garment-product-details?product_code=${encodeURIComponent(productCode)}`);
     console.log('GARMENT PRODUCT DETAILS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get garment product tags
+  getTags: async (productCode) => {
+    const response = await api.get(`/garment-tags-json?product_code=${encodeURIComponent(productCode)}`);
+    console.log('GARMENT TAGS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Get garment products by tag
+  getProductsByTag: async (tag) => {
+    const response = await api.get(`/garment-tagdetails-json?tags=${encodeURIComponent(tag)}`);
+    console.log('GARMENT TAG DETAILS RESPONSE:', response.data);
     return response.data;
   },
 };

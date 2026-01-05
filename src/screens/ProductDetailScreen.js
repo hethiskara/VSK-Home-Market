@@ -39,13 +39,42 @@ const ProductDetailScreen = ({ navigation, route }) => {
   const [reviewText, setReviewText] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
+  const [tags, setTags] = useState([]);
 
   useEffect(() => {
     fetchProductDetails();
     if (productCode) {
       fetchReviews();
+      fetchTags();
     }
   }, [productCode, productType]);
+
+  const fetchTags = async () => {
+    try {
+      let response;
+      if (productType === 'garment') {
+        response = await garmentAPI.getTags(productCode);
+      } else {
+        response = await productAPI.getTags(productCode);
+      }
+      
+      if (response && response.length > 0 && response[0].tags) {
+        // Tags come as comma-separated string, split them
+        const tagList = response[0].tags.split(',').map(tag => tag.trim());
+        setTags(tagList);
+      }
+    } catch (error) {
+      console.log('Error fetching tags:', error);
+    }
+  };
+
+  const handleTagPress = (tag) => {
+    // Navigate to a tag products screen
+    navigation.navigate('TagProducts', { 
+      tag: tag,
+      productType: productType 
+    });
+  };
 
   const fetchProductDetails = async () => {
     setLoading(true);
@@ -484,20 +513,22 @@ const ProductDetailScreen = ({ navigation, route }) => {
           </Text>
 
           {/* Tags Section */}
+          {tags.length > 0 && (
           <View style={styles.tagsSection}>
             <Text style={styles.tagsLabel}>Tags :</Text>
             <View style={styles.tagsContainer}>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>Andhra Homemade pickle</Text>
-              </View>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>VSK Home Market</Text>
-              </View>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>{product.productname?.split(' ')[0] || 'Pickle'}</Text>
-              </View>
+              {tags.map((tag, index) => (
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.tag}
+                  onPress={() => handleTagPress(tag)}
+                >
+                  <Text style={styles.tagText}>{tag}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
+          )}
 
           {/* Share Button */}
           <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
