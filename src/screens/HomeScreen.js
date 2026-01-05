@@ -1038,13 +1038,14 @@ const styles = StyleSheet.create({
   // Ad Section Styles
   adSection: {
     marginTop: 16,
-    width: '100%',
+    marginHorizontal: 16,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   adBannerFull: {
     width: '100%',
     height: undefined,
-    aspectRatio: 1, // Square format for better screen fit
+    aspectRatio: 0.75, // Taller format for better visibility (3:4 ratio)
     backgroundColor: '#F0F0F0',
   },
 
