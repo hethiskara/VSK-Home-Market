@@ -130,6 +130,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 160,
     height: 50,
+    backgroundColor: 'transparent',
   },
   rightIcons: {
     flexDirection: 'row',
