@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,91 @@ import {
   Image,
   FlatList,
   Dimensions,
+  PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { productAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
+const SLIDER_WIDTH = width - 32;
+
+// Price Range Slider Component
+const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinChange, onMaxChange }) => {
+  const [minPosition, setMinPosition] = useState(0);
+  const [maxPosition, setMaxPosition] = useState(100);
+  const [dragging, setDragging] = useState(null);
+  const [trackWidth, setTrackWidth] = useState(SLIDER_WIDTH);
+
+  useEffect(() => {
+    const minPercent = ((selectedMin - minPrice) / (maxPrice - minPrice)) * 100;
+    const maxPercent = ((selectedMax - minPrice) / (maxPrice - minPrice)) * 100;
+    setMinPosition(Math.max(0, Math.min(100, minPercent)));
+    setMaxPosition(Math.max(0, Math.min(100, maxPercent)));
+  }, [selectedMin, selectedMax, minPrice, maxPrice]);
+
+  const handleStart = (evt) => {
+    const touchX = evt.nativeEvent.locationX;
+    const minDist = Math.abs((touchX / trackWidth) * 100 - minPosition);
+    const maxDist = Math.abs((touchX / trackWidth) * 100 - maxPosition);
+    setDragging(minDist < maxDist ? 'min' : 'max');
+    handleMove(evt); // Update immediately on start
+  };
+
+  const handleMove = (evt) => {
+    const touchX = evt.nativeEvent.locationX;
+    const percent = Math.max(0, Math.min(100, (touchX / trackWidth) * 100));
+    const value = minPrice + (percent / 100) * (maxPrice - minPrice);
+    
+    if (dragging === 'min') {
+      const newValue = Math.round(Math.max(minPrice, Math.min(value, selectedMax - 1)));
+      onMinChange(newValue);
+    } else if (dragging === 'max') {
+      const newValue = Math.round(Math.max(selectedMin + 1, Math.min(value, maxPrice)));
+      onMaxChange(newValue);
+    }
+  };
+
+  const trackPanResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: handleStart,
+    onPanResponderMove: handleMove,
+    onPanResponderRelease: () => setDragging(null),
+  });
+
+  return (
+    <View style={styles.sliderContainer}>
+      <View 
+        {...trackPanResponder.panHandlers}
+        style={styles.sliderTrack}
+        onLayout={(evt) => setTrackWidth(evt.nativeEvent.layout.width)}
+      >
+        <View 
+          style={[
+            styles.sliderActiveTrack,
+            { left: `${minPosition}%`, width: `${maxPosition - minPosition}%` }
+          ]} 
+        />
+        <View
+          style={[styles.sliderThumb, { left: `${minPosition}%` }]}
+        />
+        <View
+          style={[styles.sliderThumb, { left: `${maxPosition}%` }]}
+        />
+      </View>
+    </View>
+  );
+};
 
 const ProductsScreen = ({ navigation, route }) => {
   const { sectionId, sectionTitle, categoryId, categoryTitle, subcategoryId, subcategoryTitle, showAll, pageTitle } = route.params || {};
   
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(0);
+  const [selectedMinPrice, setSelectedMinPrice] = useState(0);
+  const [selectedMaxPrice, setSelectedMaxPrice] = useState(0);
 
   useEffect(() => {
     fetchProducts();
@@ -36,13 +110,38 @@ const ProductsScreen = ({ navigation, route }) => {
         response = await productAPI.getProducts(sectionId, categoryId, subcategoryId);
       }
       console.log('Products fetched:', response);
-      setProducts(Array.isArray(response) ? response : []);
+      const productsList = Array.isArray(response) ? response : [];
+      setProducts(productsList);
+      
+      // Calculate min and max prices
+      if (productsList.length > 0) {
+        const prices = productsList.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
+        if (prices.length > 0) {
+          const min = Math.floor(Math.min(...prices));
+          const max = Math.ceil(Math.max(...prices));
+          setMinPrice(min);
+          setMaxPrice(max);
+          setSelectedMinPrice(min);
+          setSelectedMaxPrice(max);
+        }
+      }
     } catch (error) {
       console.log('Error fetching products:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Filter products based on selected price range
+  const filteredProducts = useMemo(() => {
+    if (selectedMinPrice === minPrice && selectedMaxPrice === maxPrice) {
+      return products;
+    }
+    return products.filter(product => {
+      const price = parseFloat(product.productprice) || 0;
+      return price >= selectedMinPrice && price <= selectedMaxPrice;
+    });
+  }, [products, selectedMinPrice, selectedMaxPrice, minPrice, maxPrice]);
 
   const renderBreadcrumb = () => {
     return (
@@ -123,17 +222,39 @@ const ProductsScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
+      {/* Price Filter */}
+      {products.length > 0 && minPrice < maxPrice && (
+        <View style={styles.priceFilterContainer}>
+          <Text style={styles.priceFilterLabel}>Price Range</Text>
+          <PriceRangeSlider
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            selectedMin={selectedMinPrice}
+            selectedMax={selectedMaxPrice}
+            onMinChange={setSelectedMinPrice}
+            onMaxChange={setSelectedMaxPrice}
+          />
+          <View style={styles.priceRangeText}>
+            <Text style={styles.priceRangeValue}>Rs. {selectedMinPrice}</Text>
+            <Text style={styles.priceRangeSeparator}> - </Text>
+            <Text style={styles.priceRangeValue}>Rs. {selectedMaxPrice}</Text>
+          </View>
+        </View>
+      )}
+
       {/* Breadcrumb */}
       {renderBreadcrumb()}
 
       {/* Products List */}
-      {products.length === 0 ? (
+      {filteredProducts.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No products found</Text>
+          <Text style={styles.emptyText}>
+            {products.length === 0 ? 'No products found' : 'No products in this price range'}
+          </Text>
         </View>
       ) : (
         <FlatList
-          data={products}
+          data={filteredProducts}
           renderItem={renderProductItem}
           keyExtractor={(item) => item.id?.toString()}
           contentContainerStyle={styles.listContent}
@@ -296,6 +417,68 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#999',
+  },
+  priceFilterContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  priceFilterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 12,
+  },
+  sliderContainer: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  sliderTrack: {
+    width: '100%',
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    position: 'relative',
+  },
+  sliderActiveTrack: {
+    position: 'absolute',
+    height: 4,
+    backgroundColor: '#FF6B35',
+    borderRadius: 2,
+  },
+  sliderThumb: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+    top: -8,
+    marginLeft: -10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  priceRangeText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  priceRangeValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF6B35',
+  },
+  priceRangeSeparator: {
+    fontSize: 16,
+    color: '#666',
+    marginHorizontal: 8,
   },
 });
 
