@@ -52,9 +52,11 @@ const TagProductsScreen = ({ navigation, route }) => {
 
   const handleProductPress = (product) => {
     if (productType === 'garment') {
-      navigation.navigate('GarmentProductDetail', { productCode: product.productcode });
+      // Use push to ensure a new screen is added to the stack
+      navigation.push('GarmentProductDetail', { productCode: product.productcode });
     } else {
-      navigation.navigate('ProductDetail', { 
+      // Use push to ensure a new screen is added to the stack
+      navigation.push('ProductDetail', { 
         productCode: product.productcode,
         productType: 'regular'
       });
