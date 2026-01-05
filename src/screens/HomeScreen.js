@@ -492,11 +492,8 @@ const HomeScreen = ({ navigation }) => {
               <Image
                 source={{ uri: advertisement.image }}
                 style={styles.adBannerFull}
-                resizeMode="contain"
+                resizeMode="cover"
               />
-              <View style={styles.adOverlay}>
-                <Text style={styles.adTapText}>Tap to view</Text>
-              </View>
             </TouchableOpacity>
           </View>
         )}
@@ -1041,31 +1038,14 @@ const styles = StyleSheet.create({
   // Ad Section Styles
   adSection: {
     marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
+    width: '100%',
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   adBannerFull: {
     width: '100%',
     height: undefined,
-    aspectRatio: 377 / 278, // Natural image aspect ratio for full visibility
+    aspectRatio: 1, // Square format for better screen fit
     backgroundColor: '#F0F0F0',
-  },
-  adOverlay: {
-    backgroundColor: 'rgba(44, 74, 107, 0.85)',
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  adTapText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
   },
 
   // Stay Updated Section Styles
