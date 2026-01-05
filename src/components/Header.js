@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, TextInput, Text } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, TextInput, Text, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -38,7 +38,11 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.container}>
+      <ImageBackground 
+        source={require('../../assets/Logos/headerbg.jpg')}
+        style={styles.container}
+        resizeMode="cover"
+      >
         <View style={styles.topRow}>
           {/* Hamburger Menu */}
           <TouchableOpacity
@@ -52,7 +56,7 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
 
           {/* Logo */}
           <Image
-            source={require('../../assets/Logos/logo.jpg')}
+            source={require('../../assets/Logos/appiconpng.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -93,17 +97,16 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
             </TouchableOpacity>
           </View>
         )}
-      </View>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#F0F4F8',
+    backgroundColor: 'transparent',
   },
   container: {
-    backgroundColor: '#F0F4F8',
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
