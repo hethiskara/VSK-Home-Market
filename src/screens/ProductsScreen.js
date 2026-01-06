@@ -215,11 +215,6 @@ const ProductsScreen = ({ navigation, route }) => {
         <Text style={styles.productTitle} numberOfLines={2}>
           {item.productname}
         </Text>
-        
-        <View style={styles.actionsRow}>
-          <Text style={styles.actionText}>Compare</Text>
-          <Text style={styles.actionText}>Wishlist</Text>
-        </View>
 
         <Text style={styles.productCode}>Product Code : {item.productcode}</Text>
         
