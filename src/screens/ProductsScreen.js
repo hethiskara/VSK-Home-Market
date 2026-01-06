@@ -194,13 +194,13 @@ const ProductsScreen = ({ navigation, route }) => {
       setShowPriceSlider(true);
       setSelectedSort(null);
       setShowSortDropdown(false);
+      // Fetch all products again when selecting custom price
+      fetchProducts();
       return;
     }
     
     setSelectedSort(option);
     setShowPriceSlider(false);
-    setSelectedMinPrice(minPrice);
-    setSelectedMaxPrice(maxPrice);
     setShowSortDropdown(false);
     
     // For Featured and New Arrivals, fetch from API
@@ -227,9 +227,13 @@ const ProductsScreen = ({ navigation, route }) => {
         }
       } catch (error) {
         console.log('Error fetching sorted products:', error);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
+    } else {
+      // For Price Low to High, Price High to Low - fetch all products first
+      await fetchProducts();
     }
   };
 
@@ -380,7 +384,13 @@ const ProductsScreen = ({ navigation, route }) => {
       {filteredProducts.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
-            {products.length === 0 ? 'No products found' : 'No products in this price range'}
+            {selectedSort?.sort === 'featured' 
+              ? 'No featured products found'
+              : selectedSort?.sort === 'new_arrivals'
+              ? 'No new arrivals found'
+              : showPriceSlider && products.length > 0
+              ? 'No products in this price range'
+              : 'No products found'}
           </Text>
         </View>
       ) : (
