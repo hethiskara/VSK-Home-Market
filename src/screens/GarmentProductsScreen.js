@@ -238,7 +238,14 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       const response = await api.get(apiUrl);
       console.log('GARMENT DISCOUNT API RESPONSE:', response.data);
       
-      const productData = Array.isArray(response.data) ? response.data : [];
+      const productData = Array.isArray(response.data) 
+        ? response.data.filter(item => 
+            item && 
+            item.productcode && 
+            item.productname && 
+            item.productprice
+          )
+        : [];
       console.log('GARMENT DISCOUNT PRODUCTS COUNT:', productData.length);
       setProducts(productData);
       

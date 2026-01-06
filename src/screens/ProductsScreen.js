@@ -226,7 +226,14 @@ const ProductsScreen = ({ navigation, route }) => {
       const response = await api.get(apiUrl);
       console.log('DISCOUNT API RESPONSE:', response.data);
       
-      const productData = Array.isArray(response.data) ? response.data : [];
+      const productData = Array.isArray(response.data) 
+        ? response.data.filter(item => 
+            item && 
+            item.productcode && 
+            item.productname && 
+            item.productprice
+          )
+        : [];
       console.log('DISCOUNT PRODUCTS COUNT:', productData.length);
       setProducts(productData);
       
