@@ -601,5 +601,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProductsScreen;
-
-export default ProductsScreen;
