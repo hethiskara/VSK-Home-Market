@@ -10,14 +10,27 @@ import {
   Dimensions,
   Platform,
   StatusBar,
-  Modal,
 } from 'react-native';
-import { garmentAPI, api } from '../services/api';
-import RangeSlider from "react-native-sticky-range-slider";
+import RangeSlider from 'react-native-sticky-range-slider';
+import { garmentAPI } from '../services/api';
+import api from '../services/api';
 
 const { width } = Dimensions.get('window');
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
+
+// Custom Thumb Component
+const Thumb = () => (
+  <View style={styles.thumb}>
+    <View style={styles.thumbLine} />
+  </View>
+);
+
+// Custom Rail Component
+const Rail = () => <View style={styles.rail} />;
+
+// Custom Selected Rail Component
+const RailSelected = () => <View style={styles.railSelected} />;
 
 const GarmentProductsScreen = ({ navigation, route }) => {
   const { 
@@ -31,14 +44,17 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   } = route.params || {};
   
   const [products, setProducts] = useState([]);
-  const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showSortModal, setShowSortModal] = useState(false);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(0);
+  const [selectedMinPrice, setSelectedMinPrice] = useState(0);
+  const [selectedMaxPrice, setSelectedMaxPrice] = useState(0);
+  
+  // Sort/Filter states
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [sortOptions, setSortOptions] = useState([]);
   const [selectedSort, setSelectedSort] = useState(null);
   const [showPriceSlider, setShowPriceSlider] = useState(false);
-  const [selectedMinPrice, setSelectedMinPrice] = useState(0);
-  const [selectedMaxPrice, setSelectedMaxPrice] = useState(10000);
 
   useEffect(() => {
     fetchProducts();
@@ -59,14 +75,9 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // API: /garmentmoreproduct-details?section_id=1&category_id=1&subcategory_id=15
-      // section_id = subcategoryId (Sarees=1)
-      // category_id = categoryId (Women=1)
-      // subcategory_id = productTypeId (Tissue Fancy=15)
       const response = await garmentAPI.getProducts(subcategoryId, categoryId, productTypeId);
       console.log('Garment Products fetched:', response);
       
-      // Filter out invalid/empty products - only keep products with valid data
       const validProducts = Array.isArray(response) 
         ? response.filter(item => 
             item && 
@@ -77,43 +88,50 @@ const GarmentProductsScreen = ({ navigation, route }) => {
         : [];
       
       setProducts(validProducts);
-      setAllProducts(validProducts);
       
-      // Set price range based on products
+      // Calculate min and max prices
       if (validProducts.length > 0) {
-        const prices = validProducts.map(p => parseFloat(p.productprice) || 0);
-        const min = Math.floor(Math.min(...prices));
-        const max = Math.ceil(Math.max(...prices));
-        setSelectedMinPrice(min);
-        setSelectedMaxPrice(max);
+        const prices = validProducts.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
+        if (prices.length > 0) {
+          const min = Math.floor(Math.min(...prices));
+          const max = Math.ceil(Math.max(...prices));
+          setMinPrice(min);
+          setMaxPrice(max);
+          setSelectedMinPrice(min);
+          setSelectedMaxPrice(max);
+        }
       }
     } catch (error) {
       console.log('Error fetching garment products:', error);
       setProducts([]);
-      setAllProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate min/max prices from all products
-  const { minPrice, maxPrice } = useMemo(() => {
-    if (allProducts.length === 0) return { minPrice: 0, maxPrice: 10000 };
-    const prices = allProducts.map(p => parseFloat(p.productprice) || 0);
-    return {
-      minPrice: Math.floor(Math.min(...prices)),
-      maxPrice: Math.ceil(Math.max(...prices))
-    };
-  }, [allProducts]);
-
-  // Filter products by price range
+  // Filter and sort products
   const filteredProducts = useMemo(() => {
-    if (!showPriceSlider) return products;
-    return products.filter(p => {
-      const price = parseFloat(p.productprice) || 0;
-      return price >= selectedMinPrice && price <= selectedMaxPrice;
-    });
-  }, [products, selectedMinPrice, selectedMaxPrice, showPriceSlider]);
+    let result = [...products];
+    
+    // Apply price filter if custom range is selected
+    if (showPriceSlider && (selectedMinPrice !== minPrice || selectedMaxPrice !== maxPrice)) {
+      result = result.filter(product => {
+        const price = parseFloat(product.productprice) || 0;
+        return price >= selectedMinPrice && price <= selectedMaxPrice;
+      });
+    }
+    
+    // Apply sorting
+    if (selectedSort) {
+      if (selectedSort.title === 'Price: Low to High') {
+        result.sort((a, b) => parseFloat(a.productprice) - parseFloat(b.productprice));
+      } else if (selectedSort.title === 'Price: High to Low') {
+        result.sort((a, b) => parseFloat(b.productprice) - parseFloat(a.productprice));
+      }
+    }
+    
+    return result;
+  }, [products, selectedMinPrice, selectedMaxPrice, minPrice, maxPrice, selectedSort, showPriceSlider]);
 
   const handlePriceChange = useCallback((low, high) => {
     setSelectedMinPrice(low);
@@ -121,33 +139,20 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   }, []);
 
   const handleSortSelect = async (option) => {
-    setShowSortModal(false);
-    
-    if (option.id === 'custom_price') {
+    if (option === 'custom_price') {
       setShowPriceSlider(true);
-      setSelectedSort(option);
-      await fetchProducts();
+      setSelectedSort(null);
+      setShowSortDropdown(false);
+      fetchProducts();
       return;
     }
     
-    setShowPriceSlider(false);
     setSelectedSort(option);
+    setShowPriceSlider(false);
+    setShowSortDropdown(false);
     
-    const title = option.title?.toLowerCase() || '';
-    
-    if (title.includes('low to high')) {
-      await fetchProducts();
-      const sorted = [...allProducts].sort((a, b) => 
-        (parseFloat(a.productprice) || 0) - (parseFloat(b.productprice) || 0)
-      );
-      setProducts(sorted);
-    } else if (title.includes('high to low')) {
-      await fetchProducts();
-      const sorted = [...allProducts].sort((a, b) => 
-        (parseFloat(b.productprice) || 0) - (parseFloat(a.productprice) || 0)
-      );
-      setProducts(sorted);
-    } else if (option.sort === 'featured' || option.sort === 'new_arrivals') {
+    // For Featured and New Arrivals, fetch from API
+    if (option.sort === 'featured' || option.sort === 'new_arrivals') {
       setLoading(true);
       setProducts([]);
       try {
@@ -155,16 +160,32 @@ const GarmentProductsScreen = ({ navigation, route }) => {
         const actualCategoryId = categoryId || 1;
         const actualSubcategoryId = productTypeId || 1;
         
-        // Always use garmentsortdetailjson for garment products
         const response = await api.get(`/garmentsortdetailjson?section_id=${actualSectionId}&category_id=${actualCategoryId}&subcategory_id=${actualSubcategoryId}&sort=${option.sort}`);
         
-        const productData = Array.isArray(response.data) 
-          ? response.data.filter(item => item && item.productcode && item.productname && item.productprice)
-          : [];
+        const productData = Array.isArray(response.data) ? response.data : [];
         setProducts(productData);
+        
+        if (productData.length > 0) {
+          const prices = productData.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
+          if (prices.length > 0) {
+            const min = Math.floor(Math.min(...prices));
+            const max = Math.ceil(Math.max(...prices));
+            setMinPrice(min);
+            setMaxPrice(max);
+            setSelectedMinPrice(min);
+            setSelectedMaxPrice(max);
+          }
+        } else {
+          setMinPrice(0);
+          setMaxPrice(0);
+          setSelectedMinPrice(0);
+          setSelectedMaxPrice(0);
+        }
       } catch (error) {
         console.log('Error fetching sorted products:', error);
         setProducts([]);
+        setMinPrice(0);
+        setMaxPrice(0);
       } finally {
         setLoading(false);
       }
@@ -172,18 +193,6 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       await fetchProducts();
     }
   };
-
-  // Slider components
-  const Thumb = (type) => (
-    <View style={styles.thumb} />
-  );
-  const Rail = () => <View style={styles.rail} />;
-  const RailSelected = () => <View style={styles.railSelected} />;
-  const Label = (value) => (
-    <View style={styles.sliderLabel}>
-      <Text style={styles.sliderLabelText}>₹{value}</Text>
-    </View>
-  );
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -262,6 +271,16 @@ const GarmentProductsScreen = ({ navigation, route }) => {
     );
   };
 
+  // Get empty state message based on selected sort
+  const getEmptyMessage = () => {
+    if (selectedSort?.sort === 'featured') {
+      return 'No featured products found';
+    } else if (selectedSort?.sort === 'new_arrivals') {
+      return 'No new arrivals found';
+    }
+    return 'No products available in this category';
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -283,22 +302,62 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       {/* Filter Bar */}
       <View style={styles.filterBar}>
         <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setShowSortModal(true)}
+          style={[styles.filterButton, showSortDropdown && styles.filterButtonActive]}
+          onPress={() => setShowSortDropdown(!showSortDropdown)}
         >
-          <Text style={styles.filterText}>↕ Sort By</Text>
+          <Text style={styles.filterIcon}>↕️</Text>
+          <Text style={styles.filterText}>Sort By</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.filterButton, styles.filterButtonLast]}>
-          <Text style={styles.filterText}>🔻 Filter</Text>
+          <Text style={styles.filterIcon}>🔻</Text>
+          <Text style={styles.filterText}>Filter</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Sort Dropdown */}
+      {showSortDropdown && (
+        <View style={styles.sortDropdown}>
+          {sortOptions.map((option, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.sortOption,
+                selectedSort?.title === option.title && styles.sortOptionActive
+              ]}
+              onPress={() => handleSortSelect(option)}
+            >
+              <Text style={[
+                styles.sortOptionText,
+                selectedSort?.title === option.title && styles.sortOptionTextActive
+              ]}>
+                {option.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+          {/* Custom Price Range Option */}
+          <TouchableOpacity
+            style={[
+              styles.sortOption,
+              showPriceSlider && styles.sortOptionActive
+            ]}
+            onPress={() => handleSortSelect('custom_price')}
+          >
+            <Text style={[
+              styles.sortOptionText,
+              showPriceSlider && styles.sortOptionTextActive
+            ]}>
+              Custom Price Range
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Price Range Slider */}
-      {showPriceSlider && allProducts.length > 0 && minPrice < maxPrice && (
-        <View style={styles.priceFilterContainer}>
-          <View style={styles.priceFilterHeader}>
-            <Text style={styles.priceFilterLabel}>Price : </Text>
-            <Text style={styles.priceRangeDisplay}>₹{selectedMinPrice} - ₹{selectedMaxPrice}</Text>
+      {showPriceSlider && minPrice < maxPrice && (
+        <View style={styles.priceSliderContainer}>
+          <View style={styles.priceHeader}>
+            <Text style={styles.priceLabel}>Price Range:</Text>
+            <Text style={styles.priceValue}>₹{selectedMinPrice} - ₹{selectedMaxPrice}</Text>
           </View>
           <RangeSlider
             style={styles.slider}
@@ -311,7 +370,6 @@ const GarmentProductsScreen = ({ navigation, route }) => {
             renderThumb={Thumb}
             renderRail={Rail}
             renderRailSelected={RailSelected}
-            renderLabel={Label}
           />
         </View>
       )}
@@ -319,7 +377,7 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       {/* Breadcrumb */}
       {renderBreadcrumb()}
 
-      {/* Products Count - only show if products exist */}
+      {/* Products Count */}
       {filteredProducts.length > 0 && (
         <View style={styles.countBar}>
           <Text style={styles.countText}>{filteredProducts.length} Products Found</Text>
@@ -327,12 +385,12 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       )}
 
       {/* Products List */}
-      {filteredProducts.length === 0 && !loading ? (
+      {filteredProducts.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🛍️</Text>
-          <Text style={styles.emptyTitle}>No Products Available</Text>
+          <Text style={styles.emptyTitle}>{getEmptyMessage()}</Text>
           <Text style={styles.emptyText}>
-            There are no products in this category yet.{'\n'}Please check back later or browse other categories.
+            Please check back later or browse other categories.
           </Text>
           <TouchableOpacity 
             style={styles.goBackButton}
@@ -350,55 +408,6 @@ const GarmentProductsScreen = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
         />
       )}
-
-      {/* Sort Modal */}
-      <Modal
-        visible={showSortModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowSortModal(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowSortModal(false)}
-        >
-          <View style={styles.sortModalContent}>
-            <Text style={styles.sortModalTitle}>Sort By</Text>
-            {sortOptions.map((option, index) => (
-              <TouchableOpacity
-                key={option.id || index}
-                style={[
-                  styles.sortOption,
-                  selectedSort?.id === option.id && styles.sortOptionSelected
-                ]}
-                onPress={() => handleSortSelect(option)}
-              >
-                <Text style={[
-                  styles.sortOptionText,
-                  selectedSort?.id === option.id && styles.sortOptionTextSelected
-                ]}>
-                  {option.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={[
-                styles.sortOption,
-                selectedSort?.id === 'custom_price' && styles.sortOptionSelected
-              ]}
-              onPress={() => handleSortSelect({ id: 'custom_price', title: 'Custom Price Range' })}
-            >
-              <Text style={[
-                styles.sortOptionText,
-                selectedSort?.id === 'custom_price' && styles.sortOptionTextSelected
-              ]}>
-                Custom Price Range
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 };
@@ -452,19 +461,105 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderRightWidth: 1,
     borderRightColor: '#E0E0E0',
+    gap: 6,
+  },
+  filterButtonActive: {
+    backgroundColor: '#F0F4F8',
   },
   filterButtonLast: {
     borderRightWidth: 0,
+  },
+  filterIcon: {
+    fontSize: 14,
   },
   filterText: {
     fontSize: 14,
     color: '#333333',
     fontWeight: '500',
+  },
+  sortDropdown: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+    paddingVertical: 8,
+  },
+  sortOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  sortOptionActive: {
+    backgroundColor: '#F0F4F8',
+  },
+  sortOptionText: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  sortOptionTextActive: {
+    color: THEME_COLOR,
+    fontWeight: '600',
+  },
+  priceSliderContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  priceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  priceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  priceValue: {
+    fontSize: 14,
+    color: THEME_COLOR,
+    fontWeight: '600',
+  },
+  slider: {
+    height: 40,
+  },
+  thumb: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: THEME_COLOR,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  thumbLine: {
+    width: 10,
+    height: 2,
+    backgroundColor: THEME_COLOR,
+  },
+  rail: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E0E0E0',
+  },
+  railSelected: {
+    height: 4,
+    backgroundColor: THEME_COLOR,
+    borderRadius: 2,
   },
   breadcrumb: {
     backgroundColor: '#FFFFFF',
@@ -629,110 +724,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  // Sort Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sortModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
-    maxWidth: 300,
-  },
-  sortModalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: THEME_COLOR,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  sortOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: '#F5F5F5',
-  },
-  sortOptionSelected: {
-    backgroundColor: THEME_COLOR,
-  },
-  sortOptionText: {
-    fontSize: 14,
-    color: '#333333',
-    textAlign: 'center',
-  },
-  sortOptionTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  // Price Slider Styles
-  priceFilterContainer: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  priceFilterHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  priceFilterLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  priceRangeDisplay: {
-    fontSize: 14,
-    color: THEME_COLOR,
-    fontWeight: '600',
-  },
-  slider: {
-    marginVertical: 10,
-  },
-  thumb: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: THEME_COLOR,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  rail: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#E0E0E0',
-  },
-  railSelected: {
-    height: 6,
-    backgroundColor: THEME_COLOR,
-    borderRadius: 3,
-  },
-  sliderLabel: {
-    position: 'absolute',
-    top: -30,
-    backgroundColor: THEME_COLOR,
-    borderRadius: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  sliderLabelText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
 });
 
 export default GarmentProductsScreen;
-
