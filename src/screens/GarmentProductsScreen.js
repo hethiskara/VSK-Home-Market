@@ -233,9 +233,13 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       const actualSubcategoryId = productTypeId || 1;
       
       // Use garmentdiscountmasterdetailjson for garment products
-      const response = await api.get(`/garmentdiscountmasterdetailjson?section_id=${actualSectionId}&category_id=${actualCategoryId}&subcategory_id=${actualSubcategoryId}&discount_percentage_id=${option.discount_percentage_id}`);
+      const apiUrl = `/garmentdiscountmasterdetailjson?section_id=${actualSectionId}&category_id=${actualCategoryId}&subcategory_id=${actualSubcategoryId}&discount_percentage_id=${option.discount_percentage_id}`;
+      console.log('GARMENT DISCOUNT API URL:', apiUrl);
+      const response = await api.get(apiUrl);
+      console.log('GARMENT DISCOUNT API RESPONSE:', response.data);
       
       const productData = Array.isArray(response.data) ? response.data : [];
+      console.log('GARMENT DISCOUNT PRODUCTS COUNT:', productData.length);
       setProducts(productData);
       
       if (productData.length > 0) {

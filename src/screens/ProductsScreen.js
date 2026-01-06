@@ -221,9 +221,13 @@ const ProductsScreen = ({ navigation, route }) => {
     
     try {
       // Use discountmasterdetailjson for regular products
-      const response = await api.get(`/discountmasterdetailjson?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&discount_percentage_id=${option.discount_percentage_id}`);
+      const apiUrl = `/discountmasterdetailjson?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&discount_percentage_id=${option.discount_percentage_id}`;
+      console.log('DISCOUNT API URL:', apiUrl);
+      const response = await api.get(apiUrl);
+      console.log('DISCOUNT API RESPONSE:', response.data);
       
       const productData = Array.isArray(response.data) ? response.data : [];
+      console.log('DISCOUNT PRODUCTS COUNT:', productData.length);
       setProducts(productData);
       
       if (productData.length > 0) {
