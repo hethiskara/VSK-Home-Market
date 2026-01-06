@@ -12,7 +12,7 @@ import {
   StatusBar,
   Modal,
 } from 'react-native';
-import { garmentAPI, sortAPI } from '../services/api';
+import { garmentAPI, api } from '../services/api';
 import RangeSlider from "react-native-sticky-range-slider";
 
 const { width } = Dimensions.get('window');
@@ -47,9 +47,9 @@ const GarmentProductsScreen = ({ navigation, route }) => {
 
   const fetchSortOptions = async () => {
     try {
-      const response = await sortAPI.getSortOptions();
-      if (Array.isArray(response)) {
-        setSortOptions(response);
+      const response = await api.get('/sortmasterjson');
+      if (Array.isArray(response.data)) {
+        setSortOptions(response.data);
       }
     } catch (error) {
       console.log('Error fetching sort options:', error);
@@ -126,28 +126,28 @@ const GarmentProductsScreen = ({ navigation, route }) => {
     if (option.id === 'custom_price') {
       setShowPriceSlider(true);
       setSelectedSort(option);
-      setProducts(allProducts);
+      await fetchProducts();
       return;
     }
     
     setShowPriceSlider(false);
     setSelectedSort(option);
     
-    const sortType = option.title?.toLowerCase().replace(/\s+/g, '_');
+    const title = option.title?.toLowerCase() || '';
     
-    if (sortType === 'price:_low_to_high' || sortType === 'price_low_to_high') {
+    if (title.includes('low to high')) {
       await fetchProducts();
       const sorted = [...allProducts].sort((a, b) => 
         (parseFloat(a.productprice) || 0) - (parseFloat(b.productprice) || 0)
       );
       setProducts(sorted);
-    } else if (sortType === 'price:_high_to_low' || sortType === 'price_high_to_low') {
+    } else if (title.includes('high to low')) {
       await fetchProducts();
       const sorted = [...allProducts].sort((a, b) => 
         (parseFloat(b.productprice) || 0) - (parseFloat(a.productprice) || 0)
       );
       setProducts(sorted);
-    } else if (sortType === 'featured' || sortType === 'new_arrivals') {
+    } else if (option.sort === 'featured' || option.sort === 'new_arrivals') {
       setLoading(true);
       setProducts([]);
       try {
@@ -155,16 +155,11 @@ const GarmentProductsScreen = ({ navigation, route }) => {
         const actualCategoryId = categoryId || 1;
         const actualSubcategoryId = productTypeId || 1;
         
-        const response = await sortAPI.getSortedProducts(
-          actualSectionId,
-          actualCategoryId,
-          actualSubcategoryId,
-          sortType,
-          true // isGarment = true
-        );
+        // Always use garmentsortdetailjson for garment products
+        const response = await api.get(`/garmentsortdetailjson?section_id=${actualSectionId}&category_id=${actualCategoryId}&subcategory_id=${actualSubcategoryId}&sort=${option.sort}`);
         
-        const productData = Array.isArray(response) 
-          ? response.filter(item => item && item.productcode && item.productname && item.productprice)
+        const productData = Array.isArray(response.data) 
+          ? response.data.filter(item => item && item.productcode && item.productname && item.productprice)
           : [];
         setProducts(productData);
       } catch (error) {
