@@ -206,16 +206,21 @@ const ProductsScreen = ({ navigation, route }) => {
     // For Featured and New Arrivals, fetch from API
     if (option.sort === 'featured' || option.sort === 'new_arrivals') {
       setLoading(true);
+      // Clear products immediately to prevent showing stale data
+      setProducts([]);
       try {
         // Determine if it's garment or regular based on sectionId
         const isGarment = sectionId === 1 || sectionId === '1';
         const endpoint = isGarment ? '/garmentsortdetailjson' : '/sortdetailjson';
         const response = await api.get(`${endpoint}?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&sort=${option.sort}`);
         
-        if (Array.isArray(response.data)) {
-          setProducts(response.data);
-          // Recalculate price range
-          const prices = response.data.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
+        // Handle response - could be array or empty
+        const productData = Array.isArray(response.data) ? response.data : [];
+        setProducts(productData);
+        
+        // Recalculate price range only if we have products
+        if (productData.length > 0) {
+          const prices = productData.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
           if (prices.length > 0) {
             const min = Math.floor(Math.min(...prices));
             const max = Math.ceil(Math.max(...prices));
@@ -224,10 +229,18 @@ const ProductsScreen = ({ navigation, route }) => {
             setSelectedMinPrice(min);
             setSelectedMaxPrice(max);
           }
+        } else {
+          // Reset price range for empty results
+          setMinPrice(0);
+          setMaxPrice(0);
+          setSelectedMinPrice(0);
+          setSelectedMaxPrice(0);
         }
       } catch (error) {
         console.log('Error fetching sorted products:', error);
         setProducts([]);
+        setMinPrice(0);
+        setMaxPrice(0);
       } finally {
         setLoading(false);
       }
