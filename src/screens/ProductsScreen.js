@@ -9,18 +9,17 @@ import {
   FlatList,
   Dimensions,
   PanResponder,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { productAPI } from '../services/api';
+import api from '../services/api';
 
 const { width } = Dimensions.get('window');
-const SLIDER_WIDTH = width - 64;
-const THUMB_SIZE = 24;
 
-// Price Range Slider Component
+// Price Range Slider Component with Pentagon Pointers
 const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinChange, onMaxChange }) => {
-  const trackLayoutRef = useRef({ x: 0, width: SLIDER_WIDTH });
-  const activeThumbRef = useRef(null);
+  const trackLayoutRef = useRef({ x: 0, width: width - 64 });
 
   const minPercent = ((selectedMin - minPrice) / (maxPrice - minPrice)) * 100;
   const maxPercent = ((selectedMax - minPrice) / (maxPrice - minPrice)) * 100;
@@ -36,13 +35,11 @@ const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinC
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => { activeThumbRef.current = 'min'; },
       onPanResponderMove: (evt) => {
         const value = calculateValue(evt.nativeEvent.pageX);
         const newValue = Math.max(minPrice, Math.min(value, selectedMax - 1));
         onMinChange(newValue);
       },
-      onPanResponderRelease: () => { activeThumbRef.current = null; },
     })
   ).current;
 
@@ -50,13 +47,11 @@ const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinC
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => { activeThumbRef.current = 'max'; },
       onPanResponderMove: (evt) => {
         const value = calculateValue(evt.nativeEvent.pageX);
         const newValue = Math.max(selectedMin + 1, Math.min(value, maxPrice));
         onMaxChange(newValue);
       },
-      onPanResponderRelease: () => { activeThumbRef.current = null; },
     })
   ).current;
 
@@ -68,6 +63,7 @@ const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinC
 
   return (
     <View style={styles.sliderContainer}>
+      {/* Track */}
       <View 
         style={styles.sliderTrack}
         onLayout={handleTrackLayout}
@@ -79,17 +75,27 @@ const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinC
           ]} 
         />
       </View>
+      
+      {/* Min Thumb - Pentagon shape */}
       <View
         {...minPanResponder.panHandlers}
-        style={[styles.sliderThumb, { left: `${minPercent}%` }]}
+        style={[styles.thumbWrapper, { left: `${minPercent}%` }]}
       >
-        <View style={styles.thumbInner} />
+        <View style={styles.thumbPentagon}>
+          <View style={styles.thumbPentagonTop} />
+          <View style={styles.thumbPentagonBottom} />
+        </View>
       </View>
+      
+      {/* Max Thumb - Pentagon shape */}
       <View
         {...maxPanResponder.panHandlers}
-        style={[styles.sliderThumb, { left: `${maxPercent}%` }]}
+        style={[styles.thumbWrapper, { left: `${maxPercent}%` }]}
       >
-        <View style={styles.thumbInner} />
+        <View style={styles.thumbPentagon}>
+          <View style={styles.thumbPentagonTop} />
+          <View style={styles.thumbPentagonBottom} />
+        </View>
       </View>
     </View>
   );
@@ -104,10 +110,28 @@ const ProductsScreen = ({ navigation, route }) => {
   const [maxPrice, setMaxPrice] = useState(0);
   const [selectedMinPrice, setSelectedMinPrice] = useState(0);
   const [selectedMaxPrice, setSelectedMaxPrice] = useState(0);
+  
+  // Sort/Filter states
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [sortOptions, setSortOptions] = useState([]);
+  const [selectedSort, setSelectedSort] = useState(null);
+  const [showPriceSlider, setShowPriceSlider] = useState(false);
 
   useEffect(() => {
     fetchProducts();
+    fetchSortOptions();
   }, [sectionId, categoryId, subcategoryId, showAll]);
+
+  const fetchSortOptions = async () => {
+    try {
+      const response = await api.get('/sortmasterjson');
+      if (Array.isArray(response.data)) {
+        setSortOptions(response.data);
+      }
+    } catch (error) {
+      console.log('Error fetching sort options:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -143,16 +167,43 @@ const ProductsScreen = ({ navigation, route }) => {
     }
   };
 
-  // Filter products based on selected price range
+  // Filter and sort products
   const filteredProducts = useMemo(() => {
-    if (selectedMinPrice === minPrice && selectedMaxPrice === maxPrice) {
-      return products;
+    let result = [...products];
+    
+    // Apply price filter if custom range is selected
+    if (showPriceSlider && (selectedMinPrice !== minPrice || selectedMaxPrice !== maxPrice)) {
+      result = result.filter(product => {
+        const price = parseFloat(product.productprice) || 0;
+        return price >= selectedMinPrice && price <= selectedMaxPrice;
+      });
     }
-    return products.filter(product => {
-      const price = parseFloat(product.productprice) || 0;
-      return price >= selectedMinPrice && price <= selectedMaxPrice;
-    });
-  }, [products, selectedMinPrice, selectedMaxPrice, minPrice, maxPrice]);
+    
+    // Apply sorting
+    if (selectedSort) {
+      if (selectedSort.title === 'Price: Low to High') {
+        result.sort((a, b) => parseFloat(a.productprice) - parseFloat(b.productprice));
+      } else if (selectedSort.title === 'Price: High to Low') {
+        result.sort((a, b) => parseFloat(b.productprice) - parseFloat(a.productprice));
+      }
+    }
+    
+    return result;
+  }, [products, selectedMinPrice, selectedMaxPrice, minPrice, maxPrice, selectedSort, showPriceSlider]);
+
+  const handleSortSelect = (option) => {
+    if (option === 'custom_price') {
+      setShowPriceSlider(true);
+      setSelectedSort(null);
+    } else {
+      setSelectedSort(option);
+      setShowPriceSlider(false);
+      // Reset price range when selecting other sort options
+      setSelectedMinPrice(minPrice);
+      setSelectedMaxPrice(maxPrice);
+    }
+    setShowSortDropdown(false);
+  };
 
   const renderBreadcrumb = () => {
     return (
@@ -225,18 +276,64 @@ const ProductsScreen = ({ navigation, route }) => {
 
       {/* Filter Bar */}
       <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterText}>↕ Products By</Text>
+        <TouchableOpacity 
+          style={[styles.filterButton, showSortDropdown && styles.filterButtonActive]}
+          onPress={() => setShowSortDropdown(!showSortDropdown)}
+        >
+          <Text style={styles.filterIcon}>↕️</Text>
+          <Text style={styles.filterText}>Products By</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.filterButton, styles.filterButtonLast]}>
-          <Text style={styles.filterText}>🔻 Filter</Text>
+          <Text style={styles.filterIcon}>🔻</Text>
+          <Text style={styles.filterText}>Filter</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Price Filter */}
-      {products.length > 0 && minPrice < maxPrice && (
+      {/* Sort Dropdown */}
+      {showSortDropdown && (
+        <View style={styles.sortDropdown}>
+          {sortOptions.map((option, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.sortOption,
+                selectedSort?.title === option.title && styles.sortOptionActive
+              ]}
+              onPress={() => handleSortSelect(option)}
+            >
+              <Text style={[
+                styles.sortOptionText,
+                selectedSort?.title === option.title && styles.sortOptionTextActive
+              ]}>
+                {option.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+          {/* Custom Price Range Option */}
+          <TouchableOpacity
+            style={[
+              styles.sortOption,
+              showPriceSlider && styles.sortOptionActive
+            ]}
+            onPress={() => handleSortSelect('custom_price')}
+          >
+            <Text style={[
+              styles.sortOptionText,
+              showPriceSlider && styles.sortOptionTextActive
+            ]}>
+              Custom Price Range
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Price Range Slider - Only show when Custom Price Range is selected */}
+      {showPriceSlider && products.length > 0 && minPrice < maxPrice && (
         <View style={styles.priceFilterContainer}>
-          <Text style={styles.priceFilterLabel}>Price Range</Text>
+          <View style={styles.priceFilterHeader}>
+            <Text style={styles.priceFilterLabel}>Price : </Text>
+            <Text style={styles.priceRangeDisplay}>₹{selectedMinPrice} - ₹{selectedMaxPrice}</Text>
+          </View>
           <PriceRangeSlider
             minPrice={minPrice}
             maxPrice={maxPrice}
@@ -245,11 +342,6 @@ const ProductsScreen = ({ navigation, route }) => {
             onMinChange={setSelectedMinPrice}
             onMaxChange={setSelectedMaxPrice}
           />
-          <View style={styles.priceRangeText}>
-            <Text style={styles.priceRangeValue}>Rs. {selectedMinPrice}</Text>
-            <Text style={styles.priceRangeSeparator}> - </Text>
-            <Text style={styles.priceRangeValue}>Rs. {selectedMaxPrice}</Text>
-          </View>
         </View>
       )}
 
@@ -429,6 +521,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
   },
+  filterIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  filterButtonActive: {
+    backgroundColor: '#F0F4F8',
+  },
+  sortDropdown: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+    paddingVertical: 8,
+  },
+  sortOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  sortOptionActive: {
+    backgroundColor: '#E8F4FD',
+  },
+  sortOptionText: {
+    fontSize: 14,
+    color: '#2C3E50',
+  },
+  sortOptionTextActive: {
+    color: '#3498DB',
+    fontWeight: '600',
+  },
   priceFilterContainer: {
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -436,72 +558,75 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
   },
+  priceFilterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   priceFilterLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#2C3E50',
-    marginBottom: 16,
+  },
+  priceRangeDisplay: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#C0392B',
   },
   sliderContainer: {
-    height: 40,
-    marginHorizontal: 12,
+    height: 50,
     justifyContent: 'center',
     position: 'relative',
+    marginHorizontal: 10,
   },
   sliderTrack: {
     width: '100%',
-    height: 6,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 3,
+    height: 8,
+    backgroundColor: '#4A90D9',
+    borderRadius: 4,
   },
   sliderActiveTrack: {
     position: 'absolute',
-    height: 6,
-    backgroundColor: '#FF6B35',
-    borderRadius: 3,
+    height: 8,
+    backgroundColor: '#4A90D9',
+    borderRadius: 4,
     top: 0,
   },
-  sliderThumb: {
+  thumbWrapper: {
     position: 'absolute',
-    width: 28,
-    height: 28,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    marginLeft: -15,
     top: -11,
-    marginLeft: -14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
-  thumbInner: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#FF6B35',
-    borderRadius: 6,
-  },
-  priceRangeText: {
-    flexDirection: 'row',
+  thumbPentagon: {
+    width: 24,
+    height: 24,
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingHorizontal: 4,
   },
-  priceRangeValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#2C3E50',
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
+  thumbPentagonTop: {
+    width: 20,
+    height: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#4A90D9',
+    borderBottomWidth: 0,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
   },
-  priceRangeSeparator: {
-    fontSize: 14,
-    color: '#999',
+  thumbPentagonBottom: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#FFFFFF',
+    marginTop: -2,
   },
 });
 
