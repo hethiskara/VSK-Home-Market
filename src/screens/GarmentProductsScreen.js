@@ -55,10 +55,16 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   const [sortOptions, setSortOptions] = useState([]);
   const [selectedSort, setSelectedSort] = useState(null);
   const [showPriceSlider, setShowPriceSlider] = useState(false);
+  
+  // Discount filter states
+  const [showDiscountDropdown, setShowDiscountDropdown] = useState(false);
+  const [discountOptions, setDiscountOptions] = useState([]);
+  const [selectedDiscount, setSelectedDiscount] = useState(null);
 
   useEffect(() => {
     fetchProducts();
     fetchSortOptions();
+    fetchDiscountOptions();
   }, [subcategoryId, categoryId, productTypeId]);
 
   const fetchSortOptions = async () => {
@@ -69,6 +75,18 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       }
     } catch (error) {
       console.log('Error fetching sort options:', error);
+    }
+  };
+
+  const fetchDiscountOptions = async () => {
+    try {
+      const response = await api.get('/discountmasterjson');
+      console.log('Discount options:', response.data);
+      if (Array.isArray(response.data)) {
+        setDiscountOptions(response.data);
+      }
+    } catch (error) {
+      console.log('Error fetching discount options:', error);
     }
   };
 
@@ -139,6 +157,10 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   }, []);
 
   const handleSortSelect = async (option) => {
+    // Close discount dropdown when sorting
+    setShowDiscountDropdown(false);
+    setSelectedDiscount(null);
+    
     if (option === 'custom_price') {
       setShowPriceSlider(true);
       setSelectedSort(null);
@@ -191,6 +213,54 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       }
     } else {
       await fetchProducts();
+    }
+  };
+
+  const handleDiscountSelect = async (option) => {
+    // Close sort dropdown when filtering by discount
+    setShowSortDropdown(false);
+    setShowPriceSlider(false);
+    setSelectedSort(null);
+    
+    setSelectedDiscount(option);
+    setShowDiscountDropdown(false);
+    setLoading(true);
+    setProducts([]);
+    
+    try {
+      const actualSectionId = sectionId || subcategoryId || 1;
+      const actualCategoryId = categoryId || 1;
+      const actualSubcategoryId = productTypeId || 1;
+      
+      // Use garmentdiscountmasterdetailjson for garment products
+      const response = await api.get(`/garmentdiscountmasterdetailjson?section_id=${actualSectionId}&category_id=${actualCategoryId}&subcategory_id=${actualSubcategoryId}&discount_percentage_id=${option.discount_percentage_id}`);
+      
+      const productData = Array.isArray(response.data) ? response.data : [];
+      setProducts(productData);
+      
+      if (productData.length > 0) {
+        const prices = productData.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
+        if (prices.length > 0) {
+          const min = Math.floor(Math.min(...prices));
+          const max = Math.ceil(Math.max(...prices));
+          setMinPrice(min);
+          setMaxPrice(max);
+          setSelectedMinPrice(min);
+          setSelectedMaxPrice(max);
+        }
+      } else {
+        setMinPrice(0);
+        setMaxPrice(0);
+        setSelectedMinPrice(0);
+        setSelectedMaxPrice(0);
+      }
+    } catch (error) {
+      console.log('Error fetching discount products:', error);
+      setProducts([]);
+      setMinPrice(0);
+      setMaxPrice(0);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -271,12 +341,14 @@ const GarmentProductsScreen = ({ navigation, route }) => {
     );
   };
 
-  // Get empty state message based on selected sort
+  // Get empty state message based on selected sort or discount
   const getEmptyMessage = () => {
     if (selectedSort?.sort === 'featured') {
       return 'No featured products found';
     } else if (selectedSort?.sort === 'new_arrivals') {
       return 'No new arrivals found';
+    } else if (selectedDiscount) {
+      return `No products with ${selectedDiscount.title} discount`;
     }
     return 'No products available in this category';
   };
@@ -303,14 +375,23 @@ const GarmentProductsScreen = ({ navigation, route }) => {
       <View style={styles.filterBar}>
         <TouchableOpacity 
           style={[styles.filterButton, showSortDropdown && styles.filterButtonActive]}
-          onPress={() => setShowSortDropdown(!showSortDropdown)}
+          onPress={() => {
+            setShowSortDropdown(!showSortDropdown);
+            setShowDiscountDropdown(false);
+          }}
         >
           <Text style={styles.filterIcon}>↕️</Text>
           <Text style={styles.filterText}>Sort By</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.filterButton, styles.filterButtonLast]}>
+        <TouchableOpacity 
+          style={[styles.filterButton, styles.filterButtonLast, showDiscountDropdown && styles.filterButtonActive]}
+          onPress={() => {
+            setShowDiscountDropdown(!showDiscountDropdown);
+            setShowSortDropdown(false);
+          }}
+        >
           <Text style={styles.filterIcon}>🔻</Text>
-          <Text style={styles.filterText}>Filter</Text>
+          <Text style={styles.filterText}>Discount By</Text>
         </TouchableOpacity>
       </View>
 
@@ -349,6 +430,29 @@ const GarmentProductsScreen = ({ navigation, route }) => {
               Custom Price Range
             </Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Discount Dropdown */}
+      {showDiscountDropdown && (
+        <View style={styles.sortDropdown}>
+          {discountOptions.map((option, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.sortOption,
+                selectedDiscount?.discount_percentage_id === option.discount_percentage_id && styles.sortOptionActive
+              ]}
+              onPress={() => handleDiscountSelect(option)}
+            >
+              <Text style={[
+                styles.sortOptionText,
+                selectedDiscount?.discount_percentage_id === option.discount_percentage_id && styles.sortOptionTextActive
+              ]}>
+                {option.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 

@@ -45,10 +45,16 @@ const ProductsScreen = ({ navigation, route }) => {
   const [sortOptions, setSortOptions] = useState([]);
   const [selectedSort, setSelectedSort] = useState(null);
   const [showPriceSlider, setShowPriceSlider] = useState(false);
+  
+  // Discount filter states
+  const [showDiscountDropdown, setShowDiscountDropdown] = useState(false);
+  const [discountOptions, setDiscountOptions] = useState([]);
+  const [selectedDiscount, setSelectedDiscount] = useState(null);
 
   useEffect(() => {
     fetchProducts();
     fetchSortOptions();
+    fetchDiscountOptions();
   }, [sectionId, categoryId, subcategoryId, showAll]);
 
   const fetchSortOptions = async () => {
@@ -59,6 +65,18 @@ const ProductsScreen = ({ navigation, route }) => {
       }
     } catch (error) {
       console.log('Error fetching sort options:', error);
+    }
+  };
+
+  const fetchDiscountOptions = async () => {
+    try {
+      const response = await api.get('/discountmasterjson');
+      console.log('Discount options:', response.data);
+      if (Array.isArray(response.data)) {
+        setDiscountOptions(response.data);
+      }
+    } catch (error) {
+      console.log('Error fetching discount options:', error);
     }
   };
 
@@ -126,6 +144,10 @@ const ProductsScreen = ({ navigation, route }) => {
   }, []);
 
   const handleSortSelect = async (option) => {
+    // Close discount dropdown when sorting
+    setShowDiscountDropdown(false);
+    setSelectedDiscount(null);
+    
     if (option === 'custom_price') {
       setShowPriceSlider(true);
       setSelectedSort(null);
@@ -183,6 +205,50 @@ const ProductsScreen = ({ navigation, route }) => {
     } else {
       // For Price Low to High, Price High to Low - fetch all products first
       await fetchProducts();
+    }
+  };
+
+  const handleDiscountSelect = async (option) => {
+    // Close sort dropdown when filtering by discount
+    setShowSortDropdown(false);
+    setShowPriceSlider(false);
+    setSelectedSort(null);
+    
+    setSelectedDiscount(option);
+    setShowDiscountDropdown(false);
+    setLoading(true);
+    setProducts([]);
+    
+    try {
+      // Use discountmasterdetailjson for regular products
+      const response = await api.get(`/discountmasterdetailjson?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&discount_percentage_id=${option.discount_percentage_id}`);
+      
+      const productData = Array.isArray(response.data) ? response.data : [];
+      setProducts(productData);
+      
+      if (productData.length > 0) {
+        const prices = productData.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
+        if (prices.length > 0) {
+          const min = Math.floor(Math.min(...prices));
+          const max = Math.ceil(Math.max(...prices));
+          setMinPrice(min);
+          setMaxPrice(max);
+          setSelectedMinPrice(min);
+          setSelectedMaxPrice(max);
+        }
+      } else {
+        setMinPrice(0);
+        setMaxPrice(0);
+        setSelectedMinPrice(0);
+        setSelectedMaxPrice(0);
+      }
+    } catch (error) {
+      console.log('Error fetching discount products:', error);
+      setProducts([]);
+      setMinPrice(0);
+      setMaxPrice(0);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -254,14 +320,23 @@ const ProductsScreen = ({ navigation, route }) => {
       <View style={styles.filterBar}>
         <TouchableOpacity 
           style={[styles.filterButton, showSortDropdown && styles.filterButtonActive]}
-          onPress={() => setShowSortDropdown(!showSortDropdown)}
+          onPress={() => {
+            setShowSortDropdown(!showSortDropdown);
+            setShowDiscountDropdown(false);
+          }}
         >
           <Text style={styles.filterIcon}>↕️</Text>
           <Text style={styles.filterText}>Sort By</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.filterButton, styles.filterButtonLast]}>
+        <TouchableOpacity 
+          style={[styles.filterButton, styles.filterButtonLast, showDiscountDropdown && styles.filterButtonActive]}
+          onPress={() => {
+            setShowDiscountDropdown(!showDiscountDropdown);
+            setShowSortDropdown(false);
+          }}
+        >
           <Text style={styles.filterIcon}>🔻</Text>
-          <Text style={styles.filterText}>Filter</Text>
+          <Text style={styles.filterText}>Discount By</Text>
         </TouchableOpacity>
       </View>
 
@@ -303,6 +378,29 @@ const ProductsScreen = ({ navigation, route }) => {
         </View>
       )}
 
+      {/* Discount Dropdown */}
+      {showDiscountDropdown && (
+        <View style={styles.sortDropdown}>
+          {discountOptions.map((option, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.sortOption,
+                selectedDiscount?.discount_percentage_id === option.discount_percentage_id && styles.sortOptionActive
+              ]}
+              onPress={() => handleDiscountSelect(option)}
+            >
+              <Text style={[
+                styles.sortOptionText,
+                selectedDiscount?.discount_percentage_id === option.discount_percentage_id && styles.sortOptionTextActive
+              ]}>
+                {option.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {/* Price Range Slider - Only show when Custom Price Range is selected */}
       {showPriceSlider && products.length > 0 && minPrice < maxPrice && (
         <View style={styles.priceFilterContainer}>
@@ -336,6 +434,8 @@ const ProductsScreen = ({ navigation, route }) => {
               ? 'No featured products found'
               : selectedSort?.sort === 'new_arrivals'
               ? 'No new arrivals found'
+              : selectedDiscount
+              ? `No products with ${selectedDiscount.title} discount`
               : showPriceSlider && products.length > 0
               ? 'No products in this price range'
               : 'No products found'}
