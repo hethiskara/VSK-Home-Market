@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,96 +8,27 @@ import {
   Image,
   FlatList,
   Dimensions,
-  PanResponder,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import RangeSlider from 'react-native-sticky-range-slider';
 import { productAPI } from '../services/api';
 import api from '../services/api';
 
 const { width } = Dimensions.get('window');
+const THEME_COLOR = '#4A90D9';
 
-// Price Range Slider Component with Tab Pointers
-const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinChange, onMaxChange }) => {
-  const trackLayoutRef = useRef({ x: 0, width: width - 64 });
+// Custom Thumb Component
+const Thumb = () => (
+  <View style={styles.thumb}>
+    <View style={styles.thumbLine} />
+  </View>
+);
 
-  const minPercent = ((selectedMin - minPrice) / (maxPrice - minPrice)) * 100;
-  const maxPercent = ((selectedMax - minPrice) / (maxPrice - minPrice)) * 100;
+// Custom Rail Component
+const Rail = () => <View style={styles.rail} />;
 
-  const calculateValue = (pageX) => {
-    const { x, width } = trackLayoutRef.current;
-    const touchX = pageX - x;
-    const percent = Math.max(0, Math.min(100, (touchX / width) * 100));
-    return Math.round(minPrice + (percent / 100) * (maxPrice - minPrice));
-  };
-
-  const minPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (evt) => {
-        const value = calculateValue(evt.nativeEvent.pageX);
-        const newValue = Math.max(minPrice, Math.min(value, selectedMax - 1));
-        onMinChange(newValue);
-      },
-    })
-  ).current;
-
-  const maxPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (evt) => {
-        const value = calculateValue(evt.nativeEvent.pageX);
-        const newValue = Math.max(selectedMin + 1, Math.min(value, maxPrice));
-        onMaxChange(newValue);
-      },
-    })
-  ).current;
-
-  const handleTrackLayout = (evt) => {
-    evt.target.measure((x, y, width, height, pageX, pageY) => {
-      trackLayoutRef.current = { x: pageX, width };
-    });
-  };
-
-  return (
-    <View style={styles.sliderContainer}>
-      {/* Min Thumb */}
-      <View
-        {...minPanResponder.panHandlers}
-        style={[styles.thumbWrapper, { left: `${minPercent}%` }]}
-      >
-        <View style={styles.thumbTab}>
-          <View style={styles.thumbTabInner} />
-        </View>
-      </View>
-      
-      {/* Track */}
-      <View 
-        style={styles.sliderTrack}
-        onLayout={handleTrackLayout}
-      >
-        <View 
-          style={[
-            styles.sliderActiveTrack,
-            { left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }
-          ]} 
-        />
-      </View>
-      
-      {/* Max Thumb */}
-      <View
-        {...maxPanResponder.panHandlers}
-        style={[styles.thumbWrapper, { left: `${maxPercent}%` }]}
-      >
-        <View style={styles.thumbTab}>
-          <View style={styles.thumbTabInner} />
-        </View>
-      </View>
-    </View>
-  );
-};
+// Custom Selected Rail Component
+const RailSelected = () => <View style={styles.railSelected} />;
 
 const ProductsScreen = ({ navigation, route }) => {
   const { sectionId, sectionTitle, categoryId, categoryTitle, subcategoryId, subcategoryTitle, showAll, pageTitle } = route.params || {};
@@ -188,6 +119,11 @@ const ProductsScreen = ({ navigation, route }) => {
     
     return result;
   }, [products, selectedMinPrice, selectedMaxPrice, minPrice, maxPrice, selectedSort, showPriceSlider]);
+
+  const handlePriceChange = useCallback((low, high) => {
+    setSelectedMinPrice(low);
+    setSelectedMaxPrice(high);
+  }, []);
 
   const handleSortSelect = async (option) => {
     if (option === 'custom_price') {
@@ -379,13 +315,17 @@ const ProductsScreen = ({ navigation, route }) => {
             <Text style={styles.priceFilterLabel}>Price : </Text>
             <Text style={styles.priceRangeDisplay}>₹{selectedMinPrice} - ₹{selectedMaxPrice}</Text>
           </View>
-          <PriceRangeSlider
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            selectedMin={selectedMinPrice}
-            selectedMax={selectedMaxPrice}
-            onMinChange={setSelectedMinPrice}
-            onMaxChange={setSelectedMaxPrice}
+          <RangeSlider
+            style={styles.rangeSlider}
+            min={minPrice}
+            max={maxPrice}
+            step={1}
+            low={selectedMinPrice}
+            high={selectedMaxPrice}
+            onValueChanged={handlePriceChange}
+            renderThumb={Thumb}
+            renderRail={Rail}
+            renderRailSelected={RailSelected}
           />
         </View>
       )}
@@ -624,42 +564,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#C0392B',
   },
-  sliderContainer: {
-    height: 60,
-    justifyContent: 'center',
-    position: 'relative',
-    marginHorizontal: 16,
-    paddingTop: 30,
+  rangeSlider: {
+    marginTop: 10,
   },
-  sliderTrack: {
-    width: '100%',
-    height: 10,
-    backgroundColor: '#4A90D9',
-    borderRadius: 5,
-  },
-  sliderActiveTrack: {
-    position: 'absolute',
-    height: 10,
-    backgroundColor: '#4A90D9',
-    borderRadius: 5,
-    top: 0,
-  },
-  thumbWrapper: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    marginLeft: -20,
-    top: 0,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  thumbTab: {
-    width: 22,
+  thumb: {
+    width: 24,
     height: 28,
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: '#4A90D9',
+    borderColor: THEME_COLOR,
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
@@ -669,11 +582,24 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
   },
-  thumbTabInner: {
+  thumbLine: {
     width: 2,
-    height: 12,
-    backgroundColor: '#4A90D9',
+    height: 14,
+    backgroundColor: THEME_COLOR,
+  },
+  rail: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
+  },
+  railSelected: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: THEME_COLOR,
   },
 });
+
+export default ProductsScreen;
 
 export default ProductsScreen;
