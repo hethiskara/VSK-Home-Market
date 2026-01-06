@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,10 @@ import {
   Dimensions,
   Platform,
   StatusBar,
+  Modal,
 } from 'react-native';
-import { garmentAPI } from '../services/api';
+import { garmentAPI, sortAPI } from '../services/api';
+import RangeSlider from "react-native-sticky-range-slider";
 
 const { width } = Dimensions.get('window');
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
@@ -24,15 +26,35 @@ const GarmentProductsScreen = ({ navigation, route }) => {
     subcategoryId, 
     subcategoryTitle, 
     productTypeId, 
-    productTypeTitle 
+    productTypeTitle,
+    sectionId
   } = route.params || {};
   
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [sortOptions, setSortOptions] = useState([]);
+  const [selectedSort, setSelectedSort] = useState(null);
+  const [showPriceSlider, setShowPriceSlider] = useState(false);
+  const [selectedMinPrice, setSelectedMinPrice] = useState(0);
+  const [selectedMaxPrice, setSelectedMaxPrice] = useState(10000);
 
   useEffect(() => {
     fetchProducts();
+    fetchSortOptions();
   }, [subcategoryId, categoryId, productTypeId]);
+
+  const fetchSortOptions = async () => {
+    try {
+      const response = await sortAPI.getSortOptions();
+      if (Array.isArray(response)) {
+        setSortOptions(response);
+      }
+    } catch (error) {
+      console.log('Error fetching sort options:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -55,13 +77,118 @@ const GarmentProductsScreen = ({ navigation, route }) => {
         : [];
       
       setProducts(validProducts);
+      setAllProducts(validProducts);
+      
+      // Set price range based on products
+      if (validProducts.length > 0) {
+        const prices = validProducts.map(p => parseFloat(p.productprice) || 0);
+        const min = Math.floor(Math.min(...prices));
+        const max = Math.ceil(Math.max(...prices));
+        setSelectedMinPrice(min);
+        setSelectedMaxPrice(max);
+      }
     } catch (error) {
       console.log('Error fetching garment products:', error);
       setProducts([]);
+      setAllProducts([]);
     } finally {
       setLoading(false);
     }
   };
+
+  // Calculate min/max prices from all products
+  const { minPrice, maxPrice } = useMemo(() => {
+    if (allProducts.length === 0) return { minPrice: 0, maxPrice: 10000 };
+    const prices = allProducts.map(p => parseFloat(p.productprice) || 0);
+    return {
+      minPrice: Math.floor(Math.min(...prices)),
+      maxPrice: Math.ceil(Math.max(...prices))
+    };
+  }, [allProducts]);
+
+  // Filter products by price range
+  const filteredProducts = useMemo(() => {
+    if (!showPriceSlider) return products;
+    return products.filter(p => {
+      const price = parseFloat(p.productprice) || 0;
+      return price >= selectedMinPrice && price <= selectedMaxPrice;
+    });
+  }, [products, selectedMinPrice, selectedMaxPrice, showPriceSlider]);
+
+  const handlePriceChange = useCallback((low, high) => {
+    setSelectedMinPrice(low);
+    setSelectedMaxPrice(high);
+  }, []);
+
+  const handleSortSelect = async (option) => {
+    setShowSortModal(false);
+    
+    if (option.id === 'custom_price') {
+      setShowPriceSlider(true);
+      setSelectedSort(option);
+      setProducts(allProducts);
+      return;
+    }
+    
+    setShowPriceSlider(false);
+    setSelectedSort(option);
+    
+    const sortType = option.title?.toLowerCase().replace(/\s+/g, '_');
+    
+    if (sortType === 'price:_low_to_high' || sortType === 'price_low_to_high') {
+      await fetchProducts();
+      const sorted = [...allProducts].sort((a, b) => 
+        (parseFloat(a.productprice) || 0) - (parseFloat(b.productprice) || 0)
+      );
+      setProducts(sorted);
+    } else if (sortType === 'price:_high_to_low' || sortType === 'price_high_to_low') {
+      await fetchProducts();
+      const sorted = [...allProducts].sort((a, b) => 
+        (parseFloat(b.productprice) || 0) - (parseFloat(a.productprice) || 0)
+      );
+      setProducts(sorted);
+    } else if (sortType === 'featured' || sortType === 'new_arrivals') {
+      setLoading(true);
+      setProducts([]);
+      try {
+        const actualSectionId = sectionId || subcategoryId || 1;
+        const actualCategoryId = categoryId || 1;
+        const actualSubcategoryId = productTypeId || 1;
+        
+        const response = await sortAPI.getSortedProducts(
+          actualSectionId,
+          actualCategoryId,
+          actualSubcategoryId,
+          sortType,
+          true // isGarment = true
+        );
+        
+        const productData = Array.isArray(response) 
+          ? response.filter(item => item && item.productcode && item.productname && item.productprice)
+          : [];
+        setProducts(productData);
+      } catch (error) {
+        console.log('Error fetching sorted products:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      await fetchProducts();
+    }
+  };
+
+  // Slider components
+  const Thumb = (type) => (
+    <View style={styles.thumb} />
+  );
+  const Rail = () => <View style={styles.rail} />;
+  const RailSelected = () => <View style={styles.railSelected} />;
+  const Label = (value) => (
+    <View style={styles.sliderLabel}>
+      <Text style={styles.sliderLabelText}>₹{value}</Text>
+    </View>
+  );
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -118,11 +245,6 @@ const GarmentProductsScreen = ({ navigation, route }) => {
           <Text style={styles.productTitle} numberOfLines={2}>
             {item.productname}
           </Text>
-          
-          <View style={styles.actionsRow}>
-            <Text style={styles.actionText}>Compare</Text>
-            <Text style={styles.actionText}>Wishlist</Text>
-          </View>
 
           <Text style={styles.productCode}>Product Code: {item.productcode}</Text>
           
@@ -165,7 +287,10 @@ const GarmentProductsScreen = ({ navigation, route }) => {
 
       {/* Filter Bar */}
       <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterButton}>
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowSortModal(true)}
+        >
           <Text style={styles.filterText}>↕ Sort By</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.filterButton, styles.filterButtonLast]}>
@@ -173,18 +298,41 @@ const GarmentProductsScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
+      {/* Price Range Slider */}
+      {showPriceSlider && allProducts.length > 0 && minPrice < maxPrice && (
+        <View style={styles.priceFilterContainer}>
+          <View style={styles.priceFilterHeader}>
+            <Text style={styles.priceFilterLabel}>Price : </Text>
+            <Text style={styles.priceRangeDisplay}>₹{selectedMinPrice} - ₹{selectedMaxPrice}</Text>
+          </View>
+          <RangeSlider
+            style={styles.slider}
+            min={minPrice}
+            max={maxPrice}
+            step={1}
+            low={selectedMinPrice}
+            high={selectedMaxPrice}
+            onValueChanged={handlePriceChange}
+            renderThumb={Thumb}
+            renderRail={Rail}
+            renderRailSelected={RailSelected}
+            renderLabel={Label}
+          />
+        </View>
+      )}
+
       {/* Breadcrumb */}
       {renderBreadcrumb()}
 
       {/* Products Count - only show if products exist */}
-      {products.length > 0 && (
+      {filteredProducts.length > 0 && (
         <View style={styles.countBar}>
-          <Text style={styles.countText}>{products.length} Products Found</Text>
+          <Text style={styles.countText}>{filteredProducts.length} Products Found</Text>
         </View>
       )}
 
       {/* Products List */}
-      {products.length === 0 ? (
+      {filteredProducts.length === 0 && !loading ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🛍️</Text>
           <Text style={styles.emptyTitle}>No Products Available</Text>
@@ -200,13 +348,62 @@ const GarmentProductsScreen = ({ navigation, route }) => {
         </View>
       ) : (
         <FlatList
-          data={products}
+          data={filteredProducts}
           renderItem={renderProductItem}
           keyExtractor={(item) => item.id?.toString() || item.productcode}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Sort Modal */}
+      <Modal
+        visible={showSortModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSortModal(false)}
+        >
+          <View style={styles.sortModalContent}>
+            <Text style={styles.sortModalTitle}>Sort By</Text>
+            {sortOptions.map((option, index) => (
+              <TouchableOpacity
+                key={option.id || index}
+                style={[
+                  styles.sortOption,
+                  selectedSort?.id === option.id && styles.sortOptionSelected
+                ]}
+                onPress={() => handleSortSelect(option)}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  selectedSort?.id === option.id && styles.sortOptionTextSelected
+                ]}>
+                  {option.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[
+                styles.sortOption,
+                selectedSort?.id === 'custom_price' && styles.sortOptionSelected
+              ]}
+              onPress={() => handleSortSelect({ id: 'custom_price', title: 'Custom Price Range' })}
+            >
+              <Text style={[
+                styles.sortOptionText,
+                selectedSort?.id === 'custom_price' && styles.sortOptionTextSelected
+              ]}>
+                Custom Price Range
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -369,15 +566,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 20,
   },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 6,
-  },
-  actionText: {
-    fontSize: 11,
-    color: '#3498DB',
-  },
   productCode: {
     fontSize: 11,
     color: '#888888',
@@ -444,6 +632,109 @@ const styles = StyleSheet.create({
   goBackText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  // Sort Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sortModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  sortModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: THEME_COLOR,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  sortOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#F5F5F5',
+  },
+  sortOptionSelected: {
+    backgroundColor: THEME_COLOR,
+  },
+  sortOptionText: {
+    fontSize: 14,
+    color: '#333333',
+    textAlign: 'center',
+  },
+  sortOptionTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  // Price Slider Styles
+  priceFilterContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  priceFilterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  priceFilterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  priceRangeDisplay: {
+    fontSize: 14,
+    color: THEME_COLOR,
+    fontWeight: '600',
+  },
+  slider: {
+    marginVertical: 10,
+  },
+  thumb: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: THEME_COLOR,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  rail: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E0E0E0',
+  },
+  railSelected: {
+    height: 6,
+    backgroundColor: THEME_COLOR,
+    borderRadius: 3,
+  },
+  sliderLabel: {
+    position: 'absolute',
+    top: -30,
+    backgroundColor: THEME_COLOR,
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  sliderLabelText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '600',
   },
 });
