@@ -17,7 +17,7 @@ import api from '../services/api';
 
 const { width } = Dimensions.get('window');
 
-// Price Range Slider Component with Pentagon Pointers
+// Price Range Slider Component with Tab Pointers
 const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinChange, onMaxChange }) => {
   const trackLayoutRef = useRef({ x: 0, width: width - 64 });
 
@@ -63,6 +63,16 @@ const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinC
 
   return (
     <View style={styles.sliderContainer}>
+      {/* Min Thumb */}
+      <View
+        {...minPanResponder.panHandlers}
+        style={[styles.thumbWrapper, { left: `${minPercent}%` }]}
+      >
+        <View style={styles.thumbTab}>
+          <View style={styles.thumbTabInner} />
+        </View>
+      </View>
+      
       {/* Track */}
       <View 
         style={styles.sliderTrack}
@@ -76,25 +86,13 @@ const PriceRangeSlider = ({ minPrice, maxPrice, selectedMin, selectedMax, onMinC
         />
       </View>
       
-      {/* Min Thumb - Pentagon shape */}
-      <View
-        {...minPanResponder.panHandlers}
-        style={[styles.thumbWrapper, { left: `${minPercent}%` }]}
-      >
-        <View style={styles.thumbPentagon}>
-          <View style={styles.thumbPentagonTop} />
-          <View style={styles.thumbPentagonBottom} />
-        </View>
-      </View>
-      
-      {/* Max Thumb - Pentagon shape */}
+      {/* Max Thumb */}
       <View
         {...maxPanResponder.panHandlers}
         style={[styles.thumbWrapper, { left: `${maxPercent}%` }]}
       >
-        <View style={styles.thumbPentagon}>
-          <View style={styles.thumbPentagonTop} />
-          <View style={styles.thumbPentagonBottom} />
+        <View style={styles.thumbTab}>
+          <View style={styles.thumbTabInner} />
         </View>
       </View>
     </View>
@@ -191,18 +189,48 @@ const ProductsScreen = ({ navigation, route }) => {
     return result;
   }, [products, selectedMinPrice, selectedMaxPrice, minPrice, maxPrice, selectedSort, showPriceSlider]);
 
-  const handleSortSelect = (option) => {
+  const handleSortSelect = async (option) => {
     if (option === 'custom_price') {
       setShowPriceSlider(true);
       setSelectedSort(null);
-    } else {
-      setSelectedSort(option);
-      setShowPriceSlider(false);
-      // Reset price range when selecting other sort options
-      setSelectedMinPrice(minPrice);
-      setSelectedMaxPrice(maxPrice);
+      setShowSortDropdown(false);
+      return;
     }
+    
+    setSelectedSort(option);
+    setShowPriceSlider(false);
+    setSelectedMinPrice(minPrice);
+    setSelectedMaxPrice(maxPrice);
     setShowSortDropdown(false);
+    
+    // For Featured and New Arrivals, fetch from API
+    if (option.sort === 'featured' || option.sort === 'new_arrivals') {
+      setLoading(true);
+      try {
+        // Determine if it's garment or regular based on sectionId
+        const isGarment = sectionId === 1 || sectionId === '1';
+        const endpoint = isGarment ? '/garmentsortdetailjson' : '/sortdetailjson';
+        const response = await api.get(`${endpoint}?section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&sort=${option.sort}`);
+        
+        if (Array.isArray(response.data)) {
+          setProducts(response.data);
+          // Recalculate price range
+          const prices = response.data.map(p => parseFloat(p.productprice) || 0).filter(p => p > 0);
+          if (prices.length > 0) {
+            const min = Math.floor(Math.min(...prices));
+            const max = Math.ceil(Math.max(...prices));
+            setMinPrice(min);
+            setMaxPrice(max);
+            setSelectedMinPrice(min);
+            setSelectedMaxPrice(max);
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching sorted products:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const renderBreadcrumb = () => {
@@ -281,7 +309,7 @@ const ProductsScreen = ({ navigation, route }) => {
           onPress={() => setShowSortDropdown(!showSortDropdown)}
         >
           <Text style={styles.filterIcon}>↕️</Text>
-          <Text style={styles.filterText}>Products By</Text>
+          <Text style={styles.filterText}>Sort By</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.filterButton, styles.filterButtonLast]}>
           <Text style={styles.filterIcon}>🔻</Text>
@@ -574,59 +602,54 @@ const styles = StyleSheet.create({
     color: '#C0392B',
   },
   sliderContainer: {
-    height: 50,
+    height: 60,
     justifyContent: 'center',
     position: 'relative',
-    marginHorizontal: 10,
+    marginHorizontal: 16,
+    paddingTop: 30,
   },
   sliderTrack: {
     width: '100%',
-    height: 8,
+    height: 10,
     backgroundColor: '#4A90D9',
-    borderRadius: 4,
+    borderRadius: 5,
   },
   sliderActiveTrack: {
     position: 'absolute',
-    height: 8,
+    height: 10,
     backgroundColor: '#4A90D9',
-    borderRadius: 4,
+    borderRadius: 5,
     top: 0,
   },
   thumbWrapper: {
     position: 'absolute',
-    width: 30,
-    height: 30,
-    marginLeft: -15,
-    top: -11,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  thumbPentagon: {
-    width: 24,
-    height: 24,
+    width: 40,
+    height: 40,
+    marginLeft: -20,
+    top: 0,
     justifyContent: 'flex-end',
     alignItems: 'center',
+    zIndex: 10,
   },
-  thumbPentagonTop: {
-    width: 20,
-    height: 16,
+  thumbTab: {
+    width: 22,
+    height: 28,
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#4A90D9',
-    borderBottomWidth: 0,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
   },
-  thumbPentagonBottom: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#FFFFFF',
-    marginTop: -2,
+  thumbTabInner: {
+    width: 2,
+    height: 12,
+    backgroundColor: '#4A90D9',
   },
 });
 
