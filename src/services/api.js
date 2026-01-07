@@ -338,8 +338,8 @@ export const cartAPI = {
 
   // Delete item from cart
   deleteFromCart: async (cartId) => {
-    // Backend expects id as query parameter
-    const response = await api.post(`/cart-delete-json?id=${cartId}`);
+    // Backend expects id as query parameter with GET request
+    const response = await api.get(`/cart-delete-json?id=${cartId}`);
     console.log('DELETE CART RESPONSE:', response.data);
     return response.data;
   },
