@@ -108,6 +108,15 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
   };
 
   const handleSuggestionPress = (suggestion) => {
+    // If count is 0, show notification form immediately
+    if (suggestion.count === 0 || suggestion.count === '0') {
+      setNotifySearchWord(suggestion.label);
+      setShowNotifyForm(true);
+      setShowSuggestions(false);
+      Keyboard.dismiss();
+      return;
+    }
+    
     setSelectedSuggestion(suggestion);
     setSearchQuery(suggestion.label);
     setShowSuggestions(false);
@@ -125,6 +134,15 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
 
     // If a suggestion was selected, use its type
     if (selectedSuggestion) {
+      // Check if count is 0 - show notification form
+      if (selectedSuggestion.count === 0 || selectedSuggestion.count === '0') {
+        setNotifySearchWord(selectedSuggestion.label);
+        setShowNotifyForm(true);
+        setSearchQuery('');
+        setSelectedSuggestion(null);
+        return;
+      }
+      
       const type = selectedSuggestion.type;
       const label = selectedSuggestion.label;
 
@@ -148,10 +166,18 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
       const response = await searchAPI.getAutoSuggestions(searchQuery);
       
       if (response?.status === 'success' && response.results?.length > 0) {
-        // Use the first result
-        const firstResult = response.results[0];
+        // Use the first result with count > 0
+        const firstValidResult = response.results.find(r => r.count > 0);
+        if (!firstValidResult) {
+          // All results have 0 count - show notification form
+          setNotifySearchWord(searchQuery);
+          setShowNotifyForm(true);
+          setSearchQuery('');
+          setLoadingSuggestions(false);
+          return;
+        }
         navigation.navigate('SearchResults', {
-          type: firstResult.type,
+          type: firstValidResult.type,
           label: firstResult.label,
           searchQuery: searchQuery,
         });
@@ -218,21 +244,6 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
   const handleProfilePress = () => {
     if (navigation) {
       navigation.navigate('Account');
-    }
-  };
-
-  const getSuggestionIcon = (type) => {
-    switch (type) {
-      case 'product':
-        return '📦';
-      case 'garment_product':
-        return '👗';
-      case 'category':
-        return '📁';
-      case 'garment_category':
-        return '👔';
-      default:
-        return '🔍';
     }
   };
 
@@ -340,15 +351,16 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
                     ]}
                     onPress={() => handleSuggestionPress(suggestion)}
                   >
-                    <Text style={styles.suggestionIcon}>{getSuggestionIcon(suggestion.type)}</Text>
                     <View style={styles.suggestionTextContainer}>
                       <Text style={styles.suggestionLabel}>{suggestion.label}</Text>
                       <Text style={styles.suggestionType}>{getSuggestionTypeLabel(suggestion.type)}</Text>
                     </View>
-                    {suggestion.count > 0 && (
+                    {suggestion.count > 0 ? (
                       <View style={styles.suggestionCountBadge}>
                         <Text style={styles.suggestionCount}>{suggestion.count}</Text>
                       </View>
+                    ) : (
+                      <Text style={styles.notAvailableLabel}>Not Available</Text>
                     )}
                   </TouchableOpacity>
                 ))}
@@ -631,10 +643,6 @@ const styles = StyleSheet.create({
   suggestionItemLast: {
     borderBottomWidth: 0,
   },
-  suggestionIcon: {
-    fontSize: 18,
-    marginRight: 10,
-  },
   suggestionTextContainer: {
     flex: 1,
   },
@@ -658,6 +666,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  notAvailableLabel: {
+    fontSize: 11,
+    color: '#E74C3C',
+    fontWeight: '500',
   },
   // Modal styles
   modalOverlay: {
