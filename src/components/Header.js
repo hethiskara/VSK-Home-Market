@@ -115,6 +115,7 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
     if (suggestion.count === 0 || suggestion.count === '0') {
       setNotifySearchWord(suggestion.label);
       setShowNotifyForm(true);
+      setSearchQuery(''); // Clear search text
       return;
     }
     
@@ -124,7 +125,7 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
       label: suggestion.label,
       searchQuery: suggestion.label,
     });
-    setSearchQuery('');
+    setSearchQuery(''); // Clear search text
     setSelectedSuggestion(null);
   };
 
@@ -191,12 +192,14 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
         // No results found - show notification form
         setNotifySearchWord(searchQuery);
         setShowNotifyForm(true);
+        setSearchQuery(''); // Clear search text
       }
     } catch (error) {
       console.log('Error searching:', error);
       // Show notification form on error
       setNotifySearchWord(searchQuery);
       setShowNotifyForm(true);
+      setSearchQuery(''); // Clear search text
     } finally {
       setLoadingSuggestions(false);
     }
