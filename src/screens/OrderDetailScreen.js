@@ -44,7 +44,12 @@ const OrderDetailScreen = ({ navigation, route }) => {
   const fetchOrderDetails = async () => {
     try {
       const response = await orderAPI.getOrderDetails(orderNumber);
+      console.log('ORDER DETAILS RESPONSE:', JSON.stringify(response));
       if (Array.isArray(response) && response.length > 0) {
+        // Log each item's cancel status
+        response.forEach((item, index) => {
+          console.log(`Item ${index}: cancel_status=${item.cancel_status}, cancel_qty=${item.cancel_qty}, qty=${item.qty}`);
+        });
         setOrderItems(response);
         setOrderInfo({
           orderedon: response[0].orderedon,
@@ -193,11 +198,20 @@ const OrderDetailScreen = ({ navigation, route }) => {
   );
 
   const renderOrderItem = ({ item, index }) => {
+    console.log(`RENDER ITEM ${index}:`, {
+      cancel_status: item.cancel_status,
+      cancel_qty: item.cancel_qty,
+      qty: item.qty,
+      productname: item.productname
+    });
+    
     const isCancelled = item.cancel_status === '1' || item.cancel_status === 1;
     const cancelledQty = parseInt(item.cancel_qty || '0');
     const orderedQty = parseInt(item.qty || '1');
     const remainingQty = orderedQty - cancelledQty;
     const isFullyCancelled = isCancelled && cancelledQty >= orderedQty;
+    
+    console.log(`CANCEL CHECK: isCancelled=${isCancelled}, cancelledQty=${cancelledQty}, orderedQty=${orderedQty}, isFullyCancelled=${isFullyCancelled}`);
     
     return (
       <View style={[styles.itemCard, isFullyCancelled && styles.itemCardCancelled]}>
