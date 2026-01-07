@@ -198,20 +198,14 @@ const OrderDetailScreen = ({ navigation, route }) => {
   );
 
   const renderOrderItem = ({ item, index }) => {
-    console.log(`RENDER ITEM ${index}:`, {
-      cancel_status: item.cancel_status,
-      cancel_qty: item.cancel_qty,
-      qty: item.qty,
-      productname: item.productname
-    });
-    
     const isCancelled = item.cancel_status === '1' || item.cancel_status === 1;
-    const cancelledQty = parseInt(item.cancel_qty || '0');
     const orderedQty = parseInt(item.qty || '1');
+    // If cancel_qty is empty but cancel_status is 1, assume full cancellation
+    const cancelledQty = item.cancel_qty && item.cancel_qty !== '' 
+      ? parseInt(item.cancel_qty) 
+      : (isCancelled ? orderedQty : 0);
     const remainingQty = orderedQty - cancelledQty;
     const isFullyCancelled = isCancelled && cancelledQty >= orderedQty;
-    
-    console.log(`CANCEL CHECK: isCancelled=${isCancelled}, cancelledQty=${cancelledQty}, orderedQty=${orderedQty}, isFullyCancelled=${isFullyCancelled}`);
     
     return (
       <View style={[styles.itemCard, isFullyCancelled && styles.itemCardCancelled]}>
@@ -238,17 +232,23 @@ const OrderDetailScreen = ({ navigation, route }) => {
             {/* Cancellation Status */}
             {isCancelled && (
               <View style={styles.cancelStatusContainer}>
-                <View style={styles.cancelStatusBadge}>
-                  <Text style={styles.cancelStatusText}>
-                    {isFullyCancelled 
-                      ? '❌ Cancelled' 
-                      : `⚠️ ${cancelledQty} of ${orderedQty} Cancelled`}
-                  </Text>
-                </View>
-                {!isFullyCancelled && remainingQty > 0 && (
-                  <Text style={styles.remainingQtyText}>
-                    Remaining: {remainingQty} item(s)
-                  </Text>
+                {isFullyCancelled ? (
+                  <View style={styles.cancelledBadgeFull}>
+                    <Text style={styles.cancelledBadgeFullText}>CANCELLED</Text>
+                  </View>
+                ) : (
+                  <>
+                    <View style={styles.cancelledBadgePartial}>
+                      <Text style={styles.cancelledBadgePartialText}>
+                        {cancelledQty} of {orderedQty} Cancelled
+                      </Text>
+                    </View>
+                    {remainingQty > 0 && (
+                      <Text style={styles.remainingQtyText}>
+                        Active: {remainingQty} item(s)
+                      </Text>
+                    )}
+                  </>
                 )}
               </View>
             )}
@@ -674,8 +674,9 @@ const styles = StyleSheet.create({
   },
   // Cancellation status styles
   itemCardCancelled: {
-    opacity: 0.7,
-    backgroundColor: '#FFF5F5',
+    backgroundColor: '#F8F8F8',
+    borderLeftWidth: 4,
+    borderLeftColor: '#E74C3C',
   },
   productImageCancelled: {
     opacity: 0.5,
@@ -685,25 +686,40 @@ const styles = StyleSheet.create({
     color: '#999999',
   },
   cancelStatusContainer: {
-    marginTop: 8,
+    marginTop: 10,
   },
-  cancelStatusBadge: {
-    backgroundColor: '#FFE5E5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+  cancelledBadgeFull: {
+    backgroundColor: '#E74C3C',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 4,
     alignSelf: 'flex-start',
   },
-  cancelStatusText: {
-    color: '#E74C3C',
+  cancelledBadgeFullText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  cancelledBadgePartial: {
+    backgroundColor: '#FFF3CD',
+    borderWidth: 1,
+    borderColor: '#FFCC00',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  cancelledBadgePartialText: {
+    color: '#856404',
     fontSize: 12,
     fontWeight: '600',
   },
   remainingQtyText: {
     color: '#27AE60',
-    fontSize: 11,
-    marginTop: 4,
-    fontWeight: '500',
+    fontSize: 12,
+    marginTop: 6,
+    fontWeight: '600',
   },
   emptyContainer: {
     padding: 32,
