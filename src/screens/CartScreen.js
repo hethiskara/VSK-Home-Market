@@ -242,10 +242,17 @@ const CartScreen = ({ navigation }) => {
       console.log('BILLING ADDRESS:', JSON.stringify(billingAddress));
       console.log('USE BILLING AS DELIVERY:', useBillingAsDelivery);
       
+      // Get the stored cart guest_id to ensure consistency
+      const storedCartGuestId = await AsyncStorage.getItem('cartGuestId');
+      const guestIdToUse = storedCartGuestId || guestId;
+      console.log('CHECKOUT - Stored cartGuestId:', storedCartGuestId);
+      console.log('CHECKOUT - State guestId:', guestId);
+      console.log('CHECKOUT - Using guestId:', guestIdToUse);
+      
       // Build the address data
       const addressData = {
         user_id: userId,
-        guest_id: guestId,
+        guest_id: guestIdToUse,
         firstname: addressToUse.firstname || '',
         lastname: addressToUse.lastname || '',
         address: addressToUse.address || '',
@@ -266,6 +273,9 @@ const CartScreen = ({ navigation }) => {
         
         // Use guest_id from step 1 response for step 2
         const returnedGuestId = stepOneResponse.guest_id || guestId;
+        console.log('STEP TWO - Using guest_id:', returnedGuestId);
+        console.log('STEP TWO - Original guestId state:', guestId);
+        console.log('STEP TWO - Step1 returned guest_id:', stepOneResponse.guest_id);
         
         // Step 2: Get cart summary
         const stepTwoResponse = await checkoutAPI.getCartSummary(returnedGuestId);
