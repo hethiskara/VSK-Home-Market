@@ -108,19 +108,24 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
   };
 
   const handleSuggestionPress = (suggestion) => {
+    setShowSuggestions(false);
+    Keyboard.dismiss();
+    
     // If count is 0, show notification form immediately
     if (suggestion.count === 0 || suggestion.count === '0') {
       setNotifySearchWord(suggestion.label);
       setShowNotifyForm(true);
-      setShowSuggestions(false);
-      Keyboard.dismiss();
       return;
     }
     
-    setSelectedSuggestion(suggestion);
-    setSearchQuery(suggestion.label);
-    setShowSuggestions(false);
-    Keyboard.dismiss();
+    // Count > 0, navigate directly to search results
+    navigation.navigate('SearchResults', {
+      type: suggestion.type,
+      label: suggestion.label,
+      searchQuery: suggestion.label,
+    });
+    setSearchQuery('');
+    setSelectedSuggestion(null);
   };
 
   const handleGoPress = async () => {
@@ -383,69 +388,74 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={styles.modalKeyboardView}
             >
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Product Not Available</Text>
-                  <TouchableOpacity
-                    style={styles.modalCloseButton}
-                    onPress={() => setShowNotifyForm(false)}
-                  >
-                    <Text style={styles.modalCloseText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.notAvailableText}>
-                  Sorry, products related to "<Text style={styles.searchWordBold}>{notifySearchWord}</Text>" are currently not available.
-                </Text>
-
-                <Text style={styles.formSubtitle}>
-                  Please fill out the form to get notified when available:
-                </Text>
-
-                <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
-                  <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Search Word *</Text>
-                    <TextInput
-                      style={[styles.formInput, styles.formInputDisabled]}
-                      value={notifySearchWord}
-                      editable={false}
-                    />
+              <ScrollView 
+                style={styles.modalScrollView}
+                contentContainerStyle={styles.modalScrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Product Not Available</Text>
+                    <TouchableOpacity
+                      style={styles.modalCloseButton}
+                      onPress={() => setShowNotifyForm(false)}
+                    >
+                      <Text style={styles.modalCloseText}>✕</Text>
+                    </TouchableOpacity>
                   </View>
 
-                  <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Name *</Text>
-                    <TextInput
-                      style={styles.formInput}
-                      value={notifyName}
-                      onChangeText={setNotifyName}
-                      placeholder="Enter your name"
-                      placeholderTextColor="#999"
-                    />
+                  <Text style={styles.notAvailableText}>
+                    Sorry, "<Text style={styles.searchWordBold}>{notifySearchWord}</Text>" is currently not available.
+                  </Text>
+
+                  <Text style={styles.formSubtitle}>Fill out to get notified:</Text>
+
+                  <View style={styles.formRow}>
+                    <View style={styles.formGroupHalf}>
+                      <Text style={styles.formLabel}>Search Word</Text>
+                      <TextInput
+                        style={[styles.formInputCompact, styles.formInputDisabled]}
+                        value={notifySearchWord}
+                        editable={false}
+                      />
+                    </View>
+                    <View style={styles.formGroupHalf}>
+                      <Text style={styles.formLabel}>Name *</Text>
+                      <TextInput
+                        style={styles.formInputCompact}
+                        value={notifyName}
+                        onChangeText={setNotifyName}
+                        placeholder="Your name"
+                        placeholderTextColor="#999"
+                      />
+                    </View>
                   </View>
 
-                  <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>E-mail ID *</Text>
-                    <TextInput
-                      style={styles.formInput}
-                      value={notifyEmail}
-                      onChangeText={setNotifyEmail}
-                      placeholder="Enter your email"
-                      placeholderTextColor="#999"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                    />
-                  </View>
-
-                  <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Phone No *</Text>
-                    <TextInput
-                      style={styles.formInput}
-                      value={notifyPhone}
-                      onChangeText={setNotifyPhone}
-                      placeholder="Enter your phone number"
-                      placeholderTextColor="#999"
-                      keyboardType="phone-pad"
-                    />
+                  <View style={styles.formRow}>
+                    <View style={styles.formGroupHalf}>
+                      <Text style={styles.formLabel}>Email *</Text>
+                      <TextInput
+                        style={styles.formInputCompact}
+                        value={notifyEmail}
+                        onChangeText={setNotifyEmail}
+                        placeholder="Your email"
+                        placeholderTextColor="#999"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                      />
+                    </View>
+                    <View style={styles.formGroupHalf}>
+                      <Text style={styles.formLabel}>Phone *</Text>
+                      <TextInput
+                        style={styles.formInputCompact}
+                        value={notifyPhone}
+                        onChangeText={setNotifyPhone}
+                        placeholder="Your phone"
+                        placeholderTextColor="#999"
+                        keyboardType="phone-pad"
+                      />
+                    </View>
                   </View>
 
                   <TouchableOpacity
@@ -459,8 +469,8 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
                       <Text style={styles.submitButtonText}>Submit</Text>
                     )}
                   </TouchableOpacity>
-                </ScrollView>
-              </View>
+                </View>
+              </ScrollView>
             </KeyboardAvoidingView>
           </View>
         </TouchableWithoutFeedback>
@@ -678,70 +688,88 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
   modalKeyboardView: {
     width: '100%',
     maxWidth: 400,
+    maxHeight: '90%',
+  },
+  modalScrollView: {
+    flexGrow: 0,
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    maxHeight: '90%',
+    borderRadius: 12,
+    padding: 16,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
+    marginBottom: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#1a4a7c',
   },
   modalCloseButton: {
-    width: 30,
-    height: 30,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalCloseText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#666',
   },
   notAvailableText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#E74C3C',
-    marginBottom: 12,
-    lineHeight: 20,
+    marginBottom: 8,
   },
   searchWordBold: {
     fontWeight: '700',
   },
   formSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#666',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    marginBottom: 12,
   },
-  formScroll: {
-    maxHeight: 350,
+  formRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  formGroupHalf: {
+    flex: 1,
   },
   formGroup: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   formLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  formInputCompact: {
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: '#333',
+    backgroundColor: '#FFFFFF',
   },
   formInput: {
     borderWidth: 1,
@@ -776,3 +804,4 @@ const styles = StyleSheet.create({
 });
 
 export default Header;
+

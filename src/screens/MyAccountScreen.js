@@ -314,98 +314,110 @@ const MyAccountScreen = ({ navigation }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.modalOverlay}
           >
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Edit Profile</Text>
-                <TouchableOpacity onPress={() => setShowEditProfile(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>First Name *</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    value={profileData.firstname}
-                    onChangeText={(text) => setProfileData({ ...profileData, firstname: text })}
-                    placeholder="Enter first name"
-                  />
+            <ScrollView 
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Edit Profile</Text>
+                  <TouchableOpacity onPress={() => setShowEditProfile(false)}>
+                    <Text style={styles.closeButton}>✕</Text>
+                  </TouchableOpacity>
                 </View>
 
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Last Name</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    value={profileData.lastname}
-                    onChangeText={(text) => setProfileData({ ...profileData, lastname: text })}
-                    placeholder="Enter last name"
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Mobile Number</Text>
+                {/* Mobile Number - On Top */}
+                <View style={styles.formGroupCompact}>
+                  <Text style={styles.formLabelCompact}>Mobile Number</Text>
                   <TouchableOpacity 
-                    style={styles.formInputDisabled}
+                    style={styles.formInputDisabledCompact}
                     onPress={() => Alert.alert('Info', 'Registered mobile number cannot be changed')}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.formInputDisabledText}>{profileData.mobile_no || 'Not available'}</Text>
                   </TouchableOpacity>
-                  <Text style={styles.formHint}>Registered mobile number cannot be changed</Text>
+                  <Text style={styles.formHintCompact}>Cannot be changed</Text>
                 </View>
 
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Address</Text>
+                {/* Name Row */}
+                <View style={styles.formRow}>
+                  <View style={styles.formGroupHalf}>
+                    <Text style={styles.formLabelCompact}>First Name *</Text>
+                    <TextInput
+                      style={styles.formInputCompact}
+                      value={profileData.firstname}
+                      onChangeText={(text) => setProfileData({ ...profileData, firstname: text })}
+                      placeholder="First name"
+                    />
+                  </View>
+                  <View style={styles.formGroupHalf}>
+                    <Text style={styles.formLabelCompact}>Last Name</Text>
+                    <TextInput
+                      style={styles.formInputCompact}
+                      value={profileData.lastname}
+                      onChangeText={(text) => setProfileData({ ...profileData, lastname: text })}
+                      placeholder="Last name"
+                    />
+                  </View>
+                </View>
+
+                {/* Address */}
+                <View style={styles.formGroupCompact}>
+                  <Text style={styles.formLabelCompact}>Address</Text>
                   <TextInput
-                    style={[styles.formInput, styles.formInputMultiline]}
+                    style={[styles.formInputCompact, { height: 60, textAlignVertical: 'top' }]}
                     value={profileData.address}
                     onChangeText={(text) => setProfileData({ ...profileData, address: text })}
                     placeholder="Enter address"
                     multiline
-                    numberOfLines={3}
                   />
                 </View>
 
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>City</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    value={profileData.city}
-                    onChangeText={(text) => setProfileData({ ...profileData, city: text })}
-                    placeholder="Enter city"
-                  />
+                {/* City & State Row */}
+                <View style={styles.formRow}>
+                  <View style={styles.formGroupHalf}>
+                    <Text style={styles.formLabelCompact}>City</Text>
+                    <TextInput
+                      style={styles.formInputCompact}
+                      value={profileData.city}
+                      onChangeText={(text) => setProfileData({ ...profileData, city: text })}
+                      placeholder="City"
+                    />
+                  </View>
+                  <View style={styles.formGroupHalf}>
+                    <Text style={styles.formLabelCompact}>State</Text>
+                    <TextInput
+                      style={styles.formInputCompact}
+                      value={profileData.state}
+                      onChangeText={(text) => setProfileData({ ...profileData, state: text })}
+                      placeholder="State"
+                    />
+                  </View>
                 </View>
 
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>State</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    value={profileData.state}
-                    onChangeText={(text) => setProfileData({ ...profileData, state: text })}
-                    placeholder="Enter state"
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Postal Code</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    value={profileData.postalcode}
-                    onChangeText={(text) => setProfileData({ ...profileData, postalcode: text })}
-                    placeholder="Enter postal code"
-                    keyboardType="numeric"
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Country</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    value={profileData.country}
-                    onChangeText={(text) => setProfileData({ ...profileData, country: text })}
-                    placeholder="Enter country"
-                  />
+                {/* Postal & Country Row */}
+                <View style={styles.formRow}>
+                  <View style={styles.formGroupHalf}>
+                    <Text style={styles.formLabelCompact}>Postal Code</Text>
+                    <TextInput
+                      style={styles.formInputCompact}
+                      value={profileData.postalcode}
+                      onChangeText={(text) => setProfileData({ ...profileData, postalcode: text })}
+                      placeholder="Postal code"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  <View style={styles.formGroupHalf}>
+                    <Text style={styles.formLabelCompact}>Country</Text>
+                    <TextInput
+                      style={styles.formInputCompact}
+                      value={profileData.country}
+                      onChangeText={(text) => setProfileData({ ...profileData, country: text })}
+                      placeholder="Country"
+                    />
+                  </View>
                 </View>
 
                 <TouchableOpacity
@@ -419,8 +431,8 @@ const MyAccountScreen = ({ navigation }) => {
                     <Text style={styles.saveButtonText}>Save Changes</Text>
                   )}
                 </TouchableOpacity>
-              </ScrollView>
-            </View>
+              </View>
+            </ScrollView>
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
       </Modal>
@@ -692,49 +704,76 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 16,
+  },
+  modalScrollView: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '90%',
+    flexGrow: 0,
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    width: '90%',
-    maxHeight: '80%',
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
   },
   modalContentSmall: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     width: '90%',
-    padding: 20,
+    maxWidth: 400,
+    padding: 16,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 16,
+    marginBottom: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: THEME_COLOR,
   },
   closeButton: {
-    fontSize: 24,
+    fontSize: 20,
     color: '#999999',
   },
   formScroll: {
     maxHeight: 400,
   },
+  formRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  formGroupHalf: {
+    flex: 1,
+  },
   formGroup: {
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  formGroupCompact: {
+    marginBottom: 10,
   },
   formLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#333333',
     marginBottom: 8,
+  },
+  formLabelCompact: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
   },
   formInput: {
     borderWidth: 1,
@@ -743,6 +782,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 14,
+    color: '#333333',
+    backgroundColor: '#FAFAFA',
+  },
+  formInputCompact: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
     color: '#333333',
     backgroundColor: '#FAFAFA',
   },
@@ -758,8 +807,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#F0F0F0',
   },
+  formInputDisabledCompact: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#F0F0F0',
+  },
   formInputDisabledText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666666',
   },
   formHint: {
@@ -768,20 +825,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontStyle: 'italic',
   },
+  formHintCompact: {
+    fontSize: 10,
+    color: '#999999',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
   saveButton: {
     backgroundColor: THEME_COLOR,
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 6,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
 });
