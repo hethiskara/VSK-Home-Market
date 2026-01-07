@@ -103,14 +103,14 @@ const OrderDetailScreen = ({ navigation, route }) => {
         orderNumber: orderNumber,
         userId: userData.userid,
         productCode: selectedItem.productcode,
-        productId: selectedItem.id || selectedItem.productcode,
+        productId: selectedItem.product_id || selectedItem.id || selectedItem.productcode,
         productName: selectedItem.productname,
         orderedQuantity: selectedItem.qty || '1',
         cancelQuantity: cancelQuantity,
         reason: cancelReason.trim(),
       };
 
-      console.log('CANCEL REQUEST DATA:', cancelData);
+      console.log('CANCEL REQUEST DATA:', JSON.stringify(cancelData));
       console.log('IS GARMENT:', isGarment);
       
       const response = isGarment 

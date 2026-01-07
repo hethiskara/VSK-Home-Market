@@ -422,7 +422,9 @@ export const orderAPI = {
   // Cancel regular product order
   cancelRegularOrder: async (data) => {
     const params = `order_number=${encodeURIComponent(data.orderNumber)}&user_id=${data.userId}&product_code=${encodeURIComponent(data.productCode)}&product_id=${data.productId}&product_name=${encodeURIComponent(data.productName)}&ordered_quantity=${data.orderedQuantity}&cancel_quantity=${data.cancelQuantity}&cancellation_reason=${encodeURIComponent(data.reason)}`;
-    const response = await api.get(`/regularordercancel-json?${params}`);
+    const fullUrl = `/regularordercancel-json?${params}`;
+    console.log('CANCEL REGULAR ORDER URL:', fullUrl);
+    const response = await api.get(fullUrl);
     console.log('CANCEL REGULAR ORDER RESPONSE:', response.data);
     return response.data;
   },
@@ -430,7 +432,9 @@ export const orderAPI = {
   // Cancel garment product order
   cancelGarmentOrder: async (data) => {
     const params = `order_number=${encodeURIComponent(data.orderNumber)}&user_id=${data.userId}&product_code=${encodeURIComponent(data.productCode)}&product_id=${data.productId}&product_name=${encodeURIComponent(data.productName)}&ordered_quantity=${data.orderedQuantity}&cancel_quantity=${data.cancelQuantity}&cancellation_reason=${encodeURIComponent(data.reason)}`;
-    const response = await api.get(`/garmentordercancel-json?${params}`);
+    const fullUrl = `/garmentordercancel-json?${params}`;
+    console.log('CANCEL GARMENT ORDER URL:', fullUrl);
+    const response = await api.get(fullUrl);
     console.log('CANCEL GARMENT ORDER RESPONSE:', response.data);
     return response.data;
   },
