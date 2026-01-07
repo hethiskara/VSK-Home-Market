@@ -612,21 +612,7 @@ const CartScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.quantityRow}>
-            <View style={styles.quantityControls}>
-              <TouchableOpacity 
-                style={styles.qtyButton}
-                onPress={() => updateQuantity(item.cart_id, -1)}
-              >
-                <Text style={styles.qtyButtonText}>-</Text>
-              </TouchableOpacity>
-              <Text style={styles.qtyValue}>{item.quantity}</Text>
-              <TouchableOpacity 
-                style={styles.qtyButton}
-                onPress={() => updateQuantity(item.cart_id, 1)}
-              >
-                <Text style={styles.qtyButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.qtyLabel}>Qty: {item.quantity}</Text>
             <Text style={styles.itemTotal}>Rs. {itemTotal.toFixed(2)}</Text>
           </View>
         </View>
@@ -1232,6 +1218,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '600',
+  },
+  qtyLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
   itemTotal: {
     fontSize: 14,
