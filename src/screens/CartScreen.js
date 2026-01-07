@@ -643,7 +643,7 @@ const CartScreen = ({ navigation }) => {
       <FlatList
         data={cartItems}
         renderItem={renderCartItem}
-        keyExtractor={(item) => item.cart_id?.toString()}
+        keyExtractor={(item, index) => item.cart_id?.toString() || `cart-item-${index}`}
         style={styles.cartList}
       />
 
