@@ -10,6 +10,8 @@ import {
   Dimensions,
   Platform,
   StatusBar,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import { orderAPI, tokenManager } from '../services/api';
 
@@ -22,6 +24,11 @@ const OrdersScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Track Order Modal States
+  const [showTrackModal, setShowTrackModal] = useState(false);
+  const [trackingData, setTrackingData] = useState(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -55,6 +62,201 @@ const OrdersScreen = ({ navigation }) => {
     fetchOrders();
   };
 
+  const handleTrackOrder = async (orderNumber) => {
+    try {
+      setTrackingLoading(true);
+      setShowTrackModal(true);
+      setTrackingData(null);
+      
+      const response = await orderAPI.trackOrder(orderNumber);
+      console.log('TRACKING DATA:', response);
+      
+      if (response && response.status === true) {
+        setTrackingData(response);
+      } else {
+        setTrackingData({ error: true, message: 'Unable to fetch tracking information' });
+      }
+    } catch (error) {
+      console.log('Error tracking order:', error);
+      setTrackingData({ error: true, message: 'Failed to load tracking information' });
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
+
+  const getTrackingStepStatus = (tracking, step) => {
+    if (!tracking) return 'pending';
+    
+    switch (step) {
+      case 'ordered':
+        return tracking.ordered ? 'completed' : 'pending';
+      case 'packaged':
+        return tracking.packaged ? 'completed' : 'pending';
+      case 'shipped':
+        return tracking.shipped ? 'completed' : 'pending';
+      case 'delivered':
+        return tracking.delivered ? 'completed' : 'pending';
+      default:
+        return 'pending';
+    }
+  };
+
+  const renderTrackingModal = () => (
+    <Modal
+      visible={showTrackModal}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowTrackModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.trackModalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Track Order</Text>
+            <TouchableOpacity onPress={() => setShowTrackModal(false)}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {trackingLoading ? (
+            <View style={styles.trackingLoadingContainer}>
+              <ActivityIndicator size="large" color={THEME_COLOR} />
+              <Text style={styles.trackingLoadingText}>Loading tracking info...</Text>
+            </View>
+          ) : trackingData?.error ? (
+            <View style={styles.trackingErrorContainer}>
+              <Text style={styles.trackingErrorIcon}>!</Text>
+              <Text style={styles.trackingErrorText}>{trackingData.message}</Text>
+            </View>
+          ) : trackingData ? (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Order Info */}
+              <View style={styles.trackingOrderInfo}>
+                <Text style={styles.trackingOrderNumber}>{trackingData.order_number}</Text>
+                <Text style={styles.trackingOrderDate}>Ordered: {trackingData.order_date}</Text>
+                <View style={styles.trackingAmountRow}>
+                  <Text style={styles.trackingAmountLabel}>Amount Paid:</Text>
+                  <Text style={styles.trackingAmountValue}>Rs. {trackingData.amount_paid}</Text>
+                </View>
+                <Text style={styles.trackingPaymentMethod}>via {trackingData.payment_method}</Text>
+              </View>
+
+              {/* Delivery Address */}
+              {trackingData.delivery_address && (
+                <View style={styles.trackingSection}>
+                  <Text style={styles.trackingSectionTitle}>Delivery Address</Text>
+                  <Text style={styles.trackingAddressName}>{trackingData.delivery_address.name}</Text>
+                  <Text style={styles.trackingAddressText}>{trackingData.delivery_address.address}</Text>
+                  <Text style={styles.trackingAddressPhone}>{trackingData.delivery_address.phone}</Text>
+                </View>
+              )}
+
+              {/* Tracking Timeline */}
+              <View style={styles.trackingSection}>
+                <Text style={styles.trackingSectionTitle}>Order Status</Text>
+                <View style={styles.trackingTimeline}>
+                  {/* Ordered */}
+                  <View style={styles.timelineItem}>
+                    <View style={[
+                      styles.timelineDot,
+                      getTrackingStepStatus(trackingData.tracking, 'ordered') === 'completed' && styles.timelineDotCompleted
+                    ]}>
+                      {getTrackingStepStatus(trackingData.tracking, 'ordered') === 'completed' && (
+                        <Text style={styles.timelineCheck}>✓</Text>
+                      )}
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineTitle}>Order Placed</Text>
+                      {trackingData.tracking?.ordered && (
+                        <Text style={styles.timelineDetail}>{trackingData.tracking.ordered}</Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={[
+                    styles.timelineLine,
+                    getTrackingStepStatus(trackingData.tracking, 'packaged') === 'completed' && styles.timelineLineCompleted
+                  ]} />
+
+                  {/* Packaged */}
+                  <View style={styles.timelineItem}>
+                    <View style={[
+                      styles.timelineDot,
+                      getTrackingStepStatus(trackingData.tracking, 'packaged') === 'completed' && styles.timelineDotCompleted
+                    ]}>
+                      {getTrackingStepStatus(trackingData.tracking, 'packaged') === 'completed' && (
+                        <Text style={styles.timelineCheck}>✓</Text>
+                      )}
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineTitle}>Packaged</Text>
+                      {trackingData.tracking?.packaged && (
+                        <Text style={styles.timelineDetail}>{trackingData.tracking.packaged}</Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={[
+                    styles.timelineLine,
+                    getTrackingStepStatus(trackingData.tracking, 'shipped') === 'completed' && styles.timelineLineCompleted
+                  ]} />
+
+                  {/* Shipped */}
+                  <View style={styles.timelineItem}>
+                    <View style={[
+                      styles.timelineDot,
+                      getTrackingStepStatus(trackingData.tracking, 'shipped') === 'completed' && styles.timelineDotCompleted
+                    ]}>
+                      {getTrackingStepStatus(trackingData.tracking, 'shipped') === 'completed' && (
+                        <Text style={styles.timelineCheck}>✓</Text>
+                      )}
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineTitle}>Shipped</Text>
+                      {trackingData.tracking?.shipped && (
+                        <Text style={styles.timelineDetail}>{trackingData.tracking.shipped}</Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={[
+                    styles.timelineLine,
+                    getTrackingStepStatus(trackingData.tracking, 'delivered') === 'completed' && styles.timelineLineCompleted
+                  ]} />
+
+                  {/* Delivered */}
+                  <View style={styles.timelineItem}>
+                    <View style={[
+                      styles.timelineDot,
+                      getTrackingStepStatus(trackingData.tracking, 'delivered') === 'completed' && styles.timelineDotCompleted
+                    ]}>
+                      {getTrackingStepStatus(trackingData.tracking, 'delivered') === 'completed' && (
+                        <Text style={styles.timelineCheck}>✓</Text>
+                      )}
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineTitle}>Delivered</Text>
+                      {trackingData.tracking?.delivered && (
+                        <Text style={styles.timelineDetail}>{trackingData.tracking.delivered}</Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* No Tracking Info Message */}
+              {(!trackingData.tracking || 
+                (!trackingData.tracking.ordered && !trackingData.tracking.packaged && 
+                 !trackingData.tracking.shipped && !trackingData.tracking.delivered)) && (
+                <View style={styles.noTrackingContainer}>
+                  <Text style={styles.noTrackingText}>
+                    Tracking information is not yet available for this order.
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          ) : null}
+        </View>
+      </View>
+    </Modal>
+  );
+
   const renderOrderItem = ({ item, index }) => (
     <TouchableOpacity
       style={styles.orderCard}
@@ -87,14 +289,22 @@ const OrdersScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* View Details Button */}
-      <TouchableOpacity 
-        style={styles.viewDetailsButton}
-        onPress={() => navigation.navigate('OrderDetail', { orderNumber: item.ordernumber })}
-      >
-        <Text style={styles.viewDetailsText}>View Order Details</Text>
-        <Text style={styles.arrowIcon}>›</Text>
-      </TouchableOpacity>
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsRow}>
+        <TouchableOpacity 
+          style={styles.trackOrderButton}
+          onPress={() => handleTrackOrder(item.ordernumber)}
+        >
+          <Text style={styles.trackOrderText}>Track Order</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.viewDetailsButton}
+          onPress={() => navigation.navigate('OrderDetail', { orderNumber: item.ordernumber })}
+        >
+          <Text style={styles.viewDetailsText}>View Details</Text>
+          <Text style={styles.arrowIcon}>›</Text>
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 
@@ -174,6 +384,8 @@ const OrdersScreen = ({ navigation }) => {
         }
         showsVerticalScrollIndicator={false}
       />
+
+      {renderTrackingModal()}
     </View>
   );
 };
@@ -332,13 +544,32 @@ const styles = StyleSheet.create({
     color: THEME_COLOR,
     fontWeight: '700',
   },
-  viewDetailsButton: {
+  actionButtonsRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  trackOrderButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
+    borderRightWidth: 1,
+    borderRightColor: '#F0F0F0',
+  },
+  trackOrderText: {
+    fontSize: 14,
+    color: '#27AE60',
+    fontWeight: '600',
+  },
+  viewDetailsButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
     backgroundColor: '#FAFAFA',
   },
   viewDetailsText: {
@@ -407,6 +638,197 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  trackModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
+    padding: 0,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    backgroundColor: THEME_COLOR,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  closeButton: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    fontWeight: '300',
+  },
+  trackingLoadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  trackingLoadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: '#666',
+  },
+  trackingErrorContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  trackingErrorIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFE0E0',
+    textAlign: 'center',
+    lineHeight: 50,
+    fontSize: 24,
+    color: '#E74C3C',
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  trackingErrorText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  trackingOrderInfo: {
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  trackingOrderNumber: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: THEME_COLOR,
+    marginBottom: 4,
+  },
+  trackingOrderDate: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 8,
+  },
+  trackingAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  trackingAmountLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 8,
+  },
+  trackingAmountValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#27AE60',
+  },
+  trackingPaymentMethod: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  trackingSection: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  trackingSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  trackingAddressName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  trackingAddressText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  trackingAddressPhone: {
+    fontSize: 14,
+    color: THEME_COLOR,
+    fontWeight: '500',
+  },
+  trackingTimeline: {
+    paddingLeft: 8,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  timelineDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  timelineDotCompleted: {
+    backgroundColor: '#27AE60',
+  },
+  timelineCheck: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  timelineLine: {
+    width: 2,
+    height: 20,
+    backgroundColor: '#E0E0E0',
+    marginLeft: 11,
+    marginVertical: 4,
+  },
+  timelineLineCompleted: {
+    backgroundColor: '#27AE60',
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: 4,
+  },
+  timelineTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  timelineDetail: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 18,
+  },
+  noTrackingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  noTrackingText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

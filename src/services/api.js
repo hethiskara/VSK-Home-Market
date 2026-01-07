@@ -438,6 +438,13 @@ export const orderAPI = {
     console.log('CANCEL GARMENT ORDER RESPONSE:', response.data);
     return response.data;
   },
+
+  // Track order
+  trackOrder: async (orderNumber) => {
+    const response = await api.get(`/trackorderjson?ordnum=${encodeURIComponent(orderNumber)}`);
+    console.log('TRACK ORDER RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Wishlist APIs
