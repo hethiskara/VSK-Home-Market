@@ -36,10 +36,27 @@ const OrderDetailScreen = ({ navigation, route }) => {
   const [submittingCancel, setSubmittingCancel] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showQuantityPicker, setShowQuantityPicker] = useState(false);
+  const [hasTracking, setHasTracking] = useState(false);
 
   useEffect(() => {
     fetchOrderDetails();
+    checkTrackingStatus();
   }, []);
+
+  const checkTrackingStatus = async () => {
+    try {
+      const response = await orderAPI.trackOrder(orderNumber);
+      if (response && response.status === true && response.tracking) {
+        // Check if any tracking step has data
+        const tracking = response.tracking;
+        const hasAnyTracking = tracking.packaged || tracking.shipped || tracking.delivered;
+        setHasTracking(hasAnyTracking);
+      }
+    } catch (error) {
+      console.log('Error checking tracking:', error);
+      setHasTracking(false);
+    }
+  };
 
   const fetchOrderDetails = async () => {
     try {
@@ -255,8 +272,8 @@ const OrderDetailScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Cancel Button - Only show if not fully cancelled */}
-        {!isFullyCancelled && (
+        {/* Cancel Button - Only show if not fully cancelled and no tracking */}
+        {!isFullyCancelled && !hasTracking && (
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={() => handleCancelPress(item)}
