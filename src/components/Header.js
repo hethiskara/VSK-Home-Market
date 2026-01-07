@@ -36,6 +36,12 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
     }
   };
 
+  const handleProfilePress = () => {
+    if (navigation) {
+      navigation.navigate('Account');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ImageBackground 
@@ -71,7 +77,7 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
                 </View>
               )}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity style={styles.iconButton} onPress={handleProfilePress}>
               <View style={styles.profileIcon}>
                 <View style={styles.profileHead} />
                 <View style={styles.profileBody} />
