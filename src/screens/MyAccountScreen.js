@@ -98,8 +98,15 @@ const MyAccountScreen = ({ navigation }) => {
       const response = await api.get(`/editprofile-json?${params}`);
       console.log('EDIT PROFILE RESPONSE:', response.data);
 
-      if (response.data?.status === true || response.data?.status === 'true' || response.data?.message?.toLowerCase().includes('success')) {
-        Alert.alert('Success', response.data?.message || 'Profile updated successfully');
+      // Handle response - could be array or object
+      const responseData = Array.isArray(response.data) ? response.data[0] : response.data;
+      const isSuccess = responseData?.status === true || 
+        responseData?.status === 'true' || 
+        responseData?.status === 'SUCCESS' ||
+        responseData?.message?.toLowerCase().includes('success');
+
+      if (isSuccess) {
+        Alert.alert('Success', responseData?.message || 'Profile updated successfully');
         setShowEditProfile(false);
         
         // Update local storage
@@ -111,7 +118,7 @@ const MyAccountScreen = ({ navigation }) => {
           await AsyncStorage.setItem('userData', JSON.stringify(parsed));
         }
       } else {
-        Alert.alert('Error', response.data?.message || 'Failed to update profile');
+        Alert.alert('Error', responseData?.message || 'Failed to update profile');
       }
     } catch (error) {
       console.log('Edit profile error:', error);
