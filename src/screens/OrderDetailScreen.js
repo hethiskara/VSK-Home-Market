@@ -105,17 +105,30 @@ const OrderDetailScreen = ({ navigation, route }) => {
         reason: cancelReason.trim(),
       };
 
+      console.log('CANCEL REQUEST DATA:', cancelData);
+      console.log('IS GARMENT:', isGarment);
+      
       const response = isGarment 
         ? await orderAPI.cancelGarmentOrder(cancelData)
         : await orderAPI.cancelRegularOrder(cancelData);
 
-      if (response?.status === true || response?.status === 'true') {
-        Alert.alert('Success', response.message || 'Order item cancelled successfully');
+      console.log('CANCEL RESPONSE:', response);
+
+      const isSuccess = response?.status === true || 
+        response?.status === 'true' || 
+        response?.status === 'SUCCESS' ||
+        response?.[0]?.status === 'SUCCESS' ||
+        (Array.isArray(response) && response[0]?.message?.toLowerCase().includes('success'));
+
+      if (isSuccess) {
+        const successMessage = response?.message || response?.[0]?.message || 'Order item cancelled successfully';
+        Alert.alert('Success', successMessage);
         setShowCancelModal(false);
         // Refresh order details
         fetchOrderDetails();
       } else {
-        Alert.alert('Error', response?.message || 'Failed to cancel order item');
+        const errorMessage = response?.message || response?.[0]?.message || 'Failed to cancel order item';
+        Alert.alert('Error', errorMessage);
       }
     } catch (error) {
       console.log('Cancel order error:', error);
@@ -179,40 +192,68 @@ const OrderDetailScreen = ({ navigation, route }) => {
     </View>
   );
 
-  const renderOrderItem = ({ item, index }) => (
-    <View style={styles.itemCard}>
-      <View style={styles.itemRow}>
-        <Image
-          source={{ uri: item.productimage }}
-          style={styles.productImage}
-          resizeMode="cover"
-        />
-        <View style={styles.itemInfo}>
-          <Text style={styles.productName} numberOfLines={2}>
-            {item.productname}
-          </Text>
-          <Text style={styles.productCode}>Code: {item.productcode}</Text>
-          
-          <View style={styles.itemFooter}>
-            <View style={styles.qtyContainer}>
-              <Text style={styles.qtyLabel}>Qty:</Text>
-              <Text style={styles.qtyValue}>{item.qty}</Text>
+  const renderOrderItem = ({ item, index }) => {
+    const isCancelled = item.cancel_status === '1' || item.cancel_status === 1;
+    const cancelledQty = parseInt(item.cancel_qty || '0');
+    const orderedQty = parseInt(item.qty || '1');
+    const remainingQty = orderedQty - cancelledQty;
+    const isFullyCancelled = isCancelled && cancelledQty >= orderedQty;
+    
+    return (
+      <View style={[styles.itemCard, isFullyCancelled && styles.itemCardCancelled]}>
+        <View style={styles.itemRow}>
+          <Image
+            source={{ uri: item.productimage }}
+            style={[styles.productImage, isFullyCancelled && styles.productImageCancelled]}
+            resizeMode="cover"
+          />
+          <View style={styles.itemInfo}>
+            <Text style={[styles.productName, isFullyCancelled && styles.textCancelled]} numberOfLines={2}>
+              {item.productname}
+            </Text>
+            <Text style={styles.productCode}>Code: {item.productcode}</Text>
+            
+            <View style={styles.itemFooter}>
+              <View style={styles.qtyContainer}>
+                <Text style={styles.qtyLabel}>Qty:</Text>
+                <Text style={styles.qtyValue}>{item.qty}</Text>
+              </View>
+              <Text style={styles.itemPrice}>Rs. {item.productprice}</Text>
             </View>
-            <Text style={styles.itemPrice}>Rs. {item.productprice}</Text>
+
+            {/* Cancellation Status */}
+            {isCancelled && (
+              <View style={styles.cancelStatusContainer}>
+                <View style={styles.cancelStatusBadge}>
+                  <Text style={styles.cancelStatusText}>
+                    {isFullyCancelled 
+                      ? '❌ Cancelled' 
+                      : `⚠️ ${cancelledQty} of ${orderedQty} Cancelled`}
+                  </Text>
+                </View>
+                {!isFullyCancelled && remainingQty > 0 && (
+                  <Text style={styles.remainingQtyText}>
+                    Remaining: {remainingQty} item(s)
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
         </View>
-      </View>
 
-      {/* Cancel Button */}
-      <TouchableOpacity
-        style={styles.cancelButton}
-        onPress={() => handleCancelPress(item)}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.cancelButtonText}>✕ Cancel Item</Text>
-      </TouchableOpacity>
-    </View>
-  );
+        {/* Cancel Button - Only show if not fully cancelled */}
+        {!isFullyCancelled && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => handleCancelPress(item)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cancelButtonText}>✕ Cancel Item</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -616,6 +657,39 @@ const styles = StyleSheet.create({
     color: '#E74C3C',
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Cancellation status styles
+  itemCardCancelled: {
+    opacity: 0.7,
+    backgroundColor: '#FFF5F5',
+  },
+  productImageCancelled: {
+    opacity: 0.5,
+  },
+  textCancelled: {
+    textDecorationLine: 'line-through',
+    color: '#999999',
+  },
+  cancelStatusContainer: {
+    marginTop: 8,
+  },
+  cancelStatusBadge: {
+    backgroundColor: '#FFE5E5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  cancelStatusText: {
+    color: '#E74C3C',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  remainingQtyText: {
+    color: '#27AE60',
+    fontSize: 11,
+    marginTop: 4,
+    fontWeight: '500',
   },
   emptyContainer: {
     padding: 32,
