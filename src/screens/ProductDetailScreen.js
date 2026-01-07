@@ -200,6 +200,77 @@ const ProductDetailScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleBuyNow = async () => {
+    try {
+      // Get user data
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Login Required', 'Please login to proceed');
+        navigation.navigate('Login');
+        return;
+      }
+
+      // Determine cart type based on product type
+      const cartType = productType === 'garment' ? 'garments' : 'pathanjali';
+
+      // Call add to cart API
+      const response = await cartAPI.addToCart(
+        product.bcode,
+        userData.userid,
+        product.id,
+        quantity,
+        cartType
+      );
+
+      if (response.status === true) {
+        // Save to local storage for cart display
+        const cartItem = {
+          cart_id: response.cart_id,
+          productcode: product.productcode,
+          productname: product.productname,
+          productimage: product.productimage1,
+          productprice: product.productprice,
+          mrp: product.mrp,
+          quantity: quantity,
+          cgst: product.cgst,
+          sgst: product.sgst,
+          bcode: product.bcode,
+          prod_id: product.id,
+          carttype: cartType,
+        };
+
+        // Get existing cart
+        const existingCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
+        let cartItems = existingCart ? JSON.parse(existingCart) : [];
+        
+        // Check if item already exists
+        const existingIndex = cartItems.findIndex(item => item.bcode === product.bcode);
+        if (existingIndex >= 0) {
+          cartItems[existingIndex].quantity += quantity;
+          cartItems[existingIndex].cart_id = response.cart_id;
+        } else {
+          cartItems.push(cartItem);
+        }
+
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+        
+        // Save guest_id from cart response for checkout
+        if (response.guest_id) {
+          await AsyncStorage.setItem('cartGuestId', response.guest_id);
+          console.log('Saved cart guest_id:', response.guest_id);
+        }
+        
+        // Navigate directly to Cart without showing toast
+        navigation.navigate('Cart');
+      } else {
+        Alert.alert('Error', response.message || 'Failed to add to cart');
+      }
+    } catch (error) {
+      console.log('Buy now error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
+  };
+
   const fetchReviews = async () => {
     try {
       const response = await reviewAPI.getReviews(productCode);
@@ -561,7 +632,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
             <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.buyNowButton} onPress={handleAddToCart}>
+            <TouchableOpacity style={styles.buyNowButton} onPress={handleBuyNow}>
               <Text style={styles.buyNowText}>Buy Now</Text>
             </TouchableOpacity>
           </View>
