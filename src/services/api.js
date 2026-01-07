@@ -531,4 +531,26 @@ export const tokenManager = {
   },
 };
 
+// Search API
+export const searchAPI = {
+  // Get auto-suggestions
+  getAutoSuggestions: async (queryString) => {
+    const response = await api.get(`/searchautosuggestjson?queryString=${encodeURIComponent(queryString)}`);
+    return response.data;
+  },
+
+  // Search products by type and label
+  searchProducts: async (type, label) => {
+    const response = await api.get(`/searchproductsjson?type=${encodeURIComponent(type)}&label=${encodeURIComponent(label)}`);
+    return response.data;
+  },
+
+  // Submit notification request for unavailable product
+  submitNotification: async (searchWord, name, email, phone) => {
+    const params = `type=mobile&label=mobile&notify_name=${encodeURIComponent(name)}&notify_email=${encodeURIComponent(email)}&notify_phone=${encodeURIComponent(phone)}&searchword=${encodeURIComponent(searchWord)}`;
+    const response = await api.get(`/searchproductsjson?${params}`);
+    return response.data;
+  },
+};
+
 export default api;
