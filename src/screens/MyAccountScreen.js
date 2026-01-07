@@ -337,14 +337,15 @@ const MyAccountScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Mobile Number *</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    value={profileData.mobile_no}
-                    onChangeText={(text) => setProfileData({ ...profileData, mobile_no: text })}
-                    placeholder="Enter mobile number"
-                    keyboardType="phone-pad"
-                  />
+                  <Text style={styles.formLabel}>Mobile Number</Text>
+                  <TouchableOpacity 
+                    style={styles.formInputDisabled}
+                    onPress={() => Alert.alert('Info', 'Registered mobile number cannot be changed')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.formInputDisabledText}>{profileData.mobile_no || 'Not available'}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.formHint}>Registered mobile number cannot be changed</Text>
                 </View>
 
                 <View style={styles.formGroup}>
@@ -741,6 +742,24 @@ const styles = StyleSheet.create({
   formInputMultiline: {
     height: 80,
     textAlignVertical: 'top',
+  },
+  formInputDisabled: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#F0F0F0',
+  },
+  formInputDisabledText: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  formHint: {
+    fontSize: 11,
+    color: '#999999',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   saveButton: {
     backgroundColor: THEME_COLOR,
