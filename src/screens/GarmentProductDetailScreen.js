@@ -565,9 +565,6 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           ) : (
             <View style={styles.outOfStockSection}>
               <Text style={styles.outOfStockMessage}>This product is currently out of stock</Text>
-              <TouchableOpacity style={styles.notifyButton}>
-                <Text style={styles.notifyButtonText}>Notify When Available</Text>
-              </TouchableOpacity>
             </View>
           )}
 
