@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkoutAPI, cartAPI } from '../services/api';
+import api from '../services/api';
 import { WebView } from 'react-native-webview';
 
 const CART_STORAGE_KEY = '@vsk_cart';
@@ -36,6 +37,7 @@ const CartScreen = ({ navigation }) => {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [showPaymentWebView, setShowPaymentWebView] = useState(false);
   const [razorpayData, setRazorpayData] = useState(null);
+  const [shippingCost, setShippingCost] = useState(1.00); // Default shipping cost
   
   // Delivery address fields
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -52,7 +54,23 @@ const CartScreen = ({ navigation }) => {
   useEffect(() => {
     loadCart();
     loadUserData();
+    fetchShippingCost();
   }, []);
+
+  const fetchShippingCost = async () => {
+    try {
+      const response = await api.get('/shippingcostjson');
+      console.log('SHIPPING COST RESPONSE:', response.data);
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const cost = parseFloat(response.data[0].shippingcost) || 1.00;
+        setShippingCost(cost);
+        console.log('SHIPPING COST SET TO:', cost);
+      }
+    } catch (error) {
+      console.log('Error fetching shipping cost:', error);
+      // Keep default shipping cost of 1.00 if API fails
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -271,7 +289,6 @@ const CartScreen = ({ navigation }) => {
   const handleRazorpayPayment = async () => {
     const addressToUse = useBillingAsDelivery ? billingAddress : deliveryAddress;
     const totalAmount = calculateTotal();
-    const shippingCost = 1.00;
     const grandTotalFloat = parseFloat(totalAmount) + shippingCost;
     // Round to nearest integer for Razorpay (amount in rupees, backend converts to paise)
     const grandTotal = Math.round(grandTotalFloat);
@@ -841,7 +858,6 @@ const CartScreen = ({ navigation }) => {
   const renderPaymentStep = () => {
     const addressToUse = useBillingAsDelivery ? billingAddress : deliveryAddress;
     const totalAmount = parseFloat(calculateTotal());
-    const shippingCost = 1.00;
     const grandTotal = (totalAmount + shippingCost).toFixed(2);
 
     return (
