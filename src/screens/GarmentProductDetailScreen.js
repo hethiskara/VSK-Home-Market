@@ -31,6 +31,8 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const [tags, setTags] = useState([]);
 
   useEffect(() => {
@@ -107,9 +109,11 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
 
   const handleAddToCart = async () => {
     try {
+      setAddingToCart(true);
       // Get user data
       const userData = await tokenManager.getUserData();
       if (!userData?.userid) {
+        setAddingToCart(false);
         Alert.alert('Login Required', 'Please login to add items to cart');
         navigation.navigate('Login');
         return;
@@ -172,14 +176,18 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
     } catch (error) {
       console.log('Add to cart error:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setAddingToCart(false);
     }
   };
 
   const handleBuyNow = async () => {
     try {
+      setBuyingNow(true);
       // Get user data
       const userData = await tokenManager.getUserData();
       if (!userData?.userid) {
+        setBuyingNow(false);
         Alert.alert('Login Required', 'Please login to proceed');
         navigation.navigate('Login');
         return;
@@ -240,6 +248,8 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
     } catch (error) {
       console.log('Buy now error:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setBuyingNow(false);
     }
   };
 
@@ -529,11 +539,27 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           {/* Action Buttons */}
           {parseInt(product.stockinhand) > 0 ? (
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
-                <Text style={styles.addToCartText}>Add to Cart</Text>
+              <TouchableOpacity 
+                style={[styles.addToCartButton, addingToCart && styles.buttonDisabled]} 
+                onPress={handleAddToCart}
+                disabled={addingToCart || buyingNow}
+              >
+                {addingToCart ? (
+                  <ActivityIndicator color="#1a4a7c" size="small" />
+                ) : (
+                  <Text style={styles.addToCartText}>Add to Cart</Text>
+                )}
               </TouchableOpacity>
-              <TouchableOpacity style={styles.buyNowButton} onPress={handleBuyNow}>
-                <Text style={styles.buyNowText}>Buy Now</Text>
+              <TouchableOpacity 
+                style={[styles.buyNowButton, buyingNow && styles.buttonDisabled]} 
+                onPress={handleBuyNow}
+                disabled={addingToCart || buyingNow}
+              >
+                {buyingNow ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.buyNowText}>Buy Now</Text>
+                )}
               </TouchableOpacity>
             </View>
           ) : (
@@ -858,6 +884,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
   },
   addToCartText: {
     color: '#FFFFFF',
@@ -870,11 +898,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
   },
   buyNowText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   outOfStockSection: {
     marginBottom: 24,
