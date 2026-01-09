@@ -22,6 +22,7 @@ import Header from '../components/Header';
 import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
 import { homeAPI, appReviewAPI, subscribeAPI, tokenManager } from '../services/api';
+import { BUILD_DATE } from '../config/buildConfig';
 
 const ProductCard = ({ product, onPress }) => {
   const discountPercent = product.percentage?.replace(/[()]/g, '') || '';
@@ -584,6 +585,9 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.footerCopyright}>
             <Text style={styles.copyrightText}>
               Copyright © vskhomemarket.com - All rights reserved
+            </Text>
+            <Text style={styles.buildDateText}>
+              App Version: {BUILD_DATE}
             </Text>
           </View>
         </View>
@@ -1186,6 +1190,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     opacity: 0.8,
+  },
+  buildDateText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    opacity: 0.6,
+    marginTop: 6,
   },
 
   // Modal Styles
