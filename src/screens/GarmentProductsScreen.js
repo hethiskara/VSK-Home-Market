@@ -40,7 +40,8 @@ const GarmentProductsScreen = ({ navigation, route }) => {
     subcategoryTitle, 
     productTypeId, 
     productTypeTitle,
-    sectionId
+    sectionId,
+    viewAll
   } = route.params || {};
   
   const [products, setProducts] = useState([]);
@@ -65,7 +66,7 @@ const GarmentProductsScreen = ({ navigation, route }) => {
     fetchProducts();
     fetchSortOptions();
     fetchDiscountOptions();
-  }, [subcategoryId, categoryId, productTypeId]);
+  }, [subcategoryId, categoryId, productTypeId, viewAll]);
 
   const fetchSortOptions = async () => {
     try {
@@ -93,8 +94,15 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await garmentAPI.getProducts(subcategoryId, categoryId, productTypeId);
-      console.log('Garment Products fetched:', response);
+      let response;
+      if (viewAll) {
+        // Fetch all products for the category (View All)
+        response = await garmentAPI.getAllCategoryProducts(subcategoryId, categoryId);
+        console.log('All Category Products fetched:', response);
+      } else {
+        response = await garmentAPI.getProducts(subcategoryId, categoryId, productTypeId);
+        console.log('Garment Products fetched:', response);
+      }
       
       const validProducts = Array.isArray(response) 
         ? response.filter(item => 
@@ -285,7 +293,9 @@ const GarmentProductsScreen = ({ navigation, route }) => {
         <Text style={styles.backIcon}>‹</Text>
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
-      <Text style={styles.headerTitle} numberOfLines={1}>{productTypeTitle}</Text>
+      <Text style={styles.headerTitle} numberOfLines={1}>
+        {viewAll ? `All ${subcategoryTitle}` : productTypeTitle}
+      </Text>
       <View style={styles.headerRight} />
     </View>
   );
@@ -293,7 +303,7 @@ const GarmentProductsScreen = ({ navigation, route }) => {
   const renderBreadcrumb = () => (
     <View style={styles.breadcrumb}>
       <Text style={styles.breadcrumbText}>
-        Garments › {categoryTitle} › {subcategoryTitle} › {productTypeTitle}
+        Garments › {categoryTitle} › {subcategoryTitle} › {viewAll ? 'All Products' : productTypeTitle}
       </Text>
     </View>
   );

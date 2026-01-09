@@ -348,6 +348,13 @@ export const garmentAPI = {
     console.log('GARMENT TAG DETAILS RESPONSE:', response.data);
     return response.data;
   },
+
+  // Get all products for a category (View All)
+  getAllCategoryProducts: async (sectionId, categoryId) => {
+    const response = await api.get(`/garmentsection-category-allproducts?section_id=${sectionId}&category_id=${categoryId}`);
+    console.log('ALL CATEGORY PRODUCTS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Cart APIs

@@ -75,6 +75,16 @@ const GarmentCategoryScreen = ({ navigation, route }) => {
     });
   };
 
+  const handleViewAllPress = (subcategory) => {
+    navigation.navigate('GarmentProducts', {
+      categoryId,
+      categoryTitle,
+      subcategoryId: subcategory.id,
+      subcategoryTitle: subcategory.subcategorytitle,
+      viewAll: true,
+    });
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity 
@@ -104,6 +114,22 @@ const GarmentCategoryScreen = ({ navigation, route }) => {
 
     return (
       <View style={styles.productTypesContainer}>
+        {/* View All Option */}
+        <TouchableOpacity
+          style={styles.viewAllItem}
+          onPress={() => handleViewAllPress(subcategory)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.viewAllLeft}>
+            <View style={styles.viewAllIconContainer}>
+              <Text style={styles.viewAllIcon}>✦</Text>
+            </View>
+            <Text style={styles.viewAllText}>View All {subcategory.subcategorytitle}</Text>
+          </View>
+          <Text style={styles.viewAllArrow}>›</Text>
+        </TouchableOpacity>
+
+        {/* Product Types */}
         {types.map((type) => (
           <TouchableOpacity
             key={type.id}
@@ -315,6 +341,45 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: THEME_COLOR,
     fontWeight: '600',
+  },
+  viewAllItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    backgroundColor: '#E8F4FD',
+    borderBottomWidth: 1,
+    borderBottomColor: '#D0E8F9',
+  },
+  viewAllLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  viewAllIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: THEME_COLOR,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  viewAllIcon: {
+    fontSize: 12,
+    color: '#FFFFFF',
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: THEME_COLOR,
+    flex: 1,
+  },
+  viewAllArrow: {
+    fontSize: 18,
+    color: THEME_COLOR,
+    fontWeight: '700',
   },
   emptyContainer: {
     padding: 40,
