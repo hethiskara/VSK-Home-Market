@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -59,7 +59,7 @@ const LatestProductCard = ({ product, onPress }) => {
         style={styles.latestProductImage}
         resizeMode="cover"
       />
-      <Text style={styles.latestProductName} numberOfLines={1}>
+      <Text style={styles.latestProductName} numberOfLines={2}>
         {product.productname}
       </Text>
       <Text style={styles.latestProductCode}>Code : {product.productcode}</Text>
@@ -127,9 +127,30 @@ const HomeScreen = ({ navigation }) => {
   const [subscribeId, setSubscribeId] = useState(null);
   const [subscribing, setSubscribing] = useState(false);
 
+  // Auto-scroll for Latest Products
+  const latestProductsRef = useRef(null);
+  const latestScrollIndex = useRef(0);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-scroll effect for Latest Products
+  useEffect(() => {
+    if (latestProducts.length > 0) {
+      const scrollInterval = setInterval(() => {
+        if (latestProductsRef.current) {
+          latestScrollIndex.current = (latestScrollIndex.current + 1) % latestProducts.length;
+          latestProductsRef.current.scrollToIndex({
+            index: latestScrollIndex.current,
+            animated: true,
+          });
+        }
+      }, 3000); // Scroll every 3 seconds
+
+      return () => clearInterval(scrollInterval);
+    }
+  }, [latestProducts]);
 
   const fetchData = async () => {
     try {
@@ -157,7 +178,7 @@ const HomeScreen = ({ navigation }) => {
       
       const featuredRegularProducts = (Array.isArray(featuredRegular) ? featuredRegular : []).map(p => ({ ...p, productType: 'regular' }));
       const featuredGarmentsProducts = (Array.isArray(featuredGarments) ? featuredGarments : []).map(p => ({ ...p, productType: 'garment' }));
-      setFeaturedProducts([...featuredRegularProducts, ...featuredGarmentsProducts]);
+      setFeaturedProducts([...featuredGarmentsProducts, ...featuredRegularProducts]);
 
       // Fetch best selling products (regular + garments)
       const [bestRegular, bestGarments] = await Promise.all([
@@ -469,12 +490,24 @@ const HomeScreen = ({ navigation }) => {
           </View>
           {latestProducts.length > 0 ? (
             <FlatList
+              ref={latestProductsRef}
               data={latestProducts}
               renderItem={renderLatestItem}
               keyExtractor={(item, index) => `latest-${item.id}-${index}`}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
+              onScrollToIndexFailed={(info) => {
+                // Handle scroll failure gracefully
+                setTimeout(() => {
+                  if (latestProductsRef.current && latestProducts.length > 0) {
+                    latestProductsRef.current.scrollToIndex({
+                      index: Math.min(info.index, latestProducts.length - 1),
+                      animated: true,
+                    });
+                  }
+                }, 100);
+              }}
             />
           ) : (
             <View style={styles.productPlaceholder}>
@@ -950,6 +983,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 8,
     textAlign: 'center',
+    lineHeight: 18,
+    minHeight: 36,
   },
   latestProductCode: {
     fontSize: 11,
