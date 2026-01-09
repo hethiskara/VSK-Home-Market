@@ -129,24 +129,37 @@ const HomeScreen = ({ navigation }) => {
 
   // Auto-scroll for Latest Products
   const latestProductsRef = useRef(null);
-  const latestScrollIndex = useRef(0);
+  const latestScrollOffset = useRef(0);
+  const ITEM_WIDTH = 158; // 150 width + 8 margin
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Auto-scroll effect for Latest Products
+  // Smooth continuous auto-scroll effect for Latest Products
   useEffect(() => {
     if (latestProducts.length > 0) {
+      const totalWidth = latestProducts.length * ITEM_WIDTH;
+      
       const scrollInterval = setInterval(() => {
         if (latestProductsRef.current) {
-          latestScrollIndex.current = (latestScrollIndex.current + 1) % latestProducts.length;
-          latestProductsRef.current.scrollToIndex({
-            index: latestScrollIndex.current,
-            animated: true,
-          });
+          latestScrollOffset.current += 2; // Smooth small increment
+          
+          // Reset to beginning when reaching the end
+          if (latestScrollOffset.current >= totalWidth - 300) {
+            latestScrollOffset.current = 0;
+            latestProductsRef.current.scrollToOffset({
+              offset: 0,
+              animated: false,
+            });
+          } else {
+            latestProductsRef.current.scrollToOffset({
+              offset: latestScrollOffset.current,
+              animated: false,
+            });
+          }
         }
-      }, 3000); // Scroll every 3 seconds
+      }, 30); // Smooth 30ms interval for continuous scroll
 
       return () => clearInterval(scrollInterval);
     }
@@ -497,16 +510,12 @@ const HomeScreen = ({ navigation }) => {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.productList}
-              onScrollToIndexFailed={(info) => {
-                // Handle scroll failure gracefully
-                setTimeout(() => {
-                  if (latestProductsRef.current && latestProducts.length > 0) {
-                    latestProductsRef.current.scrollToIndex({
-                      index: Math.min(info.index, latestProducts.length - 1),
-                      animated: true,
-                    });
-                  }
-                }, 100);
+              scrollEnabled={true}
+              onScrollBeginDrag={() => {
+                // Reset auto-scroll position when user manually scrolls
+                if (latestProductsRef.current) {
+                  latestScrollOffset.current = 0;
+                }
               }}
             />
           ) : (
