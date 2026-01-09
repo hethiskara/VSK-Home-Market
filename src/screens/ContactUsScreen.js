@@ -89,6 +89,10 @@ const ContactUsScreen = ({ navigation }) => {
     }
   };
 
+  const handleWhatsApp = () => {
+    Linking.openURL('https://api.whatsapp.com/send?phone=+919710412346');
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -140,6 +144,18 @@ const ContactUsScreen = ({ navigation }) => {
               <Text style={styles.contactArrow}>→</Text>
             </TouchableOpacity>
           )}
+
+          {/* WhatsApp Button */}
+          <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp}>
+            <View style={styles.whatsappIconContainer}>
+              <Text style={styles.whatsappIcon}>💬</Text>
+            </View>
+            <View style={styles.contactInfo}>
+              <Text style={styles.whatsappLabel}>Chat on WhatsApp</Text>
+              <Text style={styles.whatsappValue}>+91 9710412346</Text>
+            </View>
+            <Text style={styles.whatsappArrow}>→</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -250,6 +266,45 @@ const styles = StyleSheet.create({
   contactArrow: {
     fontSize: 20,
     color: '#3498DB',
+  },
+  whatsappButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#25D366',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#25D366',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  whatsappIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  whatsappIcon: {
+    fontSize: 20,
+  },
+  whatsappLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 2,
+  },
+  whatsappValue: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  whatsappArrow: {
+    fontSize: 20,
+    color: '#FFFFFF',
   },
 });
 
