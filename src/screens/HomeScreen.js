@@ -17,12 +17,82 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Linking,
+  Animated,
+  Dimensions,
 } from 'react-native';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const LATEST_ITEM_WIDTH = 158; // 150 width + 8 margin
+
 import Header from '../components/Header';
 import Drawer from '../components/Drawer';
 import BannerCarousel from '../components/BannerCarousel';
 import { homeAPI, appReviewAPI, subscribeAPI, tokenManager } from '../services/api';
 import { BUILD_DATE } from '../config/buildConfig';
+
+// Auto-scrolling Marquee component for Latest Products - uses native driver, doesn't block other scrolls
+const AutoScrollingList = ({ data, renderItem, keyExtractor, navigation }) => {
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const animationRef = useRef(null);
+  
+  useEffect(() => {
+    if (data.length === 0) return;
+    
+    const totalWidth = data.length * LATEST_ITEM_WIDTH;
+    
+    const startAnimation = () => {
+      scrollX.setValue(0);
+      animationRef.current = Animated.timing(scrollX, {
+        toValue: totalWidth,
+        duration: data.length * 2500, // 2.5 seconds per item for smooth scroll
+        useNativeDriver: true,
+      });
+      
+      animationRef.current.start(({ finished }) => {
+        if (finished) {
+          startAnimation(); // Loop continuously
+        }
+      });
+    };
+    
+    // Small delay before starting animation
+    const timer = setTimeout(startAnimation, 1000);
+    
+    return () => {
+      clearTimeout(timer);
+      if (animationRef.current) {
+        scrollX.stopAnimation();
+      }
+    };
+  }, [data.length]);
+
+  if (data.length === 0) return null;
+
+  // Duplicate data for seamless loop effect
+  const duplicatedData = [...data, ...data];
+
+  return (
+    <View style={{ overflow: 'hidden' }}>
+      <Animated.View
+        style={{
+          flexDirection: 'row',
+          transform: [{
+            translateX: scrollX.interpolate({
+              inputRange: [0, data.length * LATEST_ITEM_WIDTH],
+              outputRange: [0, -data.length * LATEST_ITEM_WIDTH],
+            }),
+          }],
+        }}
+      >
+        {duplicatedData.map((item, index) => (
+          <View key={`${keyExtractor(item, index % data.length)}-dup-${index}`}>
+            {renderItem({ item, index: index % data.length })}
+          </View>
+        ))}
+      </Animated.View>
+    </View>
+  );
+};
 
 const ProductCard = ({ product, onPress }) => {
   const discountPercent = product.percentage?.replace(/[()]/g, '') || '';
@@ -127,43 +197,9 @@ const HomeScreen = ({ navigation }) => {
   const [subscribeId, setSubscribeId] = useState(null);
   const [subscribing, setSubscribing] = useState(false);
 
-  // Auto-scroll for Latest Products
-  const latestProductsRef = useRef(null);
-  const latestScrollOffset = useRef(0);
-  const ITEM_WIDTH = 158; // 150 width + 8 margin
-
   useEffect(() => {
     fetchData();
   }, []);
-
-  // Smooth continuous auto-scroll effect for Latest Products
-  useEffect(() => {
-    if (latestProducts.length > 0) {
-      const totalWidth = latestProducts.length * ITEM_WIDTH;
-      
-      const scrollInterval = setInterval(() => {
-        if (latestProductsRef.current) {
-          latestScrollOffset.current += 2; // Smooth small increment
-          
-          // Reset to beginning when reaching the end
-          if (latestScrollOffset.current >= totalWidth - 300) {
-            latestScrollOffset.current = 0;
-            latestProductsRef.current.scrollToOffset({
-              offset: 0,
-              animated: false,
-            });
-          } else {
-            latestProductsRef.current.scrollToOffset({
-              offset: latestScrollOffset.current,
-              animated: false,
-            });
-          }
-        }
-      }, 30); // Smooth 30ms interval for continuous scroll
-
-      return () => clearInterval(scrollInterval);
-    }
-  }, [latestProducts]);
 
   const fetchData = async () => {
     try {
@@ -494,7 +530,7 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Latest Products Section */}
+        {/* Latest Products Section - Auto-scrolling Marquee */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
@@ -502,21 +538,11 @@ const HomeScreen = ({ navigation }) => {
             </View>
           </View>
           {latestProducts.length > 0 ? (
-            <FlatList
-              ref={latestProductsRef}
+            <AutoScrollingList
               data={latestProducts}
               renderItem={renderLatestItem}
               keyExtractor={(item, index) => `latest-${item.id}-${index}`}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.productList}
-              scrollEnabled={true}
-              onScrollBeginDrag={() => {
-                // Reset auto-scroll position when user manually scrolls
-                if (latestProductsRef.current) {
-                  latestScrollOffset.current = 0;
-                }
-              }}
+              navigation={navigation}
             />
           ) : (
             <View style={styles.productPlaceholder}>
