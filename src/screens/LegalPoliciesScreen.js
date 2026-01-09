@@ -58,8 +58,9 @@ const TABS = [
   { id: 'refund', label: 'Cancellation & Refund', icon: '↩️', color: '#E67E22' },
 ];
 
-const LegalPoliciesScreen = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState('terms');
+const LegalPoliciesScreen = ({ navigation, route }) => {
+  const { initialTab } = route.params || {};
+  const [activeTab, setActiveTab] = useState(initialTab || 'terms');
   const [content, setContent] = useState({
     terms: { loading: true, data: null, error: null },
     privacy: { loading: true, data: null, error: null },
@@ -68,7 +69,8 @@ const LegalPoliciesScreen = ({ navigation }) => {
   });
   
   const scrollViewRef = useRef(null);
-  const tabIndicatorAnim = useRef(new Animated.Value(0)).current;
+  const initialTabIndex = TABS.findIndex(t => t.id === (initialTab || 'terms'));
+  const tabIndicatorAnim = useRef(new Animated.Value(initialTabIndex >= 0 ? initialTabIndex : 0)).current;
 
   useEffect(() => {
     fetchAllContent();

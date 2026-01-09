@@ -15,6 +15,13 @@ import { tokenManager, productAPI, garmentAPI } from '../services/api';
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = width * 0.85;
 
+const POLICY_ITEMS = [
+  { id: 'terms', title: 'Terms & Conditions', tab: 'terms' },
+  { id: 'privacy', title: 'Privacy Policy', tab: 'privacy' },
+  { id: 'sales', title: 'Terms of Sales', tab: 'sales' },
+  { id: 'refund', title: 'Cancellation & Refund', tab: 'refund' },
+];
+
 const Drawer = ({ visible, onClose, navigation }) => {
   const [sections, setSections] = useState([]);
   const [garmentSections, setGarmentSections] = useState([]);
@@ -24,6 +31,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
   const [garmentCategories, setGarmentCategories] = useState([]);
   const [subcategories, setSubcategories] = useState({});
   const [loading, setLoading] = useState({});
+  const [policiesExpanded, setPoliciesExpanded] = useState(false);
   const slideAnim = useState(new Animated.Value(-DRAWER_WIDTH))[0];
 
   useEffect(() => {
@@ -394,6 +402,36 @@ const Drawer = ({ visible, onClose, navigation }) => {
               <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuPress(null, 'Feedback')}>
                 <Text style={styles.menuLabel}>Feedback</Text>
               </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.divider} />
+
+              {/* Policies Section */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => setPoliciesExpanded(!policiesExpanded)}
+              >
+                <Text style={styles.menuLabel}>Policies</Text>
+                <Text style={styles.arrow}>{policiesExpanded ? '∨' : '›'}</Text>
+              </TouchableOpacity>
+
+              {policiesExpanded && (
+                <>
+                  {POLICY_ITEMS.map((policy) => (
+                    <TouchableOpacity
+                      key={policy.id}
+                      style={styles.categoryItem}
+                      onPress={() => {
+                        onClose();
+                        navigation.navigate('LegalPolicies', { initialTab: policy.tab });
+                      }}
+                    >
+                      <Text style={styles.categoryLabel}>{policy.title}</Text>
+                      <Text style={styles.arrow}>›</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
 
               <View style={{ height: 40 }} />
             </ScrollView>
