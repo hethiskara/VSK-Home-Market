@@ -182,6 +182,30 @@ export const contentAPI = {
     console.log('CONTACT US RESPONSE:', response.data);
     return response.data;
   },
+
+  getTermsConditions: async () => {
+    const response = await api.get('/termscondition-json');
+    console.log('TERMS CONDITIONS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getPrivacyPolicy: async () => {
+    const response = await api.get('/privacypolicy-json');
+    console.log('PRIVACY POLICY RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getTermsOfSales: async () => {
+    const response = await api.get('/termsofsale-json');
+    console.log('TERMS OF SALES RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getRefundPolicy: async () => {
+    const response = await api.get('/refundpolicy-json');
+    console.log('REFUND POLICY RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Offers API

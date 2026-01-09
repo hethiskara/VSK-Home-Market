@@ -29,6 +29,7 @@ import OfferDetailScreen from './src/screens/OfferDetailScreen';
 import TagProductsScreen from './src/screens/TagProductsScreen';
 import MyAccountScreen from './src/screens/MyAccountScreen';
 import SearchResultsScreen from './src/screens/SearchResultsScreen';
+import LegalPoliciesScreen from './src/screens/LegalPoliciesScreen';
 
 LogBox.ignoreLogs(['AsyncStorage', 'Sending']);
 
@@ -101,6 +102,7 @@ export default function App() {
           <Stack.Screen name="TagProducts" component={TagProductsScreen} />
           <Stack.Screen name="Account" component={MyAccountScreen} />
           <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
+          <Stack.Screen name="LegalPolicies" component={LegalPoliciesScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

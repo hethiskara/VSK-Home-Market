@@ -262,6 +262,25 @@ const MyAccountScreen = ({ navigation }) => {
       onPress: () => navigation.navigate('Orders'),
     },
     {
+      id: 'legal-policies',
+      title: 'Legal & Policies',
+      iconComponent: (
+        <View style={styles.iconContainer}>
+          <View style={styles.policyIcon}>
+            <View style={styles.policyDocument}>
+              <View style={styles.policyLine} />
+              <View style={styles.policyLine} />
+              <View style={styles.policyLineShort} />
+            </View>
+            <View style={styles.policyShield}>
+              <Text style={styles.shieldCheck}>✓</Text>
+            </View>
+          </View>
+        </View>
+      ),
+      onPress: () => navigation.navigate('LegalPolicies'),
+    },
+    {
       id: 'logout',
       title: 'Logout',
       iconComponent: (
@@ -696,6 +715,52 @@ const styles = StyleSheet.create({
   arrowText: {
     fontSize: 24,
     color: '#E74C3C',
+    fontWeight: '700',
+  },
+  // Policy Icon
+  policyIcon: {
+    width: 36,
+    height: 40,
+    position: 'relative',
+  },
+  policyDocument: {
+    width: 28,
+    height: 36,
+    backgroundColor: THEME_COLOR,
+    borderRadius: 4,
+    padding: 5,
+    justifyContent: 'space-around',
+  },
+  policyLine: {
+    width: '100%',
+    height: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 1,
+  },
+  policyLineShort: {
+    width: '60%',
+    height: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 1,
+  },
+  policyShield: {
+    position: 'absolute',
+    right: -4,
+    bottom: -2,
+    width: 18,
+    height: 20,
+    backgroundColor: '#27AE60',
+    borderRadius: 9,
+    borderTopLeftRadius: 9,
+    borderTopRightRadius: 9,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shieldCheck: {
+    color: '#FFFFFF',
+    fontSize: 10,
     fontWeight: '700',
   },
   // Modal Styles
