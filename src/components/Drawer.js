@@ -9,8 +9,6 @@ import {
   Dimensions,
   ActivityIndicator,
   Animated,
-  Linking,
-  Image,
 } from 'react-native';
 import { tokenManager, productAPI, garmentAPI } from '../services/api';
 
@@ -390,21 +388,10 @@ const Drawer = ({ visible, onClose, navigation }) => {
                 <Text style={styles.menuLabel}>About Us</Text>
               </TouchableOpacity>
 
-              {/* Contact Us with WhatsApp */}
-              <View style={styles.contactRow}>
-                <TouchableOpacity style={styles.contactMenuItem} onPress={() => handleMenuPress(null, 'ContactUs')}>
-                  <Text style={styles.menuLabel}>Contact Us</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.whatsappButton} 
-                  onPress={() => Linking.openURL('https://api.whatsapp.com/send?phone=+919710412346')}
-                >
-                  <Image 
-                    source={require('../../assets/icons/whatsapp.png')} 
-                    style={styles.whatsappIcon}
-                  />
-                </TouchableOpacity>
-              </View>
+              {/* Contact Us */}
+              <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuPress(null, 'ContactUs')}>
+                <Text style={styles.menuLabel}>Contact Us</Text>
+              </TouchableOpacity>
 
               {/* View all Offers */}
               <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuPress(null, 'Offers')}>
@@ -511,31 +498,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '500',
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingRight: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-  },
-  contactMenuItem: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-  },
-  whatsappButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#25D366',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  whatsappIcon: {
-    width: 24,
-    height: 24,
   },
   arrow: {
     fontSize: 18,

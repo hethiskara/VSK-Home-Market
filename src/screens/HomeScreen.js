@@ -661,6 +661,18 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      {/* Floating WhatsApp Button */}
+      <TouchableOpacity
+        style={styles.whatsappFloatingButton}
+        onPress={() => Linking.openURL('https://api.whatsapp.com/send?phone=+919710412346')}
+        activeOpacity={0.8}
+      >
+        <Image 
+          source={require('../../assets/icons/whatsapp.png')} 
+          style={styles.whatsappFloatingIcon}
+        />
+      </TouchableOpacity>
+
       {/* App Review Modal */}
       <Modal
         visible={showReviewModal}
@@ -1266,6 +1278,29 @@ const styles = StyleSheet.create({
     fontSize: 10,
     opacity: 0.6,
     marginTop: 6,
+  },
+
+  // Floating WhatsApp Button
+  whatsappFloatingButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#25D366',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    zIndex: 999,
+  },
+  whatsappFloatingIcon: {
+    width: 35,
+    height: 35,
   },
 
   // Modal Styles
