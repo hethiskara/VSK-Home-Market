@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated,
   Linking,
+  Image,
 } from 'react-native';
 import { tokenManager, productAPI, garmentAPI } from '../services/api';
 
@@ -398,7 +399,10 @@ const Drawer = ({ visible, onClose, navigation }) => {
                   style={styles.whatsappButton} 
                   onPress={() => Linking.openURL('https://api.whatsapp.com/send?phone=+919710412346')}
                 >
-                  <Text style={styles.whatsappIcon}>💬</Text>
+                  <Image 
+                    source={require('../../assets/icons/whatsapp.png')} 
+                    style={styles.whatsappIcon}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -530,7 +534,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   whatsappIcon: {
-    fontSize: 18,
+    width: 24,
+    height: 24,
   },
   arrow: {
     fontSize: 18,

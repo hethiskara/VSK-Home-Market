@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Linking,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentAPI } from '../services/api';
@@ -148,7 +149,10 @@ const ContactUsScreen = ({ navigation }) => {
           {/* WhatsApp Button */}
           <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp}>
             <View style={styles.whatsappIconContainer}>
-              <Text style={styles.whatsappIcon}>💬</Text>
+              <Image 
+                source={require('../../assets/icons/whatsapp.png')} 
+                style={styles.whatsappIcon}
+              />
             </View>
             <View style={styles.contactInfo}>
               <Text style={styles.whatsappLabel}>Chat on WhatsApp</Text>
@@ -290,7 +294,8 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   whatsappIcon: {
-    fontSize: 20,
+    width: 28,
+    height: 28,
   },
   whatsappLabel: {
     fontSize: 12,
