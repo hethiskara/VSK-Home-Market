@@ -130,7 +130,7 @@ const OrdersScreen = ({ navigation }) => {
               <Text style={styles.trackingErrorText}>{trackingData.message}</Text>
             </View>
           ) : trackingData ? (
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.trackingScrollContent}>
               {/* Order Info */}
               <View style={styles.trackingOrderInfo}>
                 <Text style={styles.trackingOrderNumber}>{trackingData.order_number}</Text>
@@ -153,28 +153,33 @@ const OrdersScreen = ({ navigation }) => {
               )}
 
               {/* Courier Tracking Info */}
-              {trackingData.tracking?.url && trackingData.tracking?.track_id ? (
+              {trackingData.tracking?.tracklink && trackingData.tracking?.challanno ? (
                 <View style={styles.trackingSection}>
                   <Text style={styles.trackingSectionTitle}>Track Your Shipment</Text>
                   
                   {/* Courier Image */}
-                  {trackingData.tracking?.image && (
+                  {trackingData.tracking?.deliveryimage && (
                     <View style={styles.courierImageContainer}>
                       <Image 
-                        source={{ uri: trackingData.tracking.image }} 
+                        source={{ uri: trackingData.tracking.deliveryimage }} 
                         style={styles.courierImage}
                         resizeMode="contain"
                       />
                     </View>
                   )}
                   
-                  {/* Track ID */}
+                  {/* Track ID / Challan No */}
                   <View style={styles.trackIdContainer}>
-                    <Text style={styles.trackIdLabel}>Your Tracking ID:</Text>
+                    <Text style={styles.trackIdLabel}>Your Tracking ID / AWB Number:</Text>
                     <View style={styles.trackIdBox}>
-                      <Text style={styles.trackIdValue}>{trackingData.tracking.track_id}</Text>
+                      <Text style={styles.trackIdValue}>{trackingData.tracking.challanno}</Text>
                     </View>
                   </View>
+                  
+                  {/* Shipped Date */}
+                  {trackingData.tracking?.shipped && (
+                    <Text style={styles.shippedDate}>Shipped on: {trackingData.tracking.shipped}</Text>
+                  )}
                   
                   {/* Instructions */}
                   <Text style={styles.trackInstructions}>
@@ -184,7 +189,7 @@ const OrdersScreen = ({ navigation }) => {
                   {/* Track Button */}
                   <TouchableOpacity 
                     style={styles.trackUrlButton}
-                    onPress={() => Linking.openURL(trackingData.tracking.url)}
+                    onPress={() => Linking.openURL(trackingData.tracking.tracklink)}
                   >
                     <Text style={styles.trackUrlButtonText}>Track on Courier Website</Text>
                   </TouchableOpacity>
@@ -599,9 +604,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '85%',
+    maxHeight: '80%',
     padding: 0,
     overflow: 'hidden',
+    marginBottom: 40,
+  },
+  trackingScrollContent: {
+    paddingBottom: 24,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -814,6 +823,13 @@ const styles = StyleSheet.create({
     color: THEME_COLOR,
     textAlign: 'center',
     letterSpacing: 1,
+  },
+  shippedDate: {
+    fontSize: 13,
+    color: '#27AE60',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontWeight: '500',
   },
   trackInstructions: {
     fontSize: 13,
