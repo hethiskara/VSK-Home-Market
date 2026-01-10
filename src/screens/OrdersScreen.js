@@ -12,6 +12,8 @@ import {
   StatusBar,
   Modal,
   ScrollView,
+  Image,
+  Linking,
 } from 'react-native';
 import { orderAPI, tokenManager } from '../services/api';
 
@@ -150,103 +152,48 @@ const OrdersScreen = ({ navigation }) => {
                 </View>
               )}
 
-              {/* Tracking Timeline */}
-              <View style={styles.trackingSection}>
-                <Text style={styles.trackingSectionTitle}>Order Status</Text>
-                <View style={styles.trackingTimeline}>
-                  {/* Ordered */}
-                  <View style={styles.timelineItem}>
-                    <View style={[
-                      styles.timelineDot,
-                      getTrackingStepStatus(trackingData.tracking, 'ordered') === 'completed' && styles.timelineDotCompleted
-                    ]}>
-                      {getTrackingStepStatus(trackingData.tracking, 'ordered') === 'completed' && (
-                        <Text style={styles.timelineCheck}>✓</Text>
-                      )}
+              {/* Courier Tracking Info */}
+              {trackingData.tracking?.url && trackingData.tracking?.track_id ? (
+                <View style={styles.trackingSection}>
+                  <Text style={styles.trackingSectionTitle}>Track Your Shipment</Text>
+                  
+                  {/* Courier Image */}
+                  {trackingData.tracking?.image && (
+                    <View style={styles.courierImageContainer}>
+                      <Image 
+                        source={{ uri: trackingData.tracking.image }} 
+                        style={styles.courierImage}
+                        resizeMode="contain"
+                      />
                     </View>
-                    <View style={styles.timelineContent}>
-                      <Text style={styles.timelineTitle}>Order Placed</Text>
-                      {trackingData.tracking?.ordered && (
-                        <Text style={styles.timelineDetail}>{trackingData.tracking.ordered}</Text>
-                      )}
-                    </View>
-                  </View>
-                  <View style={[
-                    styles.timelineLine,
-                    getTrackingStepStatus(trackingData.tracking, 'packaged') === 'completed' && styles.timelineLineCompleted
-                  ]} />
-
-                  {/* Packaged */}
-                  <View style={styles.timelineItem}>
-                    <View style={[
-                      styles.timelineDot,
-                      getTrackingStepStatus(trackingData.tracking, 'packaged') === 'completed' && styles.timelineDotCompleted
-                    ]}>
-                      {getTrackingStepStatus(trackingData.tracking, 'packaged') === 'completed' && (
-                        <Text style={styles.timelineCheck}>✓</Text>
-                      )}
-                    </View>
-                    <View style={styles.timelineContent}>
-                      <Text style={styles.timelineTitle}>Packaged</Text>
-                      {trackingData.tracking?.packaged && (
-                        <Text style={styles.timelineDetail}>{trackingData.tracking.packaged}</Text>
-                      )}
+                  )}
+                  
+                  {/* Track ID */}
+                  <View style={styles.trackIdContainer}>
+                    <Text style={styles.trackIdLabel}>Your Tracking ID:</Text>
+                    <View style={styles.trackIdBox}>
+                      <Text style={styles.trackIdValue}>{trackingData.tracking.track_id}</Text>
                     </View>
                   </View>
-                  <View style={[
-                    styles.timelineLine,
-                    getTrackingStepStatus(trackingData.tracking, 'shipped') === 'completed' && styles.timelineLineCompleted
-                  ]} />
-
-                  {/* Shipped */}
-                  <View style={styles.timelineItem}>
-                    <View style={[
-                      styles.timelineDot,
-                      getTrackingStepStatus(trackingData.tracking, 'shipped') === 'completed' && styles.timelineDotCompleted
-                    ]}>
-                      {getTrackingStepStatus(trackingData.tracking, 'shipped') === 'completed' && (
-                        <Text style={styles.timelineCheck}>✓</Text>
-                      )}
-                    </View>
-                    <View style={styles.timelineContent}>
-                      <Text style={styles.timelineTitle}>Shipped</Text>
-                      {trackingData.tracking?.shipped && (
-                        <Text style={styles.timelineDetail}>{trackingData.tracking.shipped}</Text>
-                      )}
-                    </View>
-                  </View>
-                  <View style={[
-                    styles.timelineLine,
-                    getTrackingStepStatus(trackingData.tracking, 'delivered') === 'completed' && styles.timelineLineCompleted
-                  ]} />
-
-                  {/* Delivered */}
-                  <View style={styles.timelineItem}>
-                    <View style={[
-                      styles.timelineDot,
-                      getTrackingStepStatus(trackingData.tracking, 'delivered') === 'completed' && styles.timelineDotCompleted
-                    ]}>
-                      {getTrackingStepStatus(trackingData.tracking, 'delivered') === 'completed' && (
-                        <Text style={styles.timelineCheck}>✓</Text>
-                      )}
-                    </View>
-                    <View style={styles.timelineContent}>
-                      <Text style={styles.timelineTitle}>Delivered</Text>
-                      {trackingData.tracking?.delivered && (
-                        <Text style={styles.timelineDetail}>{trackingData.tracking.delivered}</Text>
-                      )}
-                    </View>
-                  </View>
+                  
+                  {/* Instructions */}
+                  <Text style={styles.trackInstructions}>
+                    Use the tracking ID above to track your shipment on the courier's website.
+                  </Text>
+                  
+                  {/* Track Button */}
+                  <TouchableOpacity 
+                    style={styles.trackUrlButton}
+                    onPress={() => Linking.openURL(trackingData.tracking.url)}
+                  >
+                    <Text style={styles.trackUrlButtonText}>Track on Courier Website</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
-
-              {/* No Tracking Info Message */}
-              {(!trackingData.tracking || 
-                (!trackingData.tracking.ordered && !trackingData.tracking.packaged && 
-                 !trackingData.tracking.shipped && !trackingData.tracking.delivered)) && (
+              ) : (
                 <View style={styles.noTrackingContainer}>
+                  <Text style={styles.noTrackingIcon}>📦</Text>
                   <Text style={styles.noTrackingText}>
-                    Tracking information is not yet available for this order.
+                    Tracking information is not yet available for this order. Please check back later.
                   </Text>
                 </View>
               )}
@@ -821,14 +768,71 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   noTrackingContainer: {
-    padding: 20,
+    padding: 30,
     alignItems: 'center',
+  },
+  noTrackingIcon: {
+    fontSize: 48,
+    marginBottom: 16,
   },
   noTrackingText: {
     fontSize: 14,
-    color: '#999',
+    color: '#666',
     textAlign: 'center',
-    fontStyle: 'italic',
+    lineHeight: 22,
+  },
+  courierImageContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 12,
+  },
+  courierImage: {
+    width: 150,
+    height: 60,
+  },
+  trackIdContainer: {
+    marginBottom: 16,
+  },
+  trackIdLabel: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 8,
+  },
+  trackIdBox: {
+    backgroundColor: '#F0F4F8',
+    padding: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
+  },
+  trackIdValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: THEME_COLOR,
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+  trackInstructions: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  trackUrlButton: {
+    backgroundColor: THEME_COLOR,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  trackUrlButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 

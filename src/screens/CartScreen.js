@@ -1642,27 +1642,27 @@ const styles = StyleSheet.create({
   },
   grandTotalRow: {
     borderBottomWidth: 0,
-    backgroundColor: '#F0F7FF',
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
     marginTop: 4,
   },
   grandTotalLabelContainer: {
     flex: 1,
   },
   grandTotalLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: '#333',
   },
   grandTotalValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: '#3498DB',
   },
   roundedOffText: {
     fontSize: 10,
-    color: '#666',
+    color: '#888',
     marginTop: 2,
   },
   deliveryOptionBox: {
