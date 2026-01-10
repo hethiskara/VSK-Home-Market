@@ -854,7 +854,8 @@ const CartScreen = ({ navigation }) => {
   const renderPaymentStep = () => {
     const addressToUse = useBillingAsDelivery ? billingAddress : deliveryAddress;
     const totalAmount = parseFloat(calculateTotal());
-    const grandTotal = (totalAmount + shippingCost).toFixed(2);
+    const grandTotalExact = totalAmount + shippingCost;
+    const grandTotalRounded = Math.round(grandTotalExact);
 
     return (
       <ScrollView style={styles.paymentScrollView} showsVerticalScrollIndicator={false}>
@@ -909,7 +910,10 @@ const CartScreen = ({ navigation }) => {
             </View>
             <View style={[styles.priceLineRow, styles.grandTotalRow]}>
               <Text style={styles.grandTotalLabel}>Total</Text>
-              <Text style={styles.grandTotalValue}>Rs {grandTotal}</Text>
+              <View style={styles.grandTotalContainer}>
+                <Text style={styles.grandTotalValue}>Rs {grandTotalRounded}</Text>
+                <Text style={styles.roundedOffText}>(Rounded off from Rs {grandTotalExact.toFixed(2)})</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -938,7 +942,7 @@ const CartScreen = ({ navigation }) => {
             {processingPayment ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.payButtonText}>Pay Rs {grandTotal}</Text>
+              <Text style={styles.payButtonText}>Pay Rs {grandTotalRounded}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -1645,10 +1649,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333',
   },
+  grandTotalContainer: {
+    alignItems: 'flex-end',
+  },
   grandTotalValue: {
     fontSize: 16,
     fontWeight: '700',
     color: '#3498DB',
+  },
+  roundedOffText: {
+    fontSize: 10,
+    color: '#888',
+    marginTop: 2,
+    fontStyle: 'italic',
   },
   deliveryOptionBox: {
     marginHorizontal: 16,

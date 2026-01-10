@@ -353,10 +353,6 @@ const GarmentProductsScreen = ({ navigation, route }) => {
           {item.percentage && (
             <Text style={styles.discount}>{item.percentage}</Text>
           )}
-
-          {!isOutOfStock && (
-            <Text style={styles.stockInfo}>In Stock: {item.qty}</Text>
-          )}
         </View>
       </TouchableOpacity>
     );

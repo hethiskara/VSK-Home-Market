@@ -72,7 +72,7 @@ const AutoScrollingList = ({ data, renderItem, keyExtractor, navigation }) => {
   const duplicatedData = [...data, ...data];
 
   return (
-    <View style={{ overflow: 'hidden' }}>
+    <View style={{ overflow: 'hidden', paddingVertical: 12, paddingHorizontal: 8 }}>
       <Animated.View
         style={{
           flexDirection: 'row',
