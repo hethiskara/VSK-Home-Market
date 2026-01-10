@@ -909,11 +909,11 @@ const CartScreen = ({ navigation }) => {
               <Text style={styles.priceLineValue}>Rs {shippingCost.toFixed(2)}</Text>
             </View>
             <View style={[styles.priceLineRow, styles.grandTotalRow]}>
-              <Text style={styles.grandTotalLabel}>Total</Text>
-              <View style={styles.grandTotalContainer}>
-                <Text style={styles.grandTotalValue}>Rs {grandTotalRounded}</Text>
+              <View style={styles.grandTotalLabelContainer}>
+                <Text style={styles.grandTotalLabel}>Total</Text>
                 <Text style={styles.roundedOffText}>(Rounded off from Rs {grandTotalExact.toFixed(2)})</Text>
               </View>
+              <Text style={styles.grandTotalValue}>Rs {grandTotalRounded}</Text>
             </View>
           </View>
         </View>
@@ -1642,26 +1642,28 @@ const styles = StyleSheet.create({
   },
   grandTotalRow: {
     borderBottomWidth: 0,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#F0F7FF',
+    paddingVertical: 14,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  grandTotalLabelContainer: {
+    flex: 1,
   },
   grandTotalLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#333',
   },
-  grandTotalContainer: {
-    alignItems: 'flex-end',
-  },
   grandTotalValue: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
     color: '#3498DB',
   },
   roundedOffText: {
     fontSize: 10,
-    color: '#888',
+    color: '#666',
     marginTop: 2,
-    fontStyle: 'italic',
   },
   deliveryOptionBox: {
     marginHorizontal: 16,
