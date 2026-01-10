@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '80%',
+    maxHeight: '90%',
     padding: 0,
     overflow: 'hidden',
     marginBottom: 40,
