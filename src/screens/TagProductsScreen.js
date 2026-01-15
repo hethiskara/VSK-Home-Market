@@ -11,14 +11,15 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { productAPI, garmentAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 const CARD_WIDTH = (width - 48) / 2;
 
 const TagProductsScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { tag, productType = 'regular' } = route.params || {};
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -7,14 +7,15 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { searchAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
 const SearchResultsScreen = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
   const { type, label, searchQuery } = route.params;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);

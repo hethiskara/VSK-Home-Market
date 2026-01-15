@@ -11,10 +11,10 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { contentAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 
 // HTML parser helper
@@ -59,6 +59,7 @@ const TABS = [
 ];
 
 const LegalPoliciesScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { initialTab } = route.params || {};
   const [activeTab, setActiveTab] = useState(initialTab || 'terms');
   const [content, setContent] = useState({

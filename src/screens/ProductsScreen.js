@@ -9,7 +9,7 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import RangeSlider from 'react-native-sticky-range-slider';
 import { productAPI } from '../services/api';
 import api from '../services/api';
@@ -31,6 +31,7 @@ const Rail = () => <View style={styles.rail} />;
 const RailSelected = () => <View style={styles.railSelected} />;
 
 const ProductsScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { sectionId, sectionTitle, categoryId, categoryTitle, subcategoryId, subcategoryTitle, showAll, pageTitle } = route.params || {};
   
   const [products, setProducts] = useState([]);
@@ -457,7 +458,7 @@ const ProductsScreen = ({ navigation, route }) => {
           data={filteredProducts}
           renderItem={renderProductItem}
           keyExtractor={(item) => item.id?.toString()}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
           showsVerticalScrollIndicator={false}
         />
       )}

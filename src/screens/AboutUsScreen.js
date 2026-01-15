@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { contentAPI } from '../services/api';
 
 // Simple HTML tag stripper
@@ -37,6 +37,7 @@ const parseHtmlContent = (html) => {
 };
 
 const AboutUsScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [content, setContent] = useState(null);
   const [parsedContent, setParsedContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -68,14 +69,16 @@ const AboutUsScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B35" />
-      </View>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <View style={[styles.loadingContainer, { paddingBottom: insets.bottom }]}>
+          <ActivityIndicator size="large" color="#FF6B35" />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -85,7 +88,11 @@ const AboutUsScreen = ({ navigation }) => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+      >
         <View style={styles.content}>
           <Text style={styles.title}>About VSK Home Market</Text>
           

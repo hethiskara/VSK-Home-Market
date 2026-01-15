@@ -14,16 +14,17 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { garmentAPI, cartAPI, tokenManager, wishlistAPI } from '../services/api';
 
 const CART_STORAGE_KEY = '@vsk_cart';
 
 const { width } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 
 const GarmentProductDetailScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { productCode } = route.params || {};
   
   const [product, setProduct] = useState(null);

@@ -12,14 +12,15 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { offersAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 
 const OfferDetailScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { discountId, title } = route.params;
   const [activeTab, setActiveTab] = useState('regular');
   const [regularProducts, setRegularProducts] = useState([]);

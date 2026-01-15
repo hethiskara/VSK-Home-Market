@@ -10,11 +10,13 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Button from '../components/Button';
 import { authAPI } from '../services/api';
 
 const OTPVerificationScreen = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
   const { userId, mobile, otp: debugOtp } = route.params;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -99,68 +101,70 @@ const OTPVerificationScreen = ({ route, navigation }) => {
     : '';
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <StatusBar style="dark" />
-      
-      <View style={styles.content}>
-        <Image
-          source={require('../../assets/Logos/app-icon.jpg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <StatusBar style="dark" />
+        
+        <View style={[styles.content, { paddingBottom: insets.bottom + 30 }]}>
+          <Image
+            source={require('../../assets/Logos/app-icon.jpg')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
 
-        <Text style={styles.title}>Verify OTP</Text>
-        <Text style={styles.subtitle}>
-          Enter the 6-digit code sent to{'\n'}
-          <Text style={styles.mobile}>{maskedMobile}</Text>
-        </Text>
+          <Text style={styles.title}>Verify OTP</Text>
+          <Text style={styles.subtitle}>
+            Enter the 6-digit code sent to{'\n'}
+            <Text style={styles.mobile}>{maskedMobile}</Text>
+          </Text>
 
-        <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => (inputRefs.current[index] = ref)}
-              style={[styles.otpInput, digit && styles.otpInputFilled]}
-              value={digit}
-              onChangeText={(value) => handleOtpChange(value, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              keyboardType="number-pad"
-              maxLength={1}
-              selectTextOnFocus
-            />
-          ))}
+          <View style={styles.otpContainer}>
+            {otp.map((digit, index) => (
+              <TextInput
+                key={index}
+                ref={(ref) => (inputRefs.current[index] = ref)}
+                style={[styles.otpInput, digit && styles.otpInputFilled]}
+                value={digit}
+                onChangeText={(value) => handleOtpChange(value, index)}
+                onKeyPress={(e) => handleKeyPress(e, index)}
+                keyboardType="number-pad"
+                maxLength={1}
+                selectTextOnFocus
+              />
+            ))}
+          </View>
+
+          <Button
+            title="Verify & Continue"
+            onPress={handleVerify}
+            loading={loading}
+            style={styles.button}
+          />
+
+          <View style={styles.resendContainer}>
+            {timer > 0 ? (
+              <Text style={styles.timerText}>
+                Resend OTP in <Text style={styles.timerCount}>{timer}s</Text>
+              </Text>
+            ) : (
+              <TouchableOpacity onPress={() => setTimer(60)}>
+                <Text style={styles.resendText}>Resend OTP</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>Back to Signup</Text>
+          </TouchableOpacity>
         </View>
-
-        <Button
-          title="Verify & Continue"
-          onPress={handleVerify}
-          loading={loading}
-          style={styles.button}
-        />
-
-        <View style={styles.resendContainer}>
-          {timer > 0 ? (
-            <Text style={styles.timerText}>
-              Resend OTP in <Text style={styles.timerCount}>{timer}s</Text>
-            </Text>
-          ) : (
-            <TouchableOpacity onPress={() => setTimer(60)}>
-              <Text style={styles.resendText}>Resend OTP</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backText}>Back to Signup</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -169,10 +173,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  keyboardView: {
+    flex: 1,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 20,
     alignItems: 'center',
   },
   logo: {

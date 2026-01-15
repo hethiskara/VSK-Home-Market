@@ -15,7 +15,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkoutAPI, cartAPI } from '../services/api';
 import api from '../services/api';
@@ -24,6 +24,7 @@ import { WebView } from 'react-native-webview';
 const CART_STORAGE_KEY = '@vsk_cart';
 
 const CartScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);

@@ -15,14 +15,14 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { checkoutAPI, tokenManager } from '../services/api';
-
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 
 const MyAccountScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   // Edit Profile Modal
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editProfileLoading, setEditProfileLoading] = useState(false);

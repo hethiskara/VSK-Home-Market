@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tokenManager, productAPI, garmentAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
@@ -23,6 +24,7 @@ const POLICY_ITEMS = [
 ];
 
 const Drawer = ({ visible, onClose, navigation }) => {
+  const insets = useSafeAreaInsets();
   const [sections, setSections] = useState([]);
   const [garmentSections, setGarmentSections] = useState([]);
   const [expandedSection, setExpandedSection] = useState(null);
@@ -433,7 +435,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
                 </>
               )}
 
-              <View style={{ height: 40 }} />
+              <View style={{ height: insets.bottom + 40 }} />
             </ScrollView>
           </View>
         </Animated.View>

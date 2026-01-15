@@ -18,13 +18,14 @@ import {
   Keyboard,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { orderAPI, tokenManager } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 
 const OrderDetailScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { orderNumber } = route.params;
   const [orderItems, setOrderItems] = useState([]);
   const [loading, setLoading] = useState(true);

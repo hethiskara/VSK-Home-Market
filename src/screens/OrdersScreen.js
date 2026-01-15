@@ -15,14 +15,15 @@ import {
   Image,
   Linking,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { orderAPI, tokenManager } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 
 const THEME_COLOR = '#2C4A6B';
 
 const OrdersScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -296,19 +297,19 @@ const OrdersScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
         {renderHeader()}
-        <View style={styles.loadingContainer}>
+        <View style={[styles.loadingContainer, { paddingBottom: insets.bottom }]}>
           <ActivityIndicator size="large" color={THEME_COLOR} />
           <Text style={styles.loadingText}>Loading your orders...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
       {renderHeader()}
 
@@ -324,7 +325,10 @@ const OrdersScreen = ({ navigation }) => {
         data={orders}
         renderItem={renderOrderItem}
         keyExtractor={(item, index) => `${item.ordernumber}-${index}`}
-        contentContainerStyle={orders.length === 0 ? styles.emptyList : styles.listContainer}
+        contentContainerStyle={[
+          orders.length === 0 ? styles.emptyList : styles.listContainer,
+          { paddingBottom: insets.bottom + 16 }
+        ]}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
           <RefreshControl 
@@ -338,7 +342,7 @@ const OrdersScreen = ({ navigation }) => {
       />
 
       {renderTrackingModal()}
-    </View>
+    </SafeAreaView>
   );
 };
 

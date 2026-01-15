@@ -11,13 +11,14 @@ import {
   StatusBar,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { garmentAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 
 const GarmentCategoryScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { categoryId, categoryTitle } = route.params;
   const [subcategories, setSubcategories] = useState([]);
   const [productTypes, setProductTypes] = useState({});
@@ -168,19 +169,19 @@ const GarmentCategoryScreen = ({ navigation, route }) => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
         {renderHeader()}
-        <View style={styles.loadingContainer}>
+        <View style={[styles.loadingContainer, { paddingBottom: insets.bottom }]}>
           <ActivityIndicator size="large" color={THEME_COLOR} />
           <Text style={styles.loadingText}>Loading categories...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor={THEME_COLOR} />
       {renderHeader()}
 
@@ -194,7 +195,7 @@ const GarmentCategoryScreen = ({ navigation, route }) => {
         data={subcategories}
         renderItem={renderSubcategoryItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 16 }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -202,7 +203,7 @@ const GarmentCategoryScreen = ({ navigation, route }) => {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -20,6 +20,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const LATEST_ITEM_WIDTH = 158; // 150 width + 8 margin
@@ -167,6 +168,7 @@ const TestimonialCard = ({ testimonial }) => {
 };
 
 const HomeScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [banners, setBanners] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -437,14 +439,16 @@ const HomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B35" />
-      </View>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <View style={[styles.loadingContainer, { paddingBottom: insets.bottom }]}>
+          <ActivityIndicator size="large" color="#FF6B35" />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header onMenuPress={() => setDrawerVisible(true)} navigation={navigation} />
       
       <Drawer 
@@ -455,6 +459,7 @@ const HomeScreen = ({ navigation }) => {
       
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -900,7 +905,7 @@ const HomeScreen = ({ navigation }) => {
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 

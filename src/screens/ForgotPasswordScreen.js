@@ -9,11 +9,13 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { authAPI } from '../services/api';
 
 const ForgotPasswordScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [mobileNo, setMobileNo] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -60,47 +62,49 @@ const ForgotPasswordScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        <Image
-          source={require('../../assets/Logos/app-icon.jpg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        <Text style={styles.title}>Forgot Password?</Text>
-        <Text style={styles.subtitle}>
-          Enter your registered mobile number.{'\n'}
-          We'll send a new password to your WhatsApp.
-        </Text>
-
-        <View style={styles.form}>
-          <Input
-            placeholder="Mobile Number"
-            value={mobileNo}
-            onChangeText={setMobileNo}
-            keyboardType="phone-pad"
-            maxLength={10}
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View style={[styles.content, { paddingBottom: insets.bottom + 30 }]}>
+          <Image
+            source={require('../../assets/Logos/app-icon.jpg')}
+            style={styles.logo}
+            resizeMode="contain"
           />
 
-          <Button
-            title="Send New Password"
-            onPress={handleForgotPassword}
-            loading={loading}
-          />
+          <Text style={styles.title}>Forgot Password?</Text>
+          <Text style={styles.subtitle}>
+            Enter your registered mobile number.{'\n'}
+            We'll send a new password to your WhatsApp.
+          </Text>
+
+          <View style={styles.form}>
+            <Input
+              placeholder="Mobile Number"
+              value={mobileNo}
+              onChangeText={setMobileNo}
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+
+            <Button
+              title="Send New Password"
+              onPress={handleForgotPassword}
+              loading={loading}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>Back to Login</Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backText}>Back to Login</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -109,10 +113,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  keyboardView: {
+    flex: 1,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 80,
+    paddingTop: 40,
     alignItems: 'center',
   },
   logo: {

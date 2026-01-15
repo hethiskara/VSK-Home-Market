@@ -11,12 +11,12 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import RangeSlider from 'react-native-sticky-range-slider';
 import { garmentAPI } from '../services/api';
 import api from '../services/api';
 
 const { width } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 const THEME_COLOR = '#2C4A6B';
 
 // Custom Thumb Component
@@ -33,6 +33,7 @@ const Rail = () => <View style={styles.rail} />;
 const RailSelected = () => <View style={styles.railSelected} />;
 
 const GarmentProductsScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { 
     categoryId, 
     categoryTitle, 
