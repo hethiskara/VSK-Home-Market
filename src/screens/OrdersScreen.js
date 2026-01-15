@@ -130,7 +130,7 @@ const OrdersScreen = ({ navigation }) => {
               <Text style={styles.trackingErrorText}>{trackingData.message}</Text>
             </View>
           ) : trackingData ? (
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.trackingScrollContent}>
+            <View style={styles.trackingScrollContent}>
               {/* Order Info */}
               <View style={styles.trackingOrderInfo}>
                 <Text style={styles.trackingOrderNumber}>{trackingData.order_number}</Text>
@@ -142,17 +142,7 @@ const OrdersScreen = ({ navigation }) => {
                 <Text style={styles.trackingPaymentMethod}>via {trackingData.payment_method}</Text>
               </View>
 
-              {/* Delivery Address */}
-              {trackingData.delivery_address && (
-                <View style={styles.trackingSection}>
-                  <Text style={styles.trackingSectionTitle}>Delivery Address</Text>
-                  <Text style={styles.trackingAddressName}>{trackingData.delivery_address.name}</Text>
-                  <Text style={styles.trackingAddressText}>{trackingData.delivery_address.address}</Text>
-                  <Text style={styles.trackingAddressPhone}>{trackingData.delivery_address.phone}</Text>
-                </View>
-              )}
-
-              {/* Courier Tracking Info */}
+              {/* Courier Tracking Info - Moved above delivery address */}
               {trackingData.tracking?.tracklink && trackingData.tracking?.challanno ? (
                 <View style={styles.trackingSection}>
                   <Text style={styles.trackingSectionTitle}>Track Your Shipment</Text>
@@ -202,7 +192,17 @@ const OrdersScreen = ({ navigation }) => {
                   </Text>
                 </View>
               )}
-            </ScrollView>
+
+              {/* Delivery Address - Moved below tracking */}
+              {trackingData.delivery_address && (
+                <View style={styles.trackingSection}>
+                  <Text style={styles.trackingSectionTitle}>Delivery Address</Text>
+                  <Text style={styles.trackingAddressName}>{trackingData.delivery_address.name}</Text>
+                  <Text style={styles.trackingAddressText}>{trackingData.delivery_address.address}</Text>
+                  <Text style={styles.trackingAddressPhone}>{trackingData.delivery_address.phone}</Text>
+                </View>
+              )}
+            </View>
           ) : null}
         </View>
       </View>

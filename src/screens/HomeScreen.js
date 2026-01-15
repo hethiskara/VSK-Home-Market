@@ -471,6 +471,9 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Top sellers of the day</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('OfferDetail', { discountId: '3', title: 'Top sellers of the day' })}>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
           {topSellers.length > 0 ? (
             <FlatList
@@ -492,6 +495,9 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Feature Products of the Day</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('OfferDetail', { discountId: '4', title: 'Feature Products of the Day' })}>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
           {featuredProducts.length > 0 ? (
             <FlatList
@@ -513,6 +519,9 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Best Selling Products</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('OfferDetail', { discountId: '5', title: 'Best Selling Products' })}>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
           {bestSelling.length > 0 ? (
             <FlatList

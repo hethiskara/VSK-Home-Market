@@ -130,6 +130,19 @@ export const homeAPI = {
     console.log('ADVERTISEMENT RESPONSE:', response.data);
     return response.data;
   },
+
+  // View All Offer Products
+  getViewAllOfferRegular: async (discountId) => {
+    const response = await api.get(`/viewallofferdetails-json?discount_id=${discountId}`);
+    console.log('VIEW ALL OFFER REGULAR RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getViewAllOfferGarments: async (discountId) => {
+    const response = await api.get(`/garmentviewallofferdetails-json?discount_id=${discountId}`);
+    console.log('VIEW ALL OFFER GARMENTS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // App Review API
