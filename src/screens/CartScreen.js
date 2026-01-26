@@ -655,7 +655,7 @@ const CartScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <View style={styles.actionButtons}>
+      <View style={[styles.actionButtons, { paddingBottom: 16 + insets.bottom }]}>
         <TouchableOpacity 
           style={styles.continueButton}
           onPress={() => navigation.navigate('Home')}
@@ -827,7 +827,7 @@ const CartScreen = ({ navigation }) => {
       </View>
 
       {/* Action Buttons */}
-      <View style={styles.addressActionButtons}>
+      <View style={[styles.addressActionButtons, { marginBottom: insets.bottom }]}>
         <TouchableOpacity 
           style={styles.backStepButton}
           onPress={() => setCurrentStep(1)}
@@ -847,7 +847,7 @@ const CartScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 
@@ -950,13 +950,13 @@ const CartScreen = ({ navigation }) => {
 
         {/* Back Button */}
         <TouchableOpacity 
-          style={styles.backToAddressButton}
+          style={[styles.backToAddressButton, { marginBottom: insets.bottom }]}
           onPress={() => setCurrentStep(2)}
         >
           <Text style={styles.backToAddressButtonText}>Back to Address</Text>
         </TouchableOpacity>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
     );
   };

@@ -685,7 +685,7 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Floating WhatsApp Button */}
       <TouchableOpacity
-        style={styles.whatsappFloatingButton}
+        style={[styles.whatsappFloatingButton, { bottom: 24 + insets.bottom }]}
         onPress={() => Linking.openURL('https://api.whatsapp.com/send?phone=+919710412346')}
         activeOpacity={0.8}
       >
@@ -1313,7 +1313,6 @@ const styles = StyleSheet.create({
   // Floating WhatsApp Button
   whatsappFloatingButton: {
     position: 'absolute',
-    bottom: 24,
     right: 20,
     width: 60,
     height: 60,
