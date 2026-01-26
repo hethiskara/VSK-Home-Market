@@ -439,7 +439,7 @@ const HomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={[styles.loadingContainer, { paddingBottom: insets.bottom }]}>
           <ActivityIndicator size="large" color="#FF6B35" />
         </View>
@@ -448,7 +448,7 @@ const HomeScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <Header onMenuPress={() => setDrawerVisible(true)} navigation={navigation} />
       
       <Drawer 
@@ -547,9 +547,10 @@ const HomeScreen = ({ navigation }) => {
         {/* Latest Products Section - Auto-scrolling Marquee */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Text style={styles.sectionTitle}>Latest Products</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Latest Products</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('LatestProducts')}>
+              <Text style={styles.viewAll}>View All</Text>
+            </TouchableOpacity>
           </View>
           {latestProducts.length > 0 ? (
             <AutoScrollingList
@@ -598,8 +599,15 @@ const HomeScreen = ({ navigation }) => {
         {/* Testimonials Section */}
         <View style={styles.testimonialSection}>
           <View style={styles.testimonialSectionHeader}>
-            <Text style={styles.testimonialSectionTitle}>What Our Customers Say</Text>
-            <Text style={styles.testimonialSubtitle}>Testimonials</Text>
+            <View style={styles.testimonialTitleRow}>
+              <View>
+                <Text style={styles.testimonialSectionTitle}>What Our Customers Say</Text>
+                <Text style={styles.testimonialSubtitle}>Testimonials</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Testimonials')}>
+                <Text style={styles.viewAllTestimonial}>View All</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           {testimonials.length > 0 ? (
             <FlatList
@@ -1071,18 +1079,26 @@ const styles = StyleSheet.create({
   testimonialSectionHeader: {
     paddingHorizontal: 16,
     paddingVertical: 16,
+  },
+  testimonialTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   testimonialSectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
-    textAlign: 'center',
   },
   testimonialSubtitle: {
     fontSize: 14,
     color: '#FFD700',
     marginTop: 4,
+    fontWeight: '500',
+  },
+  viewAllTestimonial: {
+    fontSize: 14,
+    color: '#FFD700',
     fontWeight: '500',
   },
   testimonialList: {

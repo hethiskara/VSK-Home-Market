@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { checkoutAPI, tokenManager } from '../services/api';
 const THEME_COLOR = '#2C4A6B';
+const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const MyAccountScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();

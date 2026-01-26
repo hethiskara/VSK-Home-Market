@@ -18,6 +18,7 @@ import api from '../services/api';
 
 const { width } = Dimensions.get('window');
 const THEME_COLOR = '#2C4A6B';
+const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 // Custom Thumb Component
 const Thumb = () => (

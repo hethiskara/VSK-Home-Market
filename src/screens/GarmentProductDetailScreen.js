@@ -22,6 +22,7 @@ const CART_STORAGE_KEY = '@vsk_cart';
 
 const { width } = Dimensions.get('window');
 const THEME_COLOR = '#2C4A6B';
+const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const GarmentProductDetailScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();

@@ -143,6 +143,26 @@ export const homeAPI = {
     console.log('VIEW ALL OFFER GARMENTS RESPONSE:', response.data);
     return response.data;
   },
+
+  // View All Latest Products
+  getViewAllLatestRegular: async () => {
+    const response = await api.get('/viewall-latest-products-regular');
+    console.log('VIEW ALL LATEST REGULAR RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getViewAllLatestGarments: async () => {
+    const response = await api.get('/viewall-latest-products-garments');
+    console.log('VIEW ALL LATEST GARMENTS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // View All Testimonials
+  getViewAllTestimonials: async () => {
+    const response = await api.get('/viewall-testimonial-json');
+    console.log('VIEW ALL TESTIMONIALS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // App Review API
