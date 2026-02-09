@@ -49,7 +49,16 @@ export const authAPI = {
   },
 
   login: async (data) => {
-    const params = `?mobile_no=${encodeURIComponent(data.mobile_no)}&password=${encodeURIComponent(data.password)}`;
+    let params = `?mobile_no=${encodeURIComponent(data.mobile_no)}&password=${encodeURIComponent(data.password)}`;
+    
+    // Add FCM token and device type if provided
+    if (data.fcm_token) {
+      params += `&fcm_token=${encodeURIComponent(data.fcm_token)}`;
+    }
+    if (data.device_type) {
+      params += `&device_type=${encodeURIComponent(data.device_type)}`;
+    }
+    
     const response = await api.get('/login-json' + params);
     console.log('LOGIN RESPONSE:', response.data);
     return response.data;

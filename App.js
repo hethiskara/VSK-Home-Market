@@ -6,7 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  initializePushNotifications,
   addNotificationResponseListener,
   getLastNotificationResponse,
 } from './src/services/notificationService';
@@ -106,16 +105,6 @@ export default function App() {
       if (userData) {
         setIsLoggedIn(true);
         setInitialRoute('Home');
-
-        // Initialize push notifications for logged-in user
-        const parsedUser = JSON.parse(userData);
-        if (parsedUser?.userid) {
-          initializePushNotifications(parsedUser.userid).then((token) => {
-            console.log('Push notification initialized on app start:', token);
-          }).catch((err) => {
-            console.log('Push notification init error:', err);
-          });
-        }
       }
     } catch (error) {
       console.log('Error checking login status:', error);

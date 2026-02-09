@@ -14,7 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { authAPI, checkoutAPI, tokenManager } from '../services/api';
-import { initializePushNotifications } from '../services/notificationService';
+import { registerForPushNotifications } from '../services/notificationService';
 
 const LoginScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -41,9 +41,21 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
+      // Get FCM token before login
+      let fcmToken = null;
+      try {
+        fcmToken = await registerForPushNotifications();
+        console.log('FCM Token for login:', fcmToken);
+      } catch (err) {
+        console.log('Could not get FCM token:', err);
+      }
+
+      // Call login API with FCM token
       const response = await authAPI.login({
         mobile_no: mobileNo.trim(),
         password: password,
+        fcm_token: fcmToken || '',
+        device_type: Platform.OS, // 'android' or 'ios'
       });
 
       const result = Array.isArray(response) ? response[0] : response;
@@ -75,13 +87,6 @@ const LoginScreen = ({ navigation }) => {
         }
 
         await tokenManager.setUserData(userData);
-
-        // Register for push notifications after successful login
-        initializePushNotifications(userData.userid).then((token) => {
-          console.log('Push notification registered with token:', token);
-        }).catch((err) => {
-          console.log('Push notification registration error:', err);
-        });
 
         console.log('Login successful, navigating to Home');
         navigation.replace('Home');
