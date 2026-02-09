@@ -133,6 +133,15 @@ const ProductDetailScreen = ({ navigation, route }) => {
   const handleAddToCart = async () => {
     try {
       setAddingToCart(true);
+      
+      // Check stock availability
+      const stockQty = parseInt(product.stockinhand) || 0;
+      if (stockQty > 0 && quantity > stockQty) {
+        setAddingToCart(false);
+        Alert.alert('Stock Limit', `Only ${stockQty} items available in stock. Please reduce the quantity.`);
+        return;
+      }
+      
       // Get user data
       const userData = await tokenManager.getUserData();
       if (!userData?.userid) {
@@ -210,6 +219,15 @@ const ProductDetailScreen = ({ navigation, route }) => {
   const handleBuyNow = async () => {
     try {
       setBuyingNow(true);
+      
+      // Check stock availability
+      const stockQty = parseInt(product.stockinhand) || 0;
+      if (stockQty > 0 && quantity > stockQty) {
+        setBuyingNow(false);
+        Alert.alert('Stock Limit', `Only ${stockQty} items available in stock. Please reduce the quantity.`);
+        return;
+      }
+      
       // Get user data
       const userData = await tokenManager.getUserData();
       if (!userData?.userid) {
@@ -637,7 +655,14 @@ const ProductDetailScreen = ({ navigation, route }) => {
               <Text style={styles.quantityValue}>{quantity}</Text>
               <TouchableOpacity 
                 style={styles.quantityButton}
-                onPress={() => setQuantity(quantity + 1)}
+                onPress={() => {
+                  const stockQty = parseInt(product.stockinhand) || 0;
+                  if (stockQty > 0 && quantity >= stockQty) {
+                    Alert.alert('Stock Limit', `Only ${stockQty} items available in stock.`);
+                  } else {
+                    setQuantity(quantity + 1);
+                  }
+                }}
               >
                 <Text style={styles.quantityButtonText}>+</Text>
               </TouchableOpacity>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "233300207625",
+    "project_id": "vsk-pushnotification",
+    "storage_bucket": "vsk-pushnotification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:233300207625:android:48dbfd4ce8b9b0a7f0f0d8",
+        "android_client_info": {
+          "package_name": "com.vsk.vskmobileapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDZD1RjBFGJIlOkFNyMXum1MEfsB-Ez6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
