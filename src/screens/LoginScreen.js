@@ -14,6 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { authAPI, checkoutAPI, tokenManager } from '../services/api';
+import { initializePushNotifications } from '../services/notificationService';
 
 const LoginScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -74,6 +75,13 @@ const LoginScreen = ({ navigation }) => {
         }
 
         await tokenManager.setUserData(userData);
+
+        // Register for push notifications after successful login
+        initializePushNotifications(userData.userid).then((token) => {
+          console.log('Push notification registered with token:', token);
+        }).catch((err) => {
+          console.log('Push notification registration error:', err);
+        });
 
         console.log('Login successful, navigating to Home');
         navigation.replace('Home');

@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LogBox } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  initializePushNotifications,
+  addNotificationResponseListener,
+  getLastNotificationResponse,
+} from './src/services/notificationService';
 
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -40,10 +45,59 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [initialRoute, setInitialRoute] = useState('Login');
+  const [notificationData, setNotificationData] = useState(null);
+  const navigationRef = useRef(null);
+  const notificationResponseListener = useRef(null);
 
   useEffect(() => {
     checkLoginStatus();
+    setupNotificationListeners();
+
+    return () => {
+      // Cleanup notification listeners
+      if (notificationResponseListener.current) {
+        notificationResponseListener.current.remove();
+      }
+    };
   }, []);
+
+  // Handle notification tap navigation
+  useEffect(() => {
+    if (notificationData && navigationRef.current) {
+      handleNotificationNavigation(notificationData);
+      setNotificationData(null);
+    }
+  }, [notificationData]);
+
+  const setupNotificationListeners = async () => {
+    // Check if app was opened from a notification
+    const lastResponse = await getLastNotificationResponse();
+    if (lastResponse) {
+      const data = lastResponse.notification.request.content.data;
+      console.log('App opened from notification:', data);
+      setNotificationData(data);
+    }
+
+    // Listen for notification taps while app is running
+    notificationResponseListener.current = addNotificationResponseListener((response) => {
+      const data = response.notification.request.content.data;
+      console.log('Notification tapped:', data);
+      handleNotificationNavigation(data);
+    });
+  };
+
+  const handleNotificationNavigation = (data) => {
+    if (!navigationRef.current) return;
+
+    // Handle track_order notification type
+    if (data?.type === 'track_order' && data?.order_number) {
+      // Navigate to Orders screen with the order number to show tracking modal
+      navigationRef.current.navigate('Orders', { 
+        openTrackingFor: data.order_number 
+      });
+    }
+  };
 
   const checkLoginStatus = async () => {
     try {
@@ -51,6 +105,17 @@ export default function App() {
       const userData = await AsyncStorage.getItem('userData');
       if (userData) {
         setIsLoggedIn(true);
+        setInitialRoute('Home');
+
+        // Initialize push notifications for logged-in user
+        const parsedUser = JSON.parse(userData);
+        if (parsedUser?.userid) {
+          initializePushNotifications(parsedUser.userid).then((token) => {
+            console.log('Push notification initialized on app start:', token);
+          }).catch((err) => {
+            console.log('Push notification init error:', err);
+          });
+        }
       }
     } catch (error) {
       console.log('Error checking login status:', error);
@@ -74,9 +139,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <Stack.Navigator
-          initialRouteName={isLoggedIn ? 'Home' : 'Login'}
+          initialRouteName={initialRoute}
           screenOptions={{
             headerShown: false,
             animation: 'slide_from_right',

@@ -23,12 +23,22 @@
         "foregroundImage": "./assets/Logos/app-icon.jpg",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.vskhomemarket.app"
+      "package": "com.vskhomemarket.app",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/Logos/app-icon.jpg",
+          "color": "#2C4A6B"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "b0d590bd-c6d9-4bfd-975d-2a05e9a712db"

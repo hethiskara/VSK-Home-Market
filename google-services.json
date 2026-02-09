@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:233300207625:android:48dbfd4ce8b9b0a7f0f0d8",
+        "mobilesdk_app_id": "1:233300207625:android:147d9d6e65d77c19f0f0d8",
         "android_client_info": {
-          "package_name": "com.vsk.vskmobileapp"
+          "package_name": "com.vskhomemarket.app"
         }
       },
       "oauth_client": [],

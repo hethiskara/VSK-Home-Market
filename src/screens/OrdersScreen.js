@@ -23,7 +23,7 @@ const { width } = Dimensions.get('window');
 const THEME_COLOR = '#2C4A6B';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
-const OrdersScreen = ({ navigation }) => {
+const OrdersScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,9 +34,25 @@ const OrdersScreen = ({ navigation }) => {
   const [trackingData, setTrackingData] = useState(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
 
+  // Check if we need to open tracking for a specific order (from notification)
+  const openTrackingFor = route?.params?.openTrackingFor;
+
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // Handle opening tracking modal from notification
+  useEffect(() => {
+    if (openTrackingFor && orders.length > 0) {
+      // Find the order and open tracking modal
+      const order = orders.find(o => o.order_number === openTrackingFor);
+      if (order) {
+        handleTrackOrder(openTrackingFor);
+        // Clear the param so it doesn't trigger again
+        navigation.setParams({ openTrackingFor: undefined });
+      }
+    }
+  }, [openTrackingFor, orders]);
 
   const fetchOrders = async () => {
     try {
