@@ -4,7 +4,7 @@
     "slug": "vsk-home-market",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/Logos/app-icon.jpg",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -20,7 +20,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/Logos/app-icon.jpg",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.vskhomemarket.app",
@@ -34,7 +34,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/Logos/app-icon.jpg",
+          "icon": "./assets/icon.png",
           "color": "#2C4A6B"
         }
       ]

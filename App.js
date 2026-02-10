@@ -89,8 +89,8 @@ export default function App() {
   const handleNotificationNavigation = (data) => {
     if (!navigationRef.current) return;
 
-    // Handle track_order notification type
-    if (data?.type === 'track_order' && data?.order_number) {
+    // Handle order_update notification type (from backend when tracking is added)
+    if (data?.type === 'order_update' && data?.order_number) {
       // Navigate to Orders screen with the order number to show tracking modal
       navigationRef.current.navigate('Orders', { 
         openTrackingFor: data.order_number 
