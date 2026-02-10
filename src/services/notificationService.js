@@ -16,7 +16,7 @@ Notifications.setNotificationHandler({
 const FCM_TOKEN_KEY = '@fcm_token';
 
 /**
- * Register for push notifications and get the FCM token
+ * Register for push notifications and get the native FCM token
  * @returns {Promise<string|null>} The FCM token or null if registration fails
  */
 export async function registerForPushNotifications() {
@@ -44,17 +44,7 @@ export async function registerForPushNotifications() {
       return null;
     }
 
-    // Get the Expo push token (works with FCM on Android)
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: 'b0d590bd-c6d9-4bfd-975d-2a05e9a712db', // Your EAS project ID
-    });
-    token = tokenData.data;
-    console.log('FCM/Expo Push Token:', token);
-
-    // Store token locally
-    await AsyncStorage.setItem(FCM_TOKEN_KEY, token);
-
-    // Configure Android notification channel
+    // Configure Android notification channel FIRST (required for Android 8+)
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('order-updates', {
         name: 'Order Updates',
@@ -64,6 +54,16 @@ export async function registerForPushNotifications() {
         sound: 'default',
       });
     }
+
+    // Get the NATIVE device push token (FCM token for Android, APNs token for iOS)
+    // This is what Firebase needs to send notifications directly
+    const tokenData = await Notifications.getDevicePushTokenAsync();
+    token = tokenData.data;
+    console.log('Native FCM Token:', token);
+    console.log('Token type:', tokenData.type); // Should be 'fcm' for Android
+
+    // Store token locally
+    await AsyncStorage.setItem(FCM_TOKEN_KEY, token);
 
     return token;
   } catch (error) {
