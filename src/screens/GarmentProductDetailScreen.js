@@ -13,10 +13,15 @@ import {
   Alert,
   Platform,
   StatusBar,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { garmentAPI, cartAPI, tokenManager, wishlistAPI } from '../services/api';
+import { garmentAPI, cartAPI, tokenManager, wishlistAPI, advanceOrderAPI } from '../services/api';
 
 const CART_STORAGE_KEY = '@vsk_cart';
 
@@ -36,6 +41,11 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [buyingNow, setBuyingNow] = useState(false);
   const [tags, setTags] = useState([]);
+  
+  // Advance Order Modal States
+  const [showAdvanceOrderModal, setShowAdvanceOrderModal] = useState(false);
+  const [advanceOrderQuantity, setAdvanceOrderQuantity] = useState('1');
+  const [submittingAdvanceOrder, setSubmittingAdvanceOrder] = useState(false);
 
   useEffect(() => {
     fetchProductDetails();
@@ -339,6 +349,47 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleAdvanceOrder = async () => {
+    const qty = parseInt(advanceOrderQuantity);
+    if (!qty || qty < 1) {
+      Alert.alert('Invalid Quantity', 'Please enter a valid quantity (minimum 1)');
+      return;
+    }
+
+    try {
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Login Required', 'Please login to place an advance order');
+        navigation.navigate('Login');
+        return;
+      }
+
+      setSubmittingAdvanceOrder(true);
+
+      const response = await advanceOrderAPI.submitGarmentAdvanceOrder(
+        userData.userid, 
+        qty, 
+        product.productname
+      );
+
+      if (response?.status === true || response?.[0]?.status === 'SUCCESS' || response?.message) {
+        Alert.alert(
+          'Advance Order Placed!',
+          `Your advance order for ${qty} unit(s) of "${product.productname}" has been submitted successfully. We will notify you when the product is back in stock.`,
+          [{ text: 'OK', onPress: () => setShowAdvanceOrderModal(false) }]
+        );
+        setAdvanceOrderQuantity('1');
+      } else {
+        Alert.alert('Error', response?.message || 'Failed to place advance order. Please try again.');
+      }
+    } catch (error) {
+      console.log('Advance order error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setSubmittingAdvanceOrder(false);
+    }
+  };
+
   const images = getProductImages();
 
   // Helper function to get value or NA
@@ -592,6 +643,12 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           ) : (
             <View style={styles.outOfStockSection}>
               <Text style={styles.outOfStockMessage}>This product is currently out of stock</Text>
+              <TouchableOpacity 
+                style={styles.advanceOrderButton}
+                onPress={() => setShowAdvanceOrderModal(true)}
+              >
+                <Text style={styles.advanceOrderButtonText}>Place Advance Order</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -615,6 +672,101 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
       <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp}>
         <Text style={styles.whatsappIcon}>📱</Text>
       </TouchableOpacity>
+
+      {/* Advance Order Modal */}
+      <Modal
+        visible={showAdvanceOrderModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowAdvanceOrderModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.advanceModalOverlay}
+          >
+            <View style={styles.advanceModalContent}>
+              <View style={styles.advanceModalHeader}>
+                <Text style={styles.advanceModalTitle}>Place Advance Order</Text>
+                <TouchableOpacity onPress={() => {
+                  Keyboard.dismiss();
+                  setShowAdvanceOrderModal(false);
+                }}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.advanceModalProductName} numberOfLines={2}>
+                {product?.productname}
+              </Text>
+
+              <Text style={styles.advanceModalDescription}>
+                This product is currently out of stock. Place an advance order and we'll notify you when it's available.
+              </Text>
+
+              <View style={styles.advanceQuantitySection}>
+                <Text style={styles.advanceQuantityLabel}>Quantity:</Text>
+                <View style={styles.advanceQuantityControls}>
+                  <TouchableOpacity 
+                    style={styles.advanceQuantityButton}
+                    onPress={() => {
+                      const qty = parseInt(advanceOrderQuantity) || 1;
+                      setAdvanceOrderQuantity(Math.max(1, qty - 1).toString());
+                    }}
+                  >
+                    <Text style={styles.advanceQuantityButtonText}>-</Text>
+                  </TouchableOpacity>
+                  <TextInput
+                    style={styles.advanceQuantityInput}
+                    value={advanceOrderQuantity}
+                    onChangeText={(text) => {
+                      const num = text.replace(/[^0-9]/g, '');
+                      setAdvanceOrderQuantity(num);
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                  />
+                  <TouchableOpacity 
+                    style={styles.advanceQuantityButton}
+                    onPress={() => {
+                      const qty = parseInt(advanceOrderQuantity) || 0;
+                      setAdvanceOrderQuantity((qty + 1).toString());
+                    }}
+                  >
+                    <Text style={styles.advanceQuantityButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.advanceModalButtons}>
+                <TouchableOpacity 
+                  style={styles.advanceCancelButton}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setShowAdvanceOrderModal(false);
+                  }}
+                >
+                  <Text style={styles.advanceCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.advanceSubmitButton, submittingAdvanceOrder && styles.buttonDisabled]}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    handleAdvanceOrder();
+                  }}
+                  disabled={submittingAdvanceOrder}
+                >
+                  {submittingAdvanceOrder ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.advanceSubmitButtonText}>Submit Order</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -935,12 +1087,140 @@ const styles = StyleSheet.create({
   },
   outOfStockSection: {
     marginBottom: 24,
+    alignItems: 'center',
   },
   outOfStockMessage: {
     fontSize: 14,
     color: '#E74C3C',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
+  },
+  advanceOrderButton: {
+    backgroundColor: THEME_COLOR,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+  },
+  advanceOrderButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Advance Order Modal Styles
+  advanceModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  advanceModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 340,
+  },
+  advanceModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  advanceModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: THEME_COLOR,
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#999',
+    padding: 4,
+  },
+  advanceModalProductName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  advanceModalDescription: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  advanceQuantitySection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  advanceQuantityLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  advanceQuantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+  },
+  advanceQuantityButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  advanceQuantityButtonText: {
+    fontSize: 22,
+    color: '#333',
+    fontWeight: '600',
+  },
+  advanceQuantityInput: {
+    width: 60,
+    height: 44,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  advanceModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  advanceCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  advanceCancelButtonText: {
+    color: '#666',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  advanceSubmitButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#27AE60',
+  },
+  advanceSubmitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
   notifyButton: {
     backgroundColor: '#F5F5F5',

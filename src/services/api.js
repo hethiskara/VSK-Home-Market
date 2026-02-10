@@ -611,6 +611,25 @@ export const tokenManager = {
   },
 };
 
+// Advance Order APIs
+export const advanceOrderAPI = {
+  // Submit advance order for regular product
+  submitRegularAdvanceOrder: async (userId, quantity, productName) => {
+    const params = `userid=${userId}&quantity=${quantity}&product_name=${encodeURIComponent(productName)}`;
+    const response = await api.get(`/regular-advanceorder-json?${params}`);
+    console.log('REGULAR ADVANCE ORDER RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Submit advance order for garment product
+  submitGarmentAdvanceOrder: async (userId, quantity, productName) => {
+    const params = `userid=${userId}&quantity=${quantity}&product_name=${encodeURIComponent(productName)}`;
+    const response = await api.get(`/garment-advanceorder-json?${params}`);
+    console.log('GARMENT ADVANCE ORDER RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Search API
 export const searchAPI = {
   // Get auto-suggestions
