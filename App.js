@@ -45,7 +45,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [initialRoute, setInitialRoute] = useState('Login');
-  const [notificationData, setNotificationData] = useState(null);
+  const [pendingNotification, setPendingNotification] = useState(null);
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
   const navigationRef = useRef(null);
   const notificationResponseListener = useRef(null);
 
@@ -61,41 +62,60 @@ export default function App() {
     };
   }, []);
 
-  // Handle notification tap navigation
+  // Handle pending notification after navigation is ready
   useEffect(() => {
-    if (notificationData && navigationRef.current) {
-      handleNotificationNavigation(notificationData);
-      setNotificationData(null);
+    if (pendingNotification && isNavigationReady && navigationRef.current) {
+      // Add delay to ensure navigation stack is fully mounted
+      setTimeout(() => {
+        handleNotificationNavigation(pendingNotification);
+        setPendingNotification(null);
+      }, 500);
     }
-  }, [notificationData]);
+  }, [pendingNotification, isNavigationReady]);
 
   const setupNotificationListeners = async () => {
-    // Check if app was opened from a notification
+    // Check if app was opened from a notification (cold start)
     const lastResponse = await getLastNotificationResponse();
     if (lastResponse) {
       const data = lastResponse.notification.request.content.data;
-      console.log('App opened from notification:', data);
-      setNotificationData(data);
+      console.log('App opened from notification (cold start):', data);
+      setPendingNotification(data);
     }
 
-    // Listen for notification taps while app is running
+    // Listen for notification taps while app is running (warm start)
     notificationResponseListener.current = addNotificationResponseListener((response) => {
       const data = response.notification.request.content.data;
-      console.log('Notification tapped:', data);
-      handleNotificationNavigation(data);
+      console.log('Notification tapped (warm start):', data);
+      
+      if (isNavigationReady && navigationRef.current) {
+        handleNotificationNavigation(data);
+      } else {
+        setPendingNotification(data);
+      }
     });
   };
 
   const handleNotificationNavigation = (data) => {
-    if (!navigationRef.current) return;
+    if (!navigationRef.current) {
+      console.log('Navigation ref not ready');
+      return;
+    }
+
+    console.log('Handling notification navigation:', data);
 
     // Handle order_update notification type (from backend when tracking is added)
     if (data?.type === 'order_update' && data?.order_number) {
+      console.log('Navigating to Orders with order:', data.order_number);
       // Navigate to Orders screen with the order number to show tracking modal
       navigationRef.current.navigate('Orders', { 
         openTrackingFor: data.order_number 
       });
     }
+  };
+
+  const onNavigationReady = () => {
+    setIsNavigationReady(true);
+    console.log('Navigation is ready');
   };
 
   const checkLoginStatus = async () => {
@@ -128,7 +148,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} onReady={onNavigationReady}>
         <Stack.Navigator
           initialRouteName={initialRoute}
           screenOptions={{

@@ -43,16 +43,29 @@ const OrdersScreen = ({ navigation, route }) => {
 
   // Handle opening tracking modal from notification
   useEffect(() => {
-    if (openTrackingFor && orders.length > 0) {
-      // Find the order and open tracking modal
-      const order = orders.find(o => o.order_number === openTrackingFor);
+    if (openTrackingFor && orders.length > 0 && !loading) {
+      // Find the order - check both ordernumber and order_number formats
+      const order = orders.find(o => 
+        o.ordernumber === openTrackingFor || 
+        o.order_number === openTrackingFor
+      );
+      
       if (order) {
-        handleTrackOrder(openTrackingFor);
+        // Small delay to ensure screen is fully rendered
+        setTimeout(() => {
+          handleTrackOrder(openTrackingFor);
+        }, 300);
         // Clear the param so it doesn't trigger again
+        navigation.setParams({ openTrackingFor: undefined });
+      } else {
+        // If order not found in list, still try to open tracking directly
+        setTimeout(() => {
+          handleTrackOrder(openTrackingFor);
+        }, 300);
         navigation.setParams({ openTrackingFor: undefined });
       }
     }
-  }, [openTrackingFor, orders]);
+  }, [openTrackingFor, orders, loading]);
 
   const fetchOrders = async () => {
     try {
