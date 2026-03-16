@@ -520,6 +520,17 @@ export const orderAPI = {
   },
 };
 
+// Promo Code API
+export const promoCodeAPI = {
+  // Apply promo code
+  applyPromoCode: async (promoCode, guestId, total) => {
+    const params = `promo_code=${encodeURIComponent(promoCode)}&guest_id=${encodeURIComponent(guestId)}&total=${total}`;
+    const response = await api.get(`/save-promocode-json?${params}`);
+    console.log('PROMO CODE RESPONSE:', response.data);
+    return response.data;
+  },
+};
+
 // Wishlist APIs
 export const wishlistAPI = {
   // Get user's wishlist

@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { checkoutAPI, cartAPI } from '../services/api';
+import { checkoutAPI, cartAPI, promoCodeAPI } from '../services/api';
 import api from '../services/api';
 import { WebView } from 'react-native-webview';
 
@@ -39,6 +39,14 @@ const CartScreen = ({ navigation }) => {
   const [showPaymentWebView, setShowPaymentWebView] = useState(false);
   const [razorpayData, setRazorpayData] = useState(null);
   const [shippingCost, setShippingCost] = useState(1.00); // Default shipping cost
+  
+  // Promo code states
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoFinalAmount, setPromoFinalAmount] = useState(null);
+  const [applyingPromo, setApplyingPromo] = useState(false);
+  const [promoError, setPromoError] = useState('');
   
   // Delivery address fields
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -199,6 +207,65 @@ const CartScreen = ({ navigation }) => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const handleApplyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoError('Please enter a promo code');
+      return;
+    }
+
+    try {
+      setApplyingPromo(true);
+      setPromoError('');
+
+      const totalAmount = parseFloat(calculateTotal());
+      const grandTotal = totalAmount + shippingCost;
+
+      // Get the stored cart guest_id
+      const storedCartGuestId = await AsyncStorage.getItem('cartGuestId');
+      const guestIdToUse = storedCartGuestId || guestId;
+
+      if (!guestIdToUse) {
+        setPromoError('Unable to apply promo code. Please try again.');
+        return;
+      }
+
+      const response = await promoCodeAPI.applyPromoCode(
+        promoCode.trim(),
+        guestIdToUse,
+        grandTotal.toFixed(2)
+      );
+
+      console.log('Promo code response:', response);
+
+      if (response?.status === 'success') {
+        setPromoApplied(true);
+        setPromoDiscount(parseFloat(response.discount) || 0);
+        setPromoFinalAmount(parseFloat(response.final) || grandTotal);
+        setPromoError('');
+        Alert.alert('Success', `Promo code applied! You saved Rs. ${response.discount}`);
+      } else {
+        setPromoError(response?.message || 'Invalid promo code');
+        setPromoApplied(false);
+        setPromoDiscount(0);
+        setPromoFinalAmount(null);
+      }
+    } catch (error) {
+      console.log('Error applying promo code:', error);
+      setPromoError('Failed to apply promo code. Please try again.');
+      setPromoApplied(false);
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
+
+  const handleRemovePromoCode = () => {
+    setPromoCode('');
+    setPromoApplied(false);
+    setPromoDiscount(0);
+    setPromoFinalAmount(null);
+    setPromoError('');
+  };
+
   const fetchBillingAddress = async () => {
     if (!userId) return;
     try {
@@ -312,8 +379,8 @@ const CartScreen = ({ navigation }) => {
     const addressToUse = useBillingAsDelivery ? billingAddress : deliveryAddress;
     const totalAmount = calculateTotal();
     const grandTotalFloat = parseFloat(totalAmount) + shippingCost;
-    // Round to nearest integer for Razorpay (amount in rupees, backend converts to paise)
-    const grandTotal = Math.round(grandTotalFloat);
+    // Use promo final amount if promo is applied, otherwise use regular total
+    const grandTotal = promoApplied ? Math.round(promoFinalAmount) : Math.round(grandTotalFloat);
     
     try {
       setProcessingPayment(true);
@@ -917,6 +984,49 @@ const CartScreen = ({ navigation }) => {
           })}
         </View>
 
+        {/* Promo Code Section */}
+        <View style={styles.promoCodeSection}>
+          <Text style={styles.promoCodeTitle}>Apply Coupon</Text>
+          <View style={styles.promoCodeInputRow}>
+            <TextInput
+              style={[styles.promoCodeInput, promoApplied && styles.promoCodeInputDisabled]}
+              placeholder="Enter promo code"
+              value={promoCode}
+              onChangeText={setPromoCode}
+              autoCapitalize="characters"
+              editable={!promoApplied}
+            />
+            {promoApplied ? (
+              <TouchableOpacity 
+                style={styles.removePromoButton}
+                onPress={handleRemovePromoCode}
+              >
+                <Text style={styles.removePromoButtonText}>Remove</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={[styles.applyPromoButton, applyingPromo && styles.applyPromoButtonDisabled]}
+                onPress={handleApplyPromoCode}
+                disabled={applyingPromo}
+              >
+                {applyingPromo ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.applyPromoButtonText}>Apply</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+          {promoError ? (
+            <Text style={styles.promoErrorText}>{promoError}</Text>
+          ) : null}
+          {promoApplied && (
+            <View style={styles.promoSuccessRow}>
+              <Text style={styles.promoSuccessText}>✓ Coupon applied! You save Rs. {promoDiscount.toFixed(2)}</Text>
+            </View>
+          )}
+        </View>
+
         {/* Delivery & Price Summary */}
         <View style={styles.summaryRow}>
           <View style={styles.deliveryAddressBox}>
@@ -937,12 +1047,22 @@ const CartScreen = ({ navigation }) => {
               <Text style={styles.priceLineLabel}>Shipping Cost</Text>
               <Text style={styles.priceLineValue}>Rs {shippingCost.toFixed(2)}</Text>
             </View>
+            {promoApplied && (
+              <View style={styles.promoDiscountRow}>
+                <Text style={styles.promoDiscountLabel}>Coupon Discount</Text>
+                <Text style={styles.promoDiscountValue}>- Rs {promoDiscount.toFixed(2)}</Text>
+              </View>
+            )}
             <View style={[styles.priceLineRow, styles.grandTotalRow]}>
               <View style={styles.grandTotalLabelContainer}>
-                <Text style={styles.grandTotalLabel}>Total</Text>
-                <Text style={styles.roundedOffText}>(Rounded off from Rs {grandTotalExact.toFixed(2)})</Text>
+                <Text style={styles.grandTotalLabel}>Total to Pay</Text>
+                {!promoApplied && (
+                  <Text style={styles.roundedOffText}>(Rounded off from Rs {grandTotalExact.toFixed(2)})</Text>
+                )}
               </View>
-              <Text style={styles.grandTotalValue}>Rs {grandTotalRounded}</Text>
+              <Text style={styles.grandTotalValue}>
+                Rs {promoApplied ? Math.round(promoFinalAmount) : grandTotalRounded}
+              </Text>
             </View>
           </View>
         </View>
@@ -971,7 +1091,9 @@ const CartScreen = ({ navigation }) => {
             {processingPayment ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.payButtonText}>Pay Rs {grandTotalRounded}</Text>
+              <Text style={styles.payButtonText}>
+                Pay Rs {promoApplied ? Math.round(promoFinalAmount) : grandTotalRounded}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -1698,6 +1820,104 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#888',
     marginTop: 2,
+  },
+  promoCodeSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 4,
+    padding: 12,
+    backgroundColor: '#FAFAFA',
+  },
+  promoCodeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E3A5F',
+    marginBottom: 10,
+  },
+  promoCodeInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  promoCodeInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    backgroundColor: '#FFFFFF',
+    color: '#333',
+  },
+  promoCodeInputDisabled: {
+    backgroundColor: '#F0F0F0',
+    color: '#888',
+  },
+  applyPromoButton: {
+    backgroundColor: '#1E3A5F',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 4,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyPromoButtonDisabled: {
+    backgroundColor: '#A0A0A0',
+  },
+  applyPromoButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  removePromoButton: {
+    backgroundColor: '#E74C3C',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 4,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePromoButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  promoErrorText: {
+    color: '#E74C3C',
+    fontSize: 12,
+    marginTop: 8,
+  },
+  promoSuccessRow: {
+    marginTop: 8,
+    backgroundColor: '#E8F5E9',
+    padding: 8,
+    borderRadius: 4,
+  },
+  promoSuccessText: {
+    color: '#2E7D32',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  promoDiscountRow: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#E8F5E9',
+  },
+  promoDiscountLabel: {
+    fontSize: 13,
+    color: '#2E7D32',
+    marginBottom: 2,
+  },
+  promoDiscountValue: {
+    fontSize: 13,
+    color: '#2E7D32',
+    fontWeight: '700',
   },
   deliveryOptionBox: {
     marginHorizontal: 16,
