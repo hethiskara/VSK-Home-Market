@@ -175,12 +175,23 @@ const CartScreen = ({ navigation }) => {
     );
   };
 
+  const calculateItemPrice = (item) => {
+    const price = parseFloat(item.productprice) || 0;
+    const discount = parseFloat(item.discount) || 0;
+    const cgst = parseFloat(item.cgst?.replace('%', '') || 0);
+    const sgst = parseFloat(item.sgst?.replace('%', '') || 0);
+    const totalTax = cgst + sgst;
+    
+    // Apply discount first, then add tax
+    const priceAfterDiscount = price - (price * discount / 100);
+    const priceWithTax = priceAfterDiscount + (priceAfterDiscount * totalTax / 100);
+    
+    return priceWithTax * item.quantity;
+  };
+
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.productprice) || 0;
-      const tax = parseFloat(item.cgst?.replace('%', '') || 0) + parseFloat(item.sgst?.replace('%', '') || 0);
-      const priceWithTax = price + (price * tax / 100);
-      return total + (priceWithTax * item.quantity);
+      return total + calculateItemPrice(item);
     }, 0).toFixed(2);
   };
 
@@ -593,8 +604,14 @@ const CartScreen = ({ navigation }) => {
 
   const renderCartItem = ({ item }) => {
     const unitPrice = parseFloat(item.productprice) || 0;
-    const tax = parseFloat(item.cgst?.replace('%', '') || 0) + parseFloat(item.sgst?.replace('%', '') || 0);
-    const itemTotal = (unitPrice + (unitPrice * tax / 100)) * item.quantity;
+    const discount = parseFloat(item.discount) || 0;
+    const cgst = parseFloat(item.cgst?.replace('%', '') || 0);
+    const sgst = parseFloat(item.sgst?.replace('%', '') || 0);
+    const totalTax = cgst + sgst;
+    
+    // Calculate: Apply discount first, then add tax
+    const priceAfterDiscount = unitPrice - (unitPrice * discount / 100);
+    const itemTotal = (priceAfterDiscount + (priceAfterDiscount * totalTax / 100)) * item.quantity;
 
     return (
       <View style={styles.cartItem}>
@@ -609,7 +626,10 @@ const CartScreen = ({ navigation }) => {
           
           <View style={styles.priceRow}>
             <Text style={styles.unitPrice}>Rs. {item.productprice}</Text>
-            <Text style={styles.taxInfo}>Tax: {tax}%</Text>
+            {discount > 0 && (
+              <Text style={styles.discountInfo}>-{discount}%</Text>
+            )}
+            <Text style={styles.taxInfo}>Tax: {totalTax}%</Text>
           </View>
 
           <View style={styles.quantityRow}>
@@ -872,8 +892,14 @@ const CartScreen = ({ navigation }) => {
           
           {cartItems.map((item, index) => {
             const unitPrice = parseFloat(item.productprice) || 0;
-            const tax = parseFloat(item.cgst?.replace('%', '') || 0) + parseFloat(item.sgst?.replace('%', '') || 0);
-            const itemTotal = (unitPrice + (unitPrice * tax / 100)) * item.quantity;
+            const discount = parseFloat(item.discount) || 0;
+            const cgst = parseFloat(item.cgst?.replace('%', '') || 0);
+            const sgst = parseFloat(item.sgst?.replace('%', '') || 0);
+            const totalTax = cgst + sgst;
+            
+            // Apply discount first, then add tax
+            const priceAfterDiscount = unitPrice - (unitPrice * discount / 100);
+            const itemTotal = (priceAfterDiscount + (priceAfterDiscount * totalTax / 100)) * item.quantity;
             
             return (
               <View key={index} style={styles.orderItem}>
@@ -881,7 +907,9 @@ const CartScreen = ({ navigation }) => {
                 <View style={styles.orderItemDetails}>
                   <Text style={styles.orderItemName}>{item.productname}</Text>
                   <Text style={styles.orderItemInfo}>Unit Price: Rs. {item.productprice}</Text>
-                  <Text style={styles.orderItemInfo}>Qty: {item.quantity} | Tax: {tax}%</Text>
+                  <Text style={styles.orderItemInfo}>
+                    Qty: {item.quantity} | Tax: {totalTax}%{discount > 0 ? ` | Disc: ${discount}%` : ''}
+                  </Text>
                 </View>
                 <Text style={styles.orderItemTotal}>Rs. {itemTotal.toFixed(2)}</Text>
               </View>
@@ -1193,6 +1221,11 @@ const styles = StyleSheet.create({
   taxInfo: {
     fontSize: 12,
     color: '#666',
+  },
+  discountInfo: {
+    fontSize: 12,
+    color: '#27AE60',
+    fontWeight: '600',
   },
   quantityRow: {
     flexDirection: 'row',

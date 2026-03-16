@@ -139,11 +139,26 @@ const ProductDetailScreen = ({ navigation, route }) => {
     try {
       setAddingToCart(true);
       
-      // Check stock availability
+      // Get existing cart to check current quantity
+      const existingCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
+      let cartItems = existingCart ? JSON.parse(existingCart) : [];
+      const existingItem = cartItems.find(item => item.bcode === product.bcode);
+      const existingQtyInCart = existingItem ? existingItem.quantity : 0;
+      
+      // Check stock availability (including what's already in cart)
       const stockQty = parseInt(product.stockinhand) || 0;
-      if (stockQty > 0 && quantity > stockQty) {
+      const totalQtyAfterAdd = existingQtyInCart + quantity;
+      
+      if (stockQty > 0 && totalQtyAfterAdd > stockQty) {
         setAddingToCart(false);
-        Alert.alert('Stock Limit', `Only ${stockQty} items available in stock. Please reduce the quantity.`);
+        if (existingQtyInCart > 0) {
+          Alert.alert(
+            'Stock Limit', 
+            `You already have ${existingQtyInCart} in your cart. Only ${stockQty} items available in stock.`
+          );
+        } else {
+          Alert.alert('Stock Limit', `Only ${stockQty} items available in stock. Please reduce the quantity.`);
+        }
         return;
       }
       
@@ -169,7 +184,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
       );
 
       if (response.status === true) {
-        // Save to local storage for cart display
+        // Save to local storage for cart display (include discount for cart calculations)
         const cartItem = {
           cart_id: response.cart_id,
           productcode: product.productcode,
@@ -180,15 +195,13 @@ const ProductDetailScreen = ({ navigation, route }) => {
           quantity: quantity,
           cgst: product.cgst,
           sgst: product.sgst,
+          discount: product.discount || '0',
           bcode: product.bcode,
           prod_id: product.id,
           carttype: cartType,
+          stockinhand: product.stockinhand,
         };
 
-        // Get existing cart
-        const existingCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
-        let cartItems = existingCart ? JSON.parse(existingCart) : [];
-        
         // Check if item already exists
         const existingIndex = cartItems.findIndex(item => item.bcode === product.bcode);
         if (existingIndex >= 0) {
@@ -225,11 +238,26 @@ const ProductDetailScreen = ({ navigation, route }) => {
     try {
       setBuyingNow(true);
       
-      // Check stock availability
+      // Get existing cart to check current quantity
+      const existingCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
+      let cartItems = existingCart ? JSON.parse(existingCart) : [];
+      const existingItem = cartItems.find(item => item.bcode === product.bcode);
+      const existingQtyInCart = existingItem ? existingItem.quantity : 0;
+      
+      // Check stock availability (including what's already in cart)
       const stockQty = parseInt(product.stockinhand) || 0;
-      if (stockQty > 0 && quantity > stockQty) {
+      const totalQtyAfterAdd = existingQtyInCart + quantity;
+      
+      if (stockQty > 0 && totalQtyAfterAdd > stockQty) {
         setBuyingNow(false);
-        Alert.alert('Stock Limit', `Only ${stockQty} items available in stock. Please reduce the quantity.`);
+        if (existingQtyInCart > 0) {
+          Alert.alert(
+            'Stock Limit', 
+            `You already have ${existingQtyInCart} in your cart. Only ${stockQty} items available in stock.`
+          );
+        } else {
+          Alert.alert('Stock Limit', `Only ${stockQty} items available in stock. Please reduce the quantity.`);
+        }
         return;
       }
       
@@ -255,7 +283,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
       );
 
       if (response.status === true) {
-        // Save to local storage for cart display
+        // Save to local storage for cart display (include discount for cart calculations)
         const cartItem = {
           cart_id: response.cart_id,
           productcode: product.productcode,
@@ -266,15 +294,13 @@ const ProductDetailScreen = ({ navigation, route }) => {
           quantity: quantity,
           cgst: product.cgst,
           sgst: product.sgst,
+          discount: product.discount || '0',
           bcode: product.bcode,
           prod_id: product.id,
           carttype: cartType,
+          stockinhand: product.stockinhand,
         };
 
-        // Get existing cart
-        const existingCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
-        let cartItems = existingCart ? JSON.parse(existingCart) : [];
-        
         // Check if item already exists
         const existingIndex = cartItems.findIndex(item => item.bcode === product.bcode);
         if (existingIndex >= 0) {
@@ -635,7 +661,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
             {/* Discount Details */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Discount Details :</Text>
-              <Text style={styles.detailValue}>{getValue(product.discountdetails) || 'Top sellers of the day - 7%'}</Text>
+              <Text style={styles.detailValue}>{getValue(product.discounttext)}</Text>
             </View>
 
             {/* Tax Details */}
