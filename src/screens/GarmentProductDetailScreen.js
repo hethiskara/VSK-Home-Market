@@ -46,6 +46,9 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
   const [showAdvanceOrderModal, setShowAdvanceOrderModal] = useState(false);
   const [advanceOrderQuantity, setAdvanceOrderQuantity] = useState('1');
   const [submittingAdvanceOrder, setSubmittingAdvanceOrder] = useState(false);
+  
+  // FAQ expanded state
+  const [expandedFaq, setExpandedFaq] = useState(null);
 
   useEffect(() => {
     fetchProductDetails();
@@ -421,6 +424,27 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
   // Helper function to get value or NA
   const getValue = (value) => value || 'NA';
 
+  // Get FAQs from product (faqt1-5 for questions, faqc1-5 for answers)
+  const getFaqs = () => {
+    const faqs = [];
+    for (let i = 1; i <= 5; i++) {
+      const question = product?.[`faqt${i}`];
+      const answer = product?.[`faqc${i}`];
+      if (question && question.trim() !== '' && answer && answer.trim() !== '') {
+        faqs.push({
+          id: i,
+          question: question.trim(),
+          answer: answer.trim(),
+        });
+      }
+    }
+    return faqs;
+  };
+
+  const toggleFaq = (faqId) => {
+    setExpandedFaq(expandedFaq === faqId ? null : faqId);
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity 
@@ -689,6 +713,32 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
             <Text style={styles.sectionTitle}>Specifications</Text>
             <Text style={styles.sectionContent}>{getValue(product.specifications)}</Text>
           </View>
+
+          {/* FAQ Section */}
+          {getFaqs().length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+              {getFaqs().map((faq) => (
+                <View key={faq.id} style={styles.faqItem}>
+                  <TouchableOpacity 
+                    style={styles.faqQuestion}
+                    onPress={() => toggleFaq(faq.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.faqQuestionText}>{faq.question}</Text>
+                    <Text style={styles.faqExpandIcon}>
+                      {expandedFaq === faq.id ? '−' : '+'}
+                    </Text>
+                  </TouchableOpacity>
+                  {expandedFaq === faq.id && (
+                    <View style={styles.faqAnswer}>
+                      <Text style={styles.faqAnswerText}>{faq.answer}</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
 
           <View style={{ height: 80 }} />
         </View>
@@ -1322,6 +1372,46 @@ const styles = StyleSheet.create({
   },
   whatsappIcon: {
     fontSize: 28,
+  },
+  // FAQ Styles
+  faqItem: {
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  faqQuestion: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: '#F8F9FA',
+  },
+  faqQuestionText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginRight: 10,
+  },
+  faqExpandIcon: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#8B4513',
+    width: 24,
+    textAlign: 'center',
+  },
+  faqAnswer: {
+    padding: 14,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  faqAnswerText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 22,
   },
 });
 

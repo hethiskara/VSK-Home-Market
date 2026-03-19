@@ -48,6 +48,10 @@ const CartScreen = ({ navigation }) => {
   const [applyingPromo, setApplyingPromo] = useState(false);
   const [promoError, setPromoError] = useState('');
   
+  // Subscriber discount state
+  const [subscriberDiscount, setSubscriberDiscount] = useState(0);
+  const [subscriberDiscountPercent, setSubscriberDiscountPercent] = useState(0);
+  
   // Delivery address fields
   const [deliveryAddress, setDeliveryAddress] = useState({
     firstname: '',
@@ -238,11 +242,18 @@ const CartScreen = ({ navigation }) => {
       console.log('Promo code response:', response);
 
       if (response?.status === 'success') {
+        // Remove commas from the values before parsing (API returns "1,120.17" format)
+        const finalAmount = parseFloat(String(response.final).replace(/,/g, ''));
+        const discountAmount = parseFloat(String(response.discount).replace(/,/g, ''));
+        
+        console.log('Promo API Response - final:', response.final, 'parsed:', finalAmount);
+        console.log('Promo API Response - discount:', response.discount, 'parsed:', discountAmount);
+        
         setPromoApplied(true);
-        setPromoDiscount(parseFloat(response.discount) || 0);
-        setPromoFinalAmount(parseFloat(response.final) || grandTotal);
+        setPromoDiscount(discountAmount || 0);
+        setPromoFinalAmount(finalAmount);
         setPromoError('');
-        Alert.alert('Success', `Promo code applied! You saved Rs. ${response.discount}`);
+        Alert.alert('Success', `Promo code applied! You save Rs. ${discountAmount.toFixed(2)}`);
       } else {
         setPromoError(response?.message || 'Invalid promo code');
         setPromoApplied(false);
@@ -361,6 +372,25 @@ const CartScreen = ({ navigation }) => {
         console.log('STEP TWO RESPONSE:', stepTwoResponse);
         if (Array.isArray(stepTwoResponse) && stepTwoResponse.length > 0) {
           setOrderSummary(stepTwoResponse);
+          
+          // Calculate total subscriber discount from all items
+          let totalSubscriberDiscount = 0;
+          let maxSubscriberPercent = 0;
+          stepTwoResponse.forEach(item => {
+            const subscribeDiscountStr = item.subscribediscount || '0%';
+            const subscribeDiscountPercentVal = parseFloat(subscribeDiscountStr.replace('%', '')) || 0;
+            if (subscribeDiscountPercentVal > 0) {
+              const itemTotal = parseFloat(String(item.total).replace(/,/g, '')) || 0;
+              const discountAmount = (itemTotal * subscribeDiscountPercentVal) / 100;
+              totalSubscriberDiscount += discountAmount;
+              if (subscribeDiscountPercentVal > maxSubscriberPercent) {
+                maxSubscriberPercent = subscribeDiscountPercentVal;
+              }
+            }
+          });
+          setSubscriberDiscount(totalSubscriberDiscount);
+          setSubscriberDiscountPercent(maxSubscriberPercent);
+          console.log('Total Subscriber Discount:', totalSubscriberDiscount, 'Percent:', maxSubscriberPercent);
         }
         
         setCurrentStep(3);
@@ -378,9 +408,9 @@ const CartScreen = ({ navigation }) => {
   const handleRazorpayPayment = async () => {
     const addressToUse = useBillingAsDelivery ? billingAddress : deliveryAddress;
     const totalAmount = calculateTotal();
-    const grandTotalFloat = parseFloat(totalAmount) + shippingCost;
-    // Use promo final amount if promo is applied, otherwise use regular total
-    const grandTotal = promoApplied ? Math.round(promoFinalAmount) : Math.round(grandTotalFloat);
+    const grandTotalFloat = parseFloat(totalAmount) + shippingCost - subscriberDiscount;
+    // Use promo final amount if promo is applied (also subtract subscriber discount), otherwise use regular total
+    const grandTotal = (promoApplied && promoFinalAmount !== null) ? Math.round(promoFinalAmount - subscriberDiscount) : Math.round(grandTotalFloat);
     
     try {
       setProcessingPayment(true);
@@ -682,30 +712,28 @@ const CartScreen = ({ navigation }) => {
 
     return (
       <View style={styles.cartItem}>
-        <Image 
-          source={{ uri: item.productimage }} 
+        <Image
+          source={{ uri: item.productimage }}
           style={styles.productImage}
           resizeMode="cover"
         />
         <View style={styles.itemDetails}>
           <Text style={styles.productName} numberOfLines={2}>{item.productname}</Text>
           <Text style={styles.productCode}>Code: {item.productcode}</Text>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.unitPrice}>Rs. {item.productprice}</Text>
-            {discount > 0 && (
-              <Text style={styles.discountInfo}>-{discount}%</Text>
-            )}
-            <Text style={styles.taxInfo}>Tax: {totalTax}%</Text>
-          </View>
+
+          <Text style={styles.unitPrice}>Rs. {item.productprice}</Text>
+          {discount > 0 && (
+            <Text style={styles.discountInfo}>Discount: {discount}%</Text>
+          )}
+          <Text style={styles.taxInfo}>Tax: {totalTax}%</Text>
 
           <View style={styles.quantityRow}>
             <Text style={styles.qtyLabel}>Qty: {item.quantity}</Text>
             <Text style={styles.itemTotal}>Rs. {itemTotal.toFixed(2)}</Text>
           </View>
         </View>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => removeItem(item.cart_id)}
         >
@@ -942,7 +970,8 @@ const CartScreen = ({ navigation }) => {
   const renderPaymentStep = () => {
     const addressToUse = useBillingAsDelivery ? billingAddress : deliveryAddress;
     const totalAmount = parseFloat(calculateTotal());
-    const grandTotalExact = totalAmount + shippingCost;
+    // Without promo: Total + Shipping - Subscriber Discount
+    const grandTotalExact = totalAmount + shippingCost - subscriberDiscount;
     const grandTotalRounded = Math.round(grandTotalExact);
 
     return (
@@ -1022,7 +1051,7 @@ const CartScreen = ({ navigation }) => {
           ) : null}
           {promoApplied && (
             <View style={styles.promoSuccessRow}>
-              <Text style={styles.promoSuccessText}>✓ Coupon applied! You save Rs. {promoDiscount.toFixed(2)}</Text>
+              <Text style={styles.promoSuccessText}>✓ Coupon applied!</Text>
             </View>
           )}
         </View>
@@ -1047,7 +1076,13 @@ const CartScreen = ({ navigation }) => {
               <Text style={styles.priceLineLabel}>Shipping Cost</Text>
               <Text style={styles.priceLineValue}>Rs {shippingCost.toFixed(2)}</Text>
             </View>
-            {promoApplied && (
+            {subscriberDiscount > 0 && (
+              <View style={styles.subscriberDiscountRow}>
+                <Text style={styles.subscriberDiscountLabel}>Subscriber Discount ({subscriberDiscountPercent}%)</Text>
+                <Text style={styles.subscriberDiscountValue}>- Rs {subscriberDiscount.toFixed(2)}</Text>
+              </View>
+            )}
+            {promoApplied && promoDiscount > 0 && (
               <View style={styles.promoDiscountRow}>
                 <Text style={styles.promoDiscountLabel}>Coupon Discount</Text>
                 <Text style={styles.promoDiscountValue}>- Rs {promoDiscount.toFixed(2)}</Text>
@@ -1056,12 +1091,10 @@ const CartScreen = ({ navigation }) => {
             <View style={[styles.priceLineRow, styles.grandTotalRow]}>
               <View style={styles.grandTotalLabelContainer}>
                 <Text style={styles.grandTotalLabel}>Total to Pay</Text>
-                {!promoApplied && (
-                  <Text style={styles.roundedOffText}>(Rounded off from Rs {grandTotalExact.toFixed(2)})</Text>
-                )}
+                <Text style={styles.roundedOffText}>(Rounded off from Rs {(promoApplied && promoFinalAmount !== null ? (promoFinalAmount - subscriberDiscount) : grandTotalExact).toFixed(2)})</Text>
               </View>
               <Text style={styles.grandTotalValue}>
-                Rs {promoApplied ? Math.round(promoFinalAmount) : grandTotalRounded}
+                Rs {promoApplied && promoFinalAmount !== null ? Math.round(promoFinalAmount - subscriberDiscount) : grandTotalRounded}
               </Text>
             </View>
           </View>
@@ -1092,7 +1125,7 @@ const CartScreen = ({ navigation }) => {
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <Text style={styles.payButtonText}>
-                Pay Rs {promoApplied ? Math.round(promoFinalAmount) : grandTotalRounded}
+                Pay Rs {promoApplied && promoFinalAmount !== null ? Math.round(promoFinalAmount - subscriberDiscount) : grandTotalRounded}
               </Text>
             )}
           </TouchableOpacity>
@@ -1339,15 +1372,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+    marginTop: 4,
+  },
+  discountInfo: {
+    fontSize: 12,
+    color: '#E74C3C',
+    fontWeight: '500',
+    marginTop: 2,
   },
   taxInfo: {
     fontSize: 12,
     color: '#666',
-  },
-  discountInfo: {
-    fontSize: 12,
-    color: '#27AE60',
-    fontWeight: '600',
+    marginTop: 2,
+    marginBottom: 6,
   },
   quantityRow: {
     flexDirection: 'row',
@@ -1917,6 +1954,22 @@ const styles = StyleSheet.create({
   promoDiscountValue: {
     fontSize: 13,
     color: '#2E7D32',
+    fontWeight: '700',
+  },
+  subscriberDiscountRow: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFF3E0',
+  },
+  subscriberDiscountLabel: {
+    fontSize: 13,
+    color: '#E65100',
+    marginBottom: 2,
+  },
+  subscriberDiscountValue: {
+    fontSize: 13,
+    color: '#E65100',
     fontWeight: '700',
   },
   deliveryOptionBox: {
