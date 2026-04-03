@@ -39,6 +39,13 @@ const OrderDetailScreen = ({ navigation, route }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showQuantityPicker, setShowQuantityPicker] = useState(false);
   const [hasTracking, setHasTracking] = useState(false);
+  
+  // Refund modal states
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundQuantity, setRefundQuantity] = useState('1');
+  const [submittingRefund, setSubmittingRefund] = useState(false);
+  const [showRefundQuantityPicker, setShowRefundQuantityPicker] = useState(false);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -162,6 +169,83 @@ const OrderDetailScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleRefundPress = (item) => {
+    setSelectedItem(item);
+    setRefundReason('');
+    setRefundQuantity('1');
+    setShowRefundQuantityPicker(false);
+    setShowRefundModal(true);
+  };
+
+  const getRefundQuantityOptions = () => {
+    const qty = parseInt(selectedItem?.qty || '1');
+    return Array.from({ length: qty }, (_, i) => (i + 1).toString());
+  };
+
+  const handleSubmitRefund = async () => {
+    if (!refundReason.trim()) {
+      Alert.alert('Required', 'Please enter a refund reason');
+      return;
+    }
+
+    try {
+      setSubmittingRefund(true);
+      Keyboard.dismiss();
+
+      const userData = await tokenManager.getUserData();
+      if (!userData?.userid) {
+        Alert.alert('Error', 'User not found. Please login again.');
+        return;
+      }
+
+      // Determine if garment or regular product
+      const isGarment = selectedItem.productcode?.startsWith('VSKG') || 
+                        selectedItem.carttype === 'garments';
+
+      const refundData = {
+        orderNumber: orderNumber,
+        userId: userData.userid,
+        productCode: selectedItem.productcode,
+        productId: selectedItem.product_id || selectedItem.id || selectedItem.productcode,
+        productName: selectedItem.productname,
+        orderedQuantity: selectedItem.qty || '1',
+        refundQuantity: refundQuantity,
+        reason: refundReason.trim(),
+      };
+
+      console.log('REFUND REQUEST DATA:', JSON.stringify(refundData));
+      console.log('IS GARMENT:', isGarment);
+      
+      const response = isGarment 
+        ? await orderAPI.refundGarmentOrder(refundData)
+        : await orderAPI.refundRegularOrder(refundData);
+
+      console.log('REFUND RESPONSE:', response);
+
+      const isSuccess = response?.status === true || 
+        response?.status === 'true' || 
+        response?.status === 'SUCCESS' ||
+        response?.status === 'success' ||
+        response?.[0]?.status === 'SUCCESS' ||
+        (Array.isArray(response) && response[0]?.message?.toLowerCase().includes('success'));
+
+      if (isSuccess) {
+        const successMessage = response?.message || response?.[0]?.message || 'Refund request submitted successfully';
+        Alert.alert('Success', successMessage);
+        setShowRefundModal(false);
+        fetchOrderDetails();
+      } else {
+        const errorMessage = response?.message || response?.[0]?.message || 'Failed to submit refund request';
+        Alert.alert('Error', errorMessage);
+      }
+    } catch (error) {
+      console.log('Refund order error:', error);
+      Alert.alert('Error', 'Failed to submit refund request. Please try again.');
+    } finally {
+      setSubmittingRefund(false);
+    }
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity 
@@ -226,6 +310,10 @@ const OrderDetailScreen = ({ navigation, route }) => {
     const remainingQty = orderedQty - cancelledQty;
     const isFullyCancelled = isCancelled && cancelledQty >= orderedQty;
     
+    // Refund status
+    const hasRefund = item.refund_status === '1' || item.refund_status === 1;
+    const refundedQty = item.refund_quantity ? parseInt(item.refund_quantity) : 0;
+    
     return (
       <View style={[styles.itemCard, isFullyCancelled && styles.itemCardCancelled]}>
         <View style={styles.itemRow}>
@@ -271,18 +359,45 @@ const OrderDetailScreen = ({ navigation, route }) => {
                 )}
               </View>
             )}
+
+            {/* Refund Status */}
+            {hasRefund && (
+              <View style={styles.refundStatusContainer}>
+                <View style={styles.refundBadge}>
+                  <Text style={styles.refundBadgeText}>
+                    Refund Requested: {refundedQty} item(s)
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         </View>
 
-        {/* Cancel Button - Only show if not fully cancelled and no tracking */}
-        {!isFullyCancelled && !hasTracking && (
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => handleCancelPress(item)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.cancelButtonText}>✕ Cancel Item</Text>
-          </TouchableOpacity>
+        {/* Action Buttons Row - Only show if not fully cancelled */}
+        {!isFullyCancelled && (
+          <View style={styles.actionButtonsRow}>
+            {/* Cancel Button - Only show if no tracking */}
+            {!hasTracking && (
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => handleCancelPress(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cancelButtonText}>✕ Cancel</Text>
+              </TouchableOpacity>
+            )}
+            
+            {/* Refund Button - Show if has tracking (delivered) */}
+            {hasTracking && !hasRefund && (
+              <TouchableOpacity
+                style={styles.refundButton}
+                onPress={() => handleRefundPress(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.refundButtonText}>↩ Refund Request</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
     );
@@ -471,6 +586,147 @@ const OrderDetailScreen = ({ navigation, route }) => {
                       disabled={submittingCancel}
                     >
                       {submittingCancel ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text style={styles.submitButtonText}>Submit</Text>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                )}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Refund Request Modal */}
+      <Modal
+        visible={showRefundModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowRefundModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => {
+          Keyboard.dismiss();
+          setShowRefundQuantityPicker(false);
+        }}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.modalContent}>
+              {/* Header */}
+              <View style={styles.refundFormHeader}>
+                <Text style={styles.formTitle}>Reason for Your Refund Request</Text>
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => setShowRefundModal(false)}
+                >
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.formSubHeader}>
+                <View style={styles.formSubHeaderLine} />
+                <Text style={styles.formSubTitle}>Refund Cancellation Form</Text>
+                <View style={styles.formSubHeaderLine} />
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {selectedItem && (
+                  <>
+                    {/* Order Number */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Order Number</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText}>{orderNumber}</Text>
+                      </View>
+                    </View>
+
+                    {/* Product Code */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Product Code</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText}>{selectedItem.productcode}</Text>
+                      </View>
+                    </View>
+
+                    {/* Product Name */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Product Name</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText} numberOfLines={2}>
+                          {selectedItem.productname}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Ordered Quantity */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Ordered Quantity</Text>
+                      <View style={styles.formInputReadOnly}>
+                        <Text style={styles.formInputText}>{selectedItem.qty}</Text>
+                      </View>
+                    </View>
+
+                    {/* Refund Quantity - Dropdown */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Refund Quantity</Text>
+                      <TouchableOpacity 
+                        style={styles.dropdownButton}
+                        onPress={() => setShowRefundQuantityPicker(!showRefundQuantityPicker)}
+                      >
+                        <Text style={styles.dropdownText}>{refundQuantity}</Text>
+                        <Text style={styles.dropdownArrow}>▼</Text>
+                      </TouchableOpacity>
+                      
+                      {showRefundQuantityPicker && (
+                        <View style={styles.dropdownList}>
+                          {getRefundQuantityOptions().map((qty) => (
+                            <TouchableOpacity
+                              key={qty}
+                              style={[
+                                styles.dropdownItem,
+                                refundQuantity === qty && styles.dropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setRefundQuantity(qty);
+                                setShowRefundQuantityPicker(false);
+                              }}
+                            >
+                              <Text style={[
+                                styles.dropdownItemText,
+                                refundQuantity === qty && styles.dropdownItemTextSelected
+                              ]}>
+                                {qty}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Refund Reason */}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Refund Reason</Text>
+                      <TextInput
+                        style={styles.reasonInput}
+                        placeholder="Enter your reason for refund..."
+                        value={refundReason}
+                        onChangeText={setRefundReason}
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                    </View>
+
+                    {/* Submit Button */}
+                    <TouchableOpacity
+                      style={[styles.refundSubmitButton, submittingRefund && styles.buttonDisabled]}
+                      onPress={handleSubmitRefund}
+                      disabled={submittingRefund}
+                    >
+                      {submittingRefund ? (
                         <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
                         <Text style={styles.submitButtonText}>Submit</Text>
@@ -679,16 +935,58 @@ const styles = StyleSheet.create({
     color: THEME_COLOR,
     fontWeight: '700',
   },
-  cancelButton: {
+  actionButtonsRow: {
+    flexDirection: 'row',
     marginTop: 12,
-    paddingVertical: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E74C3C',
     alignItems: 'center',
   },
   cancelButtonText: {
     color: '#E74C3C',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  refundButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFF8E1',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FF9800',
+    alignItems: 'center',
+  },
+  refundButtonText: {
+    color: '#E65100',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  refundStatusContainer: {
+    marginTop: 8,
+  },
+  refundBadge: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  refundBadgeText: {
+    color: '#E65100',
+    fontSize: 12,
     fontWeight: '600',
   },
   // Cancellation status styles
@@ -810,6 +1108,12 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
   },
   formHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  refundFormHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -938,6 +1242,14 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: THEME_COLOR,
+    paddingVertical: 14,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  refundSubmitButton: {
+    backgroundColor: '#E65100',
     paddingVertical: 14,
     borderRadius: 25,
     alignItems: 'center',

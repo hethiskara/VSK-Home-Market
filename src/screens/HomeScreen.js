@@ -167,6 +167,32 @@ const TestimonialCard = ({ testimonial }) => {
   );
 };
 
+const FeedbackCard = ({ feedback }) => {
+  // Decode HTML entities
+  const cleanContent = feedback.content
+    ?.replace(/&mdash;/g, '—')
+    ?.replace(/&amp;/g, '&')
+    ?.replace(/&quot;/g, '"')
+    ?.replace(/&#39;/g, "'") || '';
+
+  return (
+    <View style={styles.feedbackCard}>
+      <View style={styles.feedbackHeader}>
+        <View style={styles.feedbackAvatarContainer}>
+          <Text style={styles.avatarText}>
+            {feedback.name?.charAt(0)?.toUpperCase() || 'U'}
+          </Text>
+        </View>
+        <Text style={styles.feedbackName}>{feedback.name}</Text>
+      </View>
+      <View style={styles.feedbackQuoteBar} />
+      <Text style={styles.feedbackContent}>
+        {cleanContent}
+      </Text>
+    </View>
+  );
+};
+
 const HomeScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [banners, setBanners] = useState([]);
@@ -175,6 +201,7 @@ const HomeScreen = ({ navigation }) => {
   const [bestSelling, setBestSelling] = useState([]);
   const [latestProducts, setLatestProducts] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
   const [advertisement, setAdvertisement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -184,7 +211,6 @@ const HomeScreen = ({ navigation }) => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
   const [reviewName, setReviewName] = useState('');
-  const [reviewEmail, setReviewEmail] = useState('');
   const [reviewMobile, setReviewMobile] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
@@ -251,10 +277,15 @@ const HomeScreen = ({ navigation }) => {
       const latestGarmentsProducts = (Array.isArray(latestGarments) ? latestGarments : []).map(p => ({ ...p, productType: 'garment' }));
       setLatestProducts([...latestRegularProducts, ...latestGarmentsProducts]);
 
-      // Fetch testimonials
+      // Fetch testimonials (limit to 5 for homepage)
       const testimonialsResponse = await homeAPI.getTestimonials();
-      const testimonialsData = Array.isArray(testimonialsResponse) ? testimonialsResponse : [];
+      const testimonialsData = Array.isArray(testimonialsResponse) ? testimonialsResponse.slice(0, 5) : [];
       setTestimonials(testimonialsData);
+
+      // Fetch customer feedback (limit to 5 for homepage)
+      const feedbackResponse = await homeAPI.getFeedback();
+      const feedbackData = Array.isArray(feedbackResponse) ? feedbackResponse.slice(0, 5) : [];
+      setFeedbacks(feedbackData);
 
       // Fetch advertisement
       const adResponse = await homeAPI.getAdvertisement();
@@ -305,7 +336,6 @@ const HomeScreen = ({ navigation }) => {
       const response = await appReviewAPI.submitReview({
         user_id: userData?.userid || '0',
         name: reviewName.trim(),
-        email: reviewEmail.trim(),
         mobile_no: reviewMobile.trim(),
         ratings: reviewRating.toString(),
         review: reviewText.trim(),
@@ -435,6 +465,10 @@ const HomeScreen = ({ navigation }) => {
 
   const renderTestimonialItem = ({ item }) => (
     <TestimonialCard testimonial={item} />
+  );
+
+  const renderFeedbackItem = ({ item }) => (
+    <FeedbackCard feedback={item} />
   );
 
   if (loading) {
@@ -625,6 +659,35 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
+        {/* Customer Feedback Section */}
+        <View style={styles.feedbackSection}>
+          <View style={styles.feedbackSectionHeader}>
+            <View style={styles.feedbackTitleRow}>
+              <View>
+                <Text style={styles.feedbackSectionTitle}>Customer Feedback</Text>
+                <Text style={styles.feedbackSubtitle}>Reviews from our customers</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('CustomerFeedback')}>
+                <Text style={styles.viewAllFeedback}>View All</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {feedbacks.length > 0 ? (
+            <FlatList
+              data={feedbacks}
+              renderItem={renderFeedbackItem}
+              keyExtractor={(item) => `feedback-${item.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.feedbackList}
+            />
+          ) : (
+            <View style={styles.productPlaceholder}>
+              <Text style={styles.placeholderText}>No feedback available</Text>
+            </View>
+          )}
+        </View>
+
         {/* Stay Updated Section */}
         <View style={styles.stayUpdatedSection}>
           <View style={styles.stayUpdatedIcon}>
@@ -725,16 +788,6 @@ const HomeScreen = ({ navigation }) => {
                   placeholder="Enter your name"
                   value={reviewName}
                   onChangeText={setReviewName}
-                />
-
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter your email"
-                  value={reviewEmail}
-                  onChangeText={setReviewEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
                 />
 
                 <Text style={styles.inputLabel}>Mobile No *</Text>
@@ -1145,6 +1198,82 @@ const styles = StyleSheet.create({
     top: 70,
   },
   testimonialContent: {
+    fontSize: 14,
+    color: '#555555',
+    lineHeight: 22,
+    paddingLeft: 12,
+  },
+
+  // Customer Feedback Styles
+  feedbackSection: {
+    marginTop: 16,
+    backgroundColor: '#1E3A5F',
+    paddingBottom: 20,
+  },
+  feedbackSectionHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  feedbackTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  feedbackSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  feedbackSubtitle: {
+    fontSize: 14,
+    color: '#4CAF50',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  viewAllFeedback: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '500',
+  },
+  feedbackList: {
+    paddingHorizontal: 8,
+  },
+  feedbackCard: {
+    width: 300,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 8,
+    borderRadius: 12,
+    padding: 16,
+  },
+  feedbackHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  feedbackAvatarContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1E3A5F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  feedbackName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  feedbackQuoteBar: {
+    width: 4,
+    height: 30,
+    backgroundColor: '#1E3A5F',
+    borderRadius: 2,
+    position: 'absolute',
+    left: 16,
+    top: 70,
+  },
+  feedbackContent: {
     fontSize: 14,
     color: '#555555',
     lineHeight: 22,

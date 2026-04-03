@@ -81,22 +81,12 @@ const FeedbackScreen = ({ navigation }) => {
       Alert.alert('Required', 'Please enter your name');
       return false;
     }
-    if (!formData.email.trim()) {
-      Alert.alert('Required', 'Please enter your email');
-      return false;
-    }
     if (!formData.phone.trim()) {
       Alert.alert('Required', 'Please enter your phone number');
       return false;
     }
     if (!formData.feedback.trim()) {
       Alert.alert('Required', 'Please enter your feedback');
-      return false;
-    }
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim())) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address');
       return false;
     }
     return true;
@@ -111,7 +101,6 @@ const FeedbackScreen = ({ navigation }) => {
     try {
       const response = await feedbackAPI.submitFeedback({
         name: formData.name.trim(),
-        email: formData.email.trim(),
         phone: formData.phone.trim(),
         country: formData.country.trim() || 'India',
         state: formData.state.trim(),
@@ -197,20 +186,6 @@ const FeedbackScreen = ({ navigation }) => {
                   onChangeText={(value) => handleChange('name', value)}
                   placeholder="Enter your name"
                   placeholderTextColor="#999"
-                />
-              </View>
-
-              {/* Email */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>E-mail ID <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.email}
-                  onChangeText={(value) => handleChange('email', value)}
-                  placeholder="Enter your email"
-                  placeholderTextColor="#999"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
                 />
               </View>
 

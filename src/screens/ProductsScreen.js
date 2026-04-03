@@ -278,18 +278,28 @@ const ProductsScreen = ({ navigation, route }) => {
     );
   };
 
-  const renderProductItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.productCard}
-      onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
-      activeOpacity={0.7}
-    >
-      <Image 
-        source={{ uri: item.productimage }} 
-        style={styles.productImage} 
-        resizeMode="cover"
-      />
-      <View style={styles.productContent}>
+  const renderProductItem = ({ item }) => {
+    const isOutOfStock = item.qty === '0' || parseInt(item.qty) <= 0;
+    
+    return (
+      <TouchableOpacity 
+        style={[styles.productCard, isOutOfStock && styles.outOfStockCard]}
+        onPress={() => navigation.navigate('ProductDetail', { productCode: item.productcode })}
+        activeOpacity={0.7}
+      >
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: item.productimage }} 
+            style={styles.productImage} 
+            resizeMode="cover"
+          />
+          {isOutOfStock && (
+            <View style={styles.outOfStockOverlay}>
+              <Text style={styles.outOfStockText}>Advance Order</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.productContent}>
         <Text style={styles.productTitle} numberOfLines={2}>
           {item.productname}
         </Text>
@@ -307,7 +317,8 @@ const ProductsScreen = ({ navigation, route }) => {
         </View>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -558,10 +569,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E8E8E8',
   },
+  outOfStockCard: {
+    opacity: 0.9,
+  },
+  imageContainer: {
+    position: 'relative',
+  },
   productImage: {
     width: 130,
     height: 150,
     backgroundColor: '#F0F0F0',
+  },
+  outOfStockOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  outOfStockText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    backgroundColor: '#E74C3C',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
   productContent: {
     flex: 1,

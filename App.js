@@ -36,6 +36,9 @@ import SearchResultsScreen from './src/screens/SearchResultsScreen';
 import LegalPoliciesScreen from './src/screens/LegalPoliciesScreen';
 import LatestProductsScreen from './src/screens/LatestProductsScreen';
 import TestimonialsScreen from './src/screens/TestimonialsScreen';
+import TestimonialDetailScreen from './src/screens/TestimonialDetailScreen';
+import FeedbackDetailScreen from './src/screens/FeedbackDetailScreen';
+import CustomerFeedbackScreen from './src/screens/CustomerFeedbackScreen';
 
 LogBox.ignoreLogs(['AsyncStorage', 'Sending']);
 
@@ -181,6 +184,9 @@ export default function App() {
           <Stack.Screen name="LegalPolicies" component={LegalPoliciesScreen} />
           <Stack.Screen name="LatestProducts" component={LatestProductsScreen} />
           <Stack.Screen name="Testimonials" component={TestimonialsScreen} />
+          <Stack.Screen name="TestimonialDetail" component={TestimonialDetailScreen} />
+          <Stack.Screen name="FeedbackDetail" component={FeedbackDetailScreen} />
+          <Stack.Screen name="CustomerFeedback" component={CustomerFeedbackScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

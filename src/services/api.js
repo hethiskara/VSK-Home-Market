@@ -172,6 +172,34 @@ export const homeAPI = {
     console.log('VIEW ALL TESTIMONIALS RESPONSE:', response.data);
     return response.data;
   },
+
+  // Testimonial Read More
+  getTestimonialReadMore: async (id) => {
+    const response = await api.get(`/testimonial-readmore-json?id=${id}`);
+    console.log('TESTIMONIAL READ MORE RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Customer Feedback (for homepage - limited)
+  getFeedback: async () => {
+    const response = await api.get('/android-feedback-json');
+    console.log('FEEDBACK RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // View All Feedback
+  getViewAllFeedback: async () => {
+    const response = await api.get('/viewall-feedback-json');
+    console.log('VIEW ALL FEEDBACK RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Feedback Read More
+  getFeedbackReadMore: async (id) => {
+    const response = await api.get(`/feedback-readmore-json?id=${id}`);
+    console.log('FEEDBACK READ MORE RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // App Review API
@@ -509,6 +537,26 @@ export const orderAPI = {
     console.log('CANCEL GARMENT ORDER URL:', fullUrl);
     const response = await api.get(fullUrl);
     console.log('CANCEL GARMENT ORDER RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Refund regular product order
+  refundRegularOrder: async (data) => {
+    const params = `order_number=${encodeURIComponent(data.orderNumber)}&user_id=${data.userId}&product_code=${encodeURIComponent(data.productCode)}&product_id=${data.productId}&product_name=${encodeURIComponent(data.productName)}&ordered_quantity=${data.orderedQuantity}&refund_quantity=${data.refundQuantity}&refund_reason=${encodeURIComponent(data.reason)}`;
+    const fullUrl = `/regularorder-refund-json?${params}`;
+    console.log('REFUND REGULAR ORDER URL:', fullUrl);
+    const response = await api.get(fullUrl);
+    console.log('REFUND REGULAR ORDER RESPONSE:', response.data);
+    return response.data;
+  },
+
+  // Refund garment product order
+  refundGarmentOrder: async (data) => {
+    const params = `order_number=${encodeURIComponent(data.orderNumber)}&user_id=${data.userId}&product_code=${encodeURIComponent(data.productCode)}&product_id=${data.productId}&product_name=${encodeURIComponent(data.productName)}&ordered_quantity=${data.orderedQuantity}&refund_quantity=${data.refundQuantity}&refund_reason=${encodeURIComponent(data.reason)}`;
+    const fullUrl = `/garmentorder-refund-json?${params}`;
+    console.log('REFUND GARMENT ORDER URL:', fullUrl);
+    const response = await api.get(fullUrl);
+    console.log('REFUND GARMENT ORDER RESPONSE:', response.data);
     return response.data;
   },
 

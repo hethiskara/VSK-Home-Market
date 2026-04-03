@@ -333,7 +333,7 @@ const GarmentProductsScreen = ({ navigation, route }) => {
           />
           {isOutOfStock && (
             <View style={styles.outOfStockOverlay}>
-              <Text style={styles.outOfStockText}>Out of Stock</Text>
+              <Text style={styles.outOfStockText}>Advance Order</Text>
             </View>
           )}
         </View>

@@ -35,6 +35,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
@@ -835,22 +836,32 @@ const ProductDetailScreen = ({ navigation, route }) => {
             </View>
             
             {reviews.length > 0 ? (
-              reviews.map((review, index) => (
-                <View key={review.id || index} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <View style={styles.reviewerAvatar}>
-                      <Text style={styles.reviewerInitial}>
-                        {review.name?.charAt(0)?.toUpperCase() || 'U'}
-                      </Text>
+              <>
+                {(showAllReviews ? reviews : reviews.slice(0, 5)).map((review, index) => (
+                  <View key={review.id || index} style={styles.reviewCard}>
+                    <View style={styles.reviewHeader}>
+                      <View style={styles.reviewerAvatar}>
+                        <Text style={styles.reviewerInitial}>
+                          {review.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </Text>
+                      </View>
+                      <View style={styles.reviewerInfo}>
+                        <Text style={styles.reviewerName}>{review.name}</Text>
+                        {renderStars(review.ratings)}
+                      </View>
                     </View>
-                    <View style={styles.reviewerInfo}>
-                      <Text style={styles.reviewerName}>{review.name}</Text>
-                      {renderStars(review.ratings)}
-                    </View>
+                    <Text style={styles.reviewText}>{review.review}</Text>
                   </View>
-                  <Text style={styles.reviewText}>{review.review}</Text>
-                </View>
-              ))
+                ))}
+                {reviews.length > 5 && !showAllReviews && (
+                  <TouchableOpacity 
+                    style={styles.viewAllReviewsButton}
+                    onPress={() => setShowAllReviews(true)}
+                  >
+                    <Text style={styles.viewAllReviewsText}>View All ({reviews.length} Reviews)</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             ) : (
               <View style={styles.noReviews}>
                 <Text style={styles.noReviewsText}>No reviews yet. Be the first to review!</Text>
@@ -1457,6 +1468,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+  },
+  viewAllReviewsButton: {
+    backgroundColor: '#F0F4F8',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  viewAllReviewsText: {
+    color: '#2C4A6B',
+    fontSize: 14,
+    fontWeight: '600',
   },
   // FAQ Styles
   faqItem: {

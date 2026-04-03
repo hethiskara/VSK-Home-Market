@@ -15,30 +15,29 @@ import { homeAPI } from '../services/api';
 const THEME_COLOR = '#2C4A6B';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
-const TestimonialsScreen = ({ navigation }) => {
+const CustomerFeedbackScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const [testimonials, setTestimonials] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTestimonials();
+    fetchFeedbacks();
   }, []);
 
-  const fetchTestimonials = async () => {
+  const fetchFeedbacks = async () => {
     try {
       setLoading(true);
-      const response = await homeAPI.getViewAllTestimonials();
+      const response = await homeAPI.getViewAllFeedback();
       if (Array.isArray(response)) {
-        setTestimonials(response);
+        setFeedbacks(response);
       }
     } catch (error) {
-      console.log('Error fetching testimonials:', error);
+      console.log('Error fetching feedbacks:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Parse HTML entities
   const parseHtmlContent = (html) => {
     if (!html) return '';
     let text = html.replace(/&mdash;/g, '—');
@@ -53,16 +52,16 @@ const TestimonialsScreen = ({ navigation }) => {
   };
 
   const handleTitlePress = (id) => {
-    navigation.navigate('TestimonialDetail', { testimonialId: id });
+    navigation.navigate('FeedbackDetail', { feedbackId: id });
   };
 
-  const renderTestimonialItem = ({ item, index }) => {
+  const renderFeedbackItem = ({ item, index }) => {
     const colors = ['#FF6B35', '#2C4A6B', '#4CAF50', '#9C27B0', '#E91E63'];
     const bgColor = colors[index % colors.length];
     const initial = item.name ? item.name.charAt(0).toUpperCase() : 'U';
 
     return (
-      <View style={styles.testimonialCard}>
+      <View style={styles.feedbackCard}>
         {item.pagetitle && (
           <TouchableOpacity onPress={() => handleTitlePress(item.id)}>
             <Text style={styles.pageTitle}>{item.pagetitle}</Text>
@@ -83,7 +82,7 @@ const TestimonialsScreen = ({ navigation }) => {
         </View>
         <View style={styles.quoteContainer}>
           <Text style={styles.quoteIcon}>"</Text>
-          <Text style={styles.testimonialContent}>
+          <Text style={styles.feedbackContent}>
             {parseHtmlContent(item.content)}
           </Text>
           <Text style={styles.quoteIconEnd}>"</Text>
@@ -105,34 +104,32 @@ const TestimonialsScreen = ({ navigation }) => {
           <Text style={styles.backIcon}>‹</Text>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Testimonials</Text>
+        <Text style={styles.headerTitle}>Customer Feedback</Text>
         <View style={styles.placeholder} />
       </View>
 
       {/* Subtitle */}
       <View style={styles.subtitleContainer}>
         <Text style={styles.subtitle}>What Our Customers Say</Text>
-        <Text style={styles.testimonialCount}>
-          {testimonials.length} {testimonials.length === 1 ? 'Review' : 'Reviews'}
-        </Text>
+        <Text style={styles.feedbackCount}>{feedbacks.length} Reviews</Text>
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={THEME_COLOR} />
-          <Text style={styles.loadingText}>Loading testimonials...</Text>
+          <Text style={styles.loadingText}>Loading feedback...</Text>
         </View>
-      ) : testimonials.length > 0 ? (
+      ) : feedbacks.length > 0 ? (
         <FlatList
-          data={testimonials}
-          renderItem={renderTestimonialItem}
-          keyExtractor={(item) => `testimonial-${item.id}`}
+          data={feedbacks}
+          renderItem={renderFeedbackItem}
+          keyExtractor={(item) => `feedback-${item.id}`}
           contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 20 }]}
           showsVerticalScrollIndicator={false}
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No testimonials available</Text>
+          <Text style={styles.emptyText}>No feedback available</Text>
         </View>
       )}
     </View>
@@ -192,7 +189,7 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 4,
   },
-  testimonialCount: {
+  feedbackCount: {
     fontSize: 14,
     color: '#666666',
   },
@@ -209,7 +206,7 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },
-  testimonialCard: {
+  feedbackCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
@@ -274,7 +271,7 @@ const styles = StyleSheet.create({
     color: '#E0E0E0',
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
   },
-  testimonialContent: {
+  feedbackContent: {
     fontSize: 15,
     lineHeight: 24,
     color: '#555555',
@@ -300,4 +297,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TestimonialsScreen;
+export default CustomerFeedbackScreen;
