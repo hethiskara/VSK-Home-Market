@@ -43,26 +43,40 @@ const FeedbackScreen = ({ navigation }) => {
     try {
       const userData = await tokenManager.getUserData();
       if (userData?.userid) {
-        // Fetch full user details
-        const userDetails = await checkoutAPI.getUserData(userData.userid);
-        if (userDetails && userDetails.length > 0) {
-          const user = userDetails[0];
+        // Fetch user data from feedbackview API
+        const feedbackViewData = await feedbackAPI.getFeedbackViewData(userData.userid);
+        if (feedbackViewData && feedbackViewData.length > 0 && feedbackViewData[0].userdata && feedbackViewData[0].userdata.length > 0) {
+          const user = feedbackViewData[0].userdata[0];
           setFormData(prev => ({
             ...prev,
-            name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
-            email: user.email || '',
-            phone: user.mobile_no || userData.mobile_no || '',
+            name: user.name || '',
+            phone: user.phone || '',
+            country: user.country || 'India',
             state: user.state || '',
             city: user.city || '',
             address: user.address || '',
           }));
         } else {
-          // Use basic stored data
-          setFormData(prev => ({
-            ...prev,
-            name: `${userData.firstname || ''} ${userData.lastname || ''}`.trim(),
-            phone: userData.mobile_no || '',
-          }));
+          // Fallback to checkout API
+          const userDetails = await checkoutAPI.getUserData(userData.userid);
+          if (userDetails && userDetails.length > 0) {
+            const user = userDetails[0];
+            setFormData(prev => ({
+              ...prev,
+              name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+              phone: user.mobile_no || userData.mobile_no || '',
+              state: user.state || '',
+              city: user.city || '',
+              address: user.address || '',
+            }));
+          } else {
+            // Use basic stored data
+            setFormData(prev => ({
+              ...prev,
+              name: `${userData.firstname || ''} ${userData.lastname || ''}`.trim(),
+              phone: userData.mobile_no || '',
+            }));
+          }
         }
       }
     } catch (error) {

@@ -193,6 +193,69 @@ const FeedbackCard = ({ feedback }) => {
   );
 };
 
+const OVERALL_STAR_SIZE = 17;
+const OVERALL_STAR_CELL_W = OVERALL_STAR_SIZE + 4;
+
+/** Five stars with proportional fill for fractional ratings (e.g. 4.8 → four full + 80% of fifth). */
+const OverallRatingStars = ({ overallrating }) => {
+  const raw = String(overallrating ?? '').replace(',', '.');
+  const rating = Math.min(5, Math.max(0, parseFloat(raw) || 0));
+  return (
+    <View style={styles.overallStarRow}>
+      {[0, 1, 2, 3, 4].map((i) => {
+        const fill = Math.min(1, Math.max(0, rating - i));
+        const clipW = Math.round(OVERALL_STAR_CELL_W * fill * 100) / 100;
+        return (
+          <View
+            key={i}
+            style={[styles.overallStarCell, { width: OVERALL_STAR_CELL_W }]}
+          >
+            <Text
+              style={[
+                styles.overallStarBg,
+                {
+                  fontSize: OVERALL_STAR_SIZE,
+                  lineHeight: OVERALL_STAR_SIZE + 2,
+                  width: OVERALL_STAR_CELL_W,
+                  ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+                },
+              ]}
+            >
+              ★
+            </Text>
+            <View
+              style={[
+                styles.overallStarFillClip,
+                {
+                  width: clipW,
+                  height: OVERALL_STAR_SIZE + 2,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.overallStarFg,
+                  {
+                    fontSize: OVERALL_STAR_SIZE,
+                    lineHeight: OVERALL_STAR_SIZE + 2,
+                    width: OVERALL_STAR_CELL_W,
+                    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+                  },
+                ]}
+              >
+                ★
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+      <Text style={styles.overallRatingNumber}>
+        {rating >= 5 ? '5.0' : rating.toFixed(1)}
+      </Text>
+    </View>
+  );
+};
+
 const HomeScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [banners, setBanners] = useState([]);
@@ -224,6 +287,10 @@ const HomeScreen = ({ navigation }) => {
   const [subscribeOTP, setSubscribeOTP] = useState('');
   const [subscribeId, setSubscribeId] = useState(null);
   const [subscribing, setSubscribing] = useState(false);
+
+  // App Reviews Section states
+  const [appReviews, setAppReviews] = useState([]);
+  const [starRatingData, setStarRatingData] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -293,11 +360,24 @@ const HomeScreen = ({ navigation }) => {
         setAdvertisement(adResponse.data.products[0]);
       }
 
-      // Pre-fill user data for review modal if logged in
+      // Pre-fill user data for review modal and subscribe modal if logged in
       const userData = await tokenManager.getUserData();
       if (userData) {
         setReviewName(`${userData.firstname || ''} ${userData.lastname || ''}`.trim());
         setReviewMobile(userData.mobile_no || '');
+        setSubscribeName(`${userData.firstname || ''} ${userData.lastname || ''}`.trim());
+        setSubscribeMobile(userData.mobile_no || '');
+      }
+
+      // Fetch app reviews (limit to 5 for homepage)
+      const appReviewsResponse = await appReviewAPI.getViewAllReviews();
+      const appReviewsData = Array.isArray(appReviewsResponse) ? appReviewsResponse.slice(0, 5) : [];
+      setAppReviews(appReviewsData);
+
+      // Fetch star rating count
+      const starRatingResponse = await appReviewAPI.getStarRatingCount();
+      if (Array.isArray(starRatingResponse) && starRatingResponse.length > 0) {
+        setStarRatingData(starRatingResponse[0]);
       }
 
     } catch (error) {
@@ -415,11 +495,29 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const prefillSubscribeFromUser = async () => {
+    try {
+      const userData = await tokenManager.getUserData();
+      if (userData) {
+        setSubscribeName(`${userData.firstname || ''} ${userData.lastname || ''}`.trim());
+        setSubscribeMobile(userData.mobile_no || '');
+      }
+    } catch (e) {
+      console.log('prefillSubscribeFromUser error:', e);
+    }
+  };
+
+  const openSubscribeModal = () => {
+    setSubscribeStep(1);
+    setSubscribeOTP('');
+    setSubscribeId(null);
+    setShowSubscribeModal(true);
+    prefillSubscribeFromUser();
+  };
+
   const resetSubscribeModal = () => {
     setShowSubscribeModal(false);
     setSubscribeStep(1);
-    setSubscribeName('');
-    setSubscribeMobile('');
     setSubscribeOTP('');
     setSubscribeId(null);
   };
@@ -618,16 +716,67 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Love Our App Section */}
         <View style={styles.appReviewSection}>
-          <View style={styles.appReviewHeader}>
-            <Text style={styles.appReviewTitle}>❤️ Love Our App?</Text>
-            <Text style={styles.appReviewSubtitle}>Share your experience with us</Text>
+          <View style={styles.appReviewSectionHeader}>
+            <View style={styles.appReviewTitleRow}>
+              <View>
+                <Text style={styles.appReviewSectionTitle}>❤️ Love Our App?</Text>
+                {starRatingData && (
+                  <View style={styles.starRatingInfo}>
+                    <OverallRatingStars overallrating={starRatingData.overallrating} />
+                    <Text style={styles.reviewCount}>{starRatingData.members}</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('AppReviews')}>
+                <Text style={styles.viewAllAppReview}>View All</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+          
           <TouchableOpacity 
-            style={styles.writeReviewButton}
+            style={styles.writeReviewButtonCompact}
             onPress={() => setShowReviewModal(true)}
           >
             <Text style={styles.writeReviewButtonText}>✍️ Write a Review</Text>
           </TouchableOpacity>
+
+          {appReviews.length > 0 ? (
+            <FlatList
+              data={appReviews}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={styles.appReviewCard}
+                  onPress={() => navigation.navigate('AppReviewDetail', { reviewId: item.id })}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.appReviewCardHeader}>
+                    <View style={[styles.appReviewAvatar, { backgroundColor: ['#FF6B35', '#2C4A6B', '#4CAF50', '#9C27B0', '#E91E63'][parseInt(item.id) % 5] }]}>
+                      <Text style={styles.appReviewAvatarText}>
+                        {item.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </Text>
+                    </View>
+                    <View style={styles.appReviewInfo}>
+                      <Text style={styles.appReviewName}>{item.name}</Text>
+                      <View style={styles.appReviewStars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Text key={star} style={[styles.appReviewStar, { color: star <= parseFloat(item.ratings) ? '#FFD700' : '#DDD' }]}>★</Text>
+                        ))}
+                      </View>
+                    </View>
+                  </View>
+                  <Text style={styles.appReviewText} numberOfLines={3}>{item.review}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => `app-review-${item.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.appReviewList}
+            />
+          ) : (
+            <View style={styles.productPlaceholder}>
+              <Text style={styles.placeholderText}>No reviews yet</Text>
+            </View>
+          )}
         </View>
 
         {/* Testimonials Section */}
@@ -699,7 +848,7 @@ const HomeScreen = ({ navigation }) => {
           </Text>
           <TouchableOpacity 
             style={styles.subscribeButton}
-            onPress={() => setShowSubscribeModal(true)}
+            onPress={openSubscribeModal}
           >
             <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
           </TouchableOpacity>
@@ -1348,33 +1497,131 @@ const styles = StyleSheet.create({
   appReviewSection: {
     marginTop: 16,
     backgroundColor: '#FFF8F5',
-    padding: 20,
-    alignItems: 'center',
+    paddingBottom: 20,
   },
-  appReviewHeader: {
-    alignItems: 'center',
-    marginBottom: 12,
+  appReviewSectionHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
-  appReviewTitle: {
+  appReviewTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  appReviewSectionTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#2C4A6B',
-    marginBottom: 4,
   },
-  appReviewSubtitle: {
+  starRatingInfo: {
+    marginTop: 8,
+  },
+  overallStarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  overallStarCell: {
+    position: 'relative',
+    height: OVERALL_STAR_SIZE + 2,
+  },
+  overallStarBg: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    color: '#DDDDDD',
+    textAlign: 'left',
+  },
+  overallStarFillClip: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    overflow: 'hidden',
+  },
+  overallStarFg: {
+    color: '#FFD700',
+  },
+  overallRatingNumber: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#2C4A6B',
+    marginLeft: 8,
+  },
+  reviewCount: {
     fontSize: 14,
     color: '#666666',
+    marginTop: 4,
   },
-  writeReviewButton: {
+  viewAllAppReview: {
+    fontSize: 14,
+    color: '#FF6B35',
+    fontWeight: '600',
+  },
+  writeReviewButtonCompact: {
     backgroundColor: '#2C4A6B',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   writeReviewButtonText: {
     color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  appReviewList: {
+    paddingHorizontal: 8,
+  },
+  appReviewCard: {
+    width: 280,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  appReviewCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  appReviewAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appReviewAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  appReviewInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  appReviewName: {
     fontSize: 15,
     fontWeight: '600',
+    color: '#333333',
+  },
+  appReviewStars: {
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+  appReviewStar: {
+    fontSize: 14,
+    marginRight: 2,
+  },
+  appReviewText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#555555',
   },
 
   // Footer Styles

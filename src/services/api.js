@@ -210,14 +210,38 @@ export const appReviewAPI = {
     console.log('APP REVIEW RESPONSE:', response.data);
     return response.data;
   },
+
+  getViewAllReviews: async () => {
+    const response = await api.get('/home-viewall-review-json');
+    console.log('VIEW ALL APP REVIEWS RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getReviewDetail: async (id) => {
+    const response = await api.get(`/home-review-readmore-json?id=${id}`);
+    console.log('APP REVIEW DETAIL RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getStarRatingCount: async () => {
+    const response = await api.get('/home-star-ratingcount-json');
+    console.log('STAR RATING COUNT RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Feedback API
 export const feedbackAPI = {
   submitFeedback: async (data) => {
-    const params = `feedback_name=${encodeURIComponent(data.name)}&feedback_email=${encodeURIComponent(data.email)}&feedback_phone=${data.phone}&feedback_country=${encodeURIComponent(data.country)}&feedback_state=${encodeURIComponent(data.state)}&feedback_city=${encodeURIComponent(data.city)}&feedback_address=${encodeURIComponent(data.address)}&customer_feedback=${encodeURIComponent(data.feedback)}`;
+    const params = `feedback_name=${encodeURIComponent(data.name)}&feedback_email=${encodeURIComponent(data.email || '')}&feedback_phone=${data.phone}&feedback_country=${encodeURIComponent(data.country)}&feedback_state=${encodeURIComponent(data.state)}&feedback_city=${encodeURIComponent(data.city)}&feedback_address=${encodeURIComponent(data.address)}&customer_feedback=${encodeURIComponent(data.feedback)}`;
     const response = await api.get(`/feedback-json?${params}`);
     console.log('FEEDBACK RESPONSE:', response.data);
+    return response.data;
+  },
+
+  getFeedbackViewData: async (userId) => {
+    const response = await api.get(`/feedbackview-json?user_id=${userId}`);
+    console.log('FEEDBACK VIEW DATA RESPONSE:', response.data);
     return response.data;
   },
 };

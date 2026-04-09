@@ -39,6 +39,8 @@ import TestimonialsScreen from './src/screens/TestimonialsScreen';
 import TestimonialDetailScreen from './src/screens/TestimonialDetailScreen';
 import FeedbackDetailScreen from './src/screens/FeedbackDetailScreen';
 import CustomerFeedbackScreen from './src/screens/CustomerFeedbackScreen';
+import AppReviewsScreen from './src/screens/AppReviewsScreen';
+import AppReviewDetailScreen from './src/screens/AppReviewDetailScreen';
 
 LogBox.ignoreLogs(['AsyncStorage', 'Sending']);
 
@@ -187,6 +189,8 @@ export default function App() {
           <Stack.Screen name="TestimonialDetail" component={TestimonialDetailScreen} />
           <Stack.Screen name="FeedbackDetail" component={FeedbackDetailScreen} />
           <Stack.Screen name="CustomerFeedback" component={CustomerFeedbackScreen} />
+          <Stack.Screen name="AppReviews" component={AppReviewsScreen} />
+          <Stack.Screen name="AppReviewDetail" component={AppReviewDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
