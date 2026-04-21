@@ -750,7 +750,7 @@ const HomeScreen = ({ navigation }) => {
                   activeOpacity={0.8}
                 >
                   <View style={styles.appReviewCardHeader}>
-                    <View style={[styles.appReviewAvatar, { backgroundColor: ['#FF6B35', '#2C4A6B', '#4CAF50', '#9C27B0', '#E91E63'][parseInt(item.id) % 5] }]}>
+                    <View style={[styles.appReviewAvatar, { backgroundColor: ['#FF6B35', '#a10000', '#4CAF50', '#9C27B0', '#E91E63'][parseInt(item.id) % 5] }]}>
                       <Text style={styles.appReviewAvatarText}>
                         {item.name?.charAt(0)?.toUpperCase() || 'U'}
                       </Text>
@@ -1142,9 +1142,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#FDF8F3',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#a10000',
   },
   sectionTitle: {
     fontSize: 16,
@@ -1161,7 +1163,7 @@ const styles = StyleSheet.create({
   },
   viewAll: {
     fontSize: 14,
-    color: '#2196F3',
+    color: '#a10000',
     fontWeight: '500',
   },
   productList: {
@@ -1212,7 +1214,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2196F3',
+    color: '#a10000',
   },
   discount: {
     fontSize: 11,
@@ -1275,7 +1277,7 @@ const styles = StyleSheet.create({
   // Testimonial Styles
   testimonialSection: {
     marginTop: 16,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     paddingBottom: 20,
   },
   testimonialSectionHeader: {
@@ -1300,7 +1302,7 @@ const styles = StyleSheet.create({
   },
   viewAllTestimonial: {
     fontSize: 14,
-    color: '#FFD700',
+    color: '#FFFFFF',
     fontWeight: '500',
   },
   testimonialList: {
@@ -1322,7 +1324,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1340,7 +1342,7 @@ const styles = StyleSheet.create({
   quoteBar: {
     width: 4,
     height: 30,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     borderRadius: 2,
     position: 'absolute',
     left: 16,
@@ -1356,7 +1358,7 @@ const styles = StyleSheet.create({
   // Customer Feedback Styles
   feedbackSection: {
     marginTop: 16,
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#8b0000',
     paddingBottom: 20,
   },
   feedbackSectionHeader: {
@@ -1381,7 +1383,7 @@ const styles = StyleSheet.create({
   },
   viewAllFeedback: {
     fontSize: 14,
-    color: '#4CAF50',
+    color: '#FFFFFF',
     fontWeight: '500',
   },
   feedbackList: {
@@ -1403,7 +1405,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#8b0000',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1416,7 +1418,7 @@ const styles = StyleSheet.create({
   feedbackQuoteBar: {
     width: 4,
     height: 30,
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#8b0000',
     borderRadius: 2,
     position: 'absolute',
     left: 16,
@@ -1446,7 +1448,7 @@ const styles = StyleSheet.create({
   // Stay Updated Section Styles
   stayUpdatedSection: {
     marginTop: 16,
-    backgroundColor: '#E8F4FD',
+    backgroundColor: '#FDF2F2',
     padding: 24,
     alignItems: 'center',
   },
@@ -1458,7 +1460,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#2C4A6B',
+    shadowColor: '#a10000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1470,7 +1472,7 @@ const styles = StyleSheet.create({
   stayUpdatedTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2C4A6B',
+    color: '#a10000',
     marginBottom: 8,
   },
   stayUpdatedText: {
@@ -1511,7 +1513,7 @@ const styles = StyleSheet.create({
   appReviewSectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2C4A6B',
+    color: '#a10000',
   },
   starRatingInfo: {
     marginTop: 8,
@@ -1543,7 +1545,7 @@ const styles = StyleSheet.create({
   overallRatingNumber: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#2C4A6B',
+    color: '#a10000',
     marginLeft: 8,
   },
   reviewCount: {
@@ -1553,11 +1555,11 @@ const styles = StyleSheet.create({
   },
   viewAllAppReview: {
     fontSize: 14,
-    color: '#FF6B35',
+    color: '#a10000',
     fontWeight: '600',
   },
   writeReviewButtonCompact: {
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
@@ -1626,7 +1628,7 @@ const styles = StyleSheet.create({
 
   // Footer Styles
   footer: {
-    backgroundColor: '#1A3A5C',
+    backgroundColor: '#8b0000',
     paddingVertical: 24,
     paddingHorizontal: 16,
     marginTop: 16,
@@ -1736,7 +1738,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2C4A6B',
+    color: '#a10000',
   },
   modalClose: {
     fontSize: 22,
@@ -1776,7 +1778,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -1842,7 +1844,7 @@ const styles = StyleSheet.create({
   subscribeModalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2C4A6B',
+    color: '#a10000',
   },
   subscribeFormContainer: {
     paddingTop: 8,
@@ -1876,7 +1878,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resendOTPText: {
-    color: '#2C4A6B',
+    color: '#a10000',
     fontSize: 14,
     fontWeight: '500',
   },

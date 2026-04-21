@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TouchableOpacity } from 'react-native';
 import { homeAPI } from '../services/api';
 
-const THEME_COLOR = '#1E3A5F';
+const THEME_COLOR = '#8b0000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const FeedbackDetailScreen = ({ navigation, route }) => {

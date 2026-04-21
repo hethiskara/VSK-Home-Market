@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TouchableOpacity } from 'react-native';
 import { appReviewAPI } from '../services/api';
 
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const AppReviewDetailScreen = ({ navigation, route }) => {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
   },
   ratingBadge: {
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   ratingBadgeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2C4A6B',
+    color: '#a10000',
   },
   contentCard: {
     backgroundColor: '#FFFFFF',

@@ -50,7 +50,7 @@ export async function registerForPushNotifications() {
         name: 'Order Updates',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#2C4A6B',
+        lightColor: '#a10000',
         sound: 'default',
       });
     }

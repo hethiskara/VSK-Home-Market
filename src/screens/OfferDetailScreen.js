@@ -17,7 +17,7 @@ import { offersAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const OfferDetailScreen = ({ navigation, route }) => {

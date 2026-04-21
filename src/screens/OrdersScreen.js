@@ -20,7 +20,7 @@ import { orderAPI, tokenManager } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const OrdersScreen = ({ navigation, route }) => {
@@ -844,7 +844,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   trackIdBox: {
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
     padding: 14,
     borderRadius: 8,
     borderWidth: 1,

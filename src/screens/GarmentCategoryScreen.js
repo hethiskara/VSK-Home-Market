@@ -15,7 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { garmentAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const GarmentCategoryScreen = ({ navigation, route }) => {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     paddingHorizontal: 20,
-    backgroundColor: '#E8F4FD',
+    backgroundColor: '#FDF2F2',
     borderBottomWidth: 1,
     borderBottomColor: '#D0E8F9',
   },

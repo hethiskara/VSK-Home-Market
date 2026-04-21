@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
   },
   backButton: {
     paddingVertical: 4,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 16,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '500',
   },
   headerTitle: {
@@ -271,12 +271,12 @@ const styles = StyleSheet.create({
   },
   contactValue: {
     fontSize: 16,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '600',
   },
   contactArrow: {
     fontSize: 20,
-    color: '#3498DB',
+    color: '#c92a2a',
   },
   whatsappButton: {
     flexDirection: 'row',

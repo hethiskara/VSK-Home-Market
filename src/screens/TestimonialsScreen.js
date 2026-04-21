@@ -12,7 +12,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TouchableOpacity } from 'react-native';
 import { homeAPI } from '../services/api';
 
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const TestimonialsScreen = ({ navigation }) => {
@@ -57,7 +57,7 @@ const TestimonialsScreen = ({ navigation }) => {
   };
 
   const renderTestimonialItem = ({ item, index }) => {
-    const colors = ['#FF6B35', '#2C4A6B', '#4CAF50', '#9C27B0', '#E91E63'];
+    const colors = ['#FF6B35', '#a10000', '#4CAF50', '#9C27B0', '#E91E63'];
     const bgColor = colors[index % colors.length];
     const initial = item.name ? item.name.charAt(0).toUpperCase() : 'U';
 
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2C4A6B',
+    color: '#a10000',
     marginBottom: 12,
     textDecorationLine: 'underline',
   },

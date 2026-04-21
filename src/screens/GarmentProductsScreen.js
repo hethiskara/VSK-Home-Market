@@ -17,7 +17,7 @@ import { garmentAPI } from '../services/api';
 import api from '../services/api';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 // Custom Thumb Component
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   filterButtonActive: {
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
   },
   filterButtonLast: {
     borderRightWidth: 0,
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   sortOptionActive: {
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
   },
   sortOptionText: {
     fontSize: 14,

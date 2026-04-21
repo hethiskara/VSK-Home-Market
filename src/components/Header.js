@@ -6,7 +6,6 @@ import {
   StyleSheet, 
   TextInput, 
   Text, 
-  ImageBackground,
   Modal,
   ScrollView,
   ActivityIndicator,
@@ -272,11 +271,7 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ImageBackground 
-        source={require('../../assets/Logos/headerbg.jpg')}
-        style={styles.container}
-        resizeMode="cover"
-      >
+      <View style={styles.container}>
         <View style={styles.topRow}>
           {/* Hamburger Menu */}
           <TouchableOpacity
@@ -340,7 +335,7 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
                 onSubmitEditing={handleGoPress}
               />
               {loadingSuggestions && (
-                <ActivityIndicator size="small" color="#1a4a7c" style={styles.searchLoader} />
+                <ActivityIndicator size="small" color="#a10000" style={styles.searchLoader} />
               )}
               <TouchableOpacity style={styles.goButton} onPress={handleGoPress}>
                 <Text style={styles.goText}>Go</Text>
@@ -376,7 +371,7 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
             )}
           </View>
         )}
-      </ImageBackground>
+      </View>
 
       {/* Notification Form Modal */}
       <Modal
@@ -484,12 +479,13 @@ const Header = ({ onMenuPress, navigation, showSearch = true }) => {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#FDF8F3',
     zIndex: 100,
   },
   container: {
     paddingHorizontal: 16,
     paddingBottom: 12,
+    backgroundColor: '#FDF8F3',
   },
   topRow: {
     flexDirection: 'row',
@@ -505,7 +501,7 @@ const styles = StyleSheet.create({
   },
   menuLine: {
     height: 3,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#a10000',
     borderRadius: 2,
   },
   logo: {
@@ -560,13 +556,13 @@ const styles = StyleSheet.create({
   profileHead: {
     width: 12,
     height: 12,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#a10000',
     borderRadius: 6,
   },
   profileBody: {
     width: 20,
     height: 12,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#a10000',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     marginTop: 2,
@@ -615,7 +611,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   goButton: {
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#8b0000',
     paddingHorizontal: 20,
     height: '100%',
     justifyContent: 'center',
@@ -670,7 +666,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   suggestionCountBadge: {
-    backgroundColor: '#1a4a7c',
+    backgroundColor: '#a10000',
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -722,7 +718,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1a4a7c',
+    color: '#a10000',
   },
   modalCloseButton: {
     width: 28,
@@ -789,7 +785,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   submitButton: {
-    backgroundColor: '#1a4a7c',
+    backgroundColor: '#a10000',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',

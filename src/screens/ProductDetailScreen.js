@@ -819,7 +819,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
                 disabled={addingToCart || buyingNow}
               >
                 {addingToCart ? (
-                  <ActivityIndicator color="#1a4a7c" size="small" />
+                  <ActivityIndicator color="#a10000" size="small" />
                 ) : (
                   <Text style={styles.addToCartText}>Add to Cart</Text>
                 )}
@@ -1123,7 +1123,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
   },
   backButton: {
     paddingVertical: 4,
@@ -1131,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 16,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '500',
   },
   headerTitle: {
@@ -1219,7 +1219,7 @@ const styles = StyleSheet.create({
   },
   ratingsLabel: {
     fontSize: 14,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '500',
   },
   wishlistButton: {
@@ -1316,12 +1316,12 @@ const styles = StyleSheet.create({
   },
   shareIcon: {
     fontSize: 16,
-    color: '#3498DB',
+    color: '#c92a2a',
     marginRight: 6,
   },
   shareText: {
     fontSize: 14,
-    color: '#3498DB',
+    color: '#c92a2a',
     textDecorationLine: 'underline',
   },
   quantitySection: {
@@ -1450,7 +1450,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   writeReviewButton: {
-    backgroundColor: '#3498DB',
+    backgroundColor: '#c92a2a',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -1475,7 +1475,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -1509,7 +1509,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   viewAllReviewsButton: {
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -1517,7 +1517,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   viewAllReviewsText: {
-    color: '#2C4A6B',
+    color: '#a10000',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1546,7 +1546,7 @@ const styles = StyleSheet.create({
   faqExpandIcon: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1E3A5F',
+    color: '#8b0000',
     width: 24,
     textAlign: 'center',
   },

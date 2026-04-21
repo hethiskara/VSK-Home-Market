@@ -611,7 +611,7 @@ const CartScreen = ({ navigation }) => {
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #2C4A6B 0%, #1a2d42 100%);
+            background: linear-gradient(135deg, #a10000 0%, #5c0000 100%);
           }
           .container {
             text-align: center;
@@ -662,7 +662,7 @@ const CartScreen = ({ navigation }) => {
               contact: '${razorpayData.mobile}'
             },
             theme: {
-              color: '#2C4A6B'
+              color: '#a10000'
             },
             handler: function(response) {
               window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -799,7 +799,7 @@ const CartScreen = ({ navigation }) => {
               </TouchableOpacity>
               {isUpdating ? (
                 <View style={styles.qtyValueContainer}>
-                  <ActivityIndicator size="small" color="#3498DB" />
+                  <ActivityIndicator size="small" color="#c92a2a" />
                 </View>
               ) : (
                 <Text style={styles.qtyValue}>{item.quantity}</Text>
@@ -1241,7 +1241,7 @@ const CartScreen = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2C4A6B" />
+          <ActivityIndicator size="large" color="#a10000" />
         </View>
       </SafeAreaView>
     );
@@ -1335,7 +1335,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
   },
   backButton: {
     paddingVertical: 4,
@@ -1361,7 +1361,7 @@ const styles = StyleSheet.create({
   cartTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#3498DB',
+    color: '#c92a2a',
   },
   stepsContainer: {
     flexDirection: 'row',
@@ -1379,8 +1379,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepActive: {
-    backgroundColor: '#2C4A6B',
-    borderColor: '#2C4A6B',
+    backgroundColor: '#a10000',
+    borderColor: '#a10000',
   },
   stepText: {
     fontSize: 10,
@@ -1401,7 +1401,7 @@ const styles = StyleSheet.create({
   },
   itemsCountBold: {
     fontWeight: '600',
-    color: '#3498DB',
+    color: '#c92a2a',
   },
   tableHeader: {
     paddingHorizontal: 16,
@@ -1503,7 +1503,7 @@ const styles = StyleSheet.create({
   },
   qtyButtonText: {
     fontSize: 18,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '600',
   },
   qtyButtonTextDisabled: {
@@ -1564,7 +1564,7 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#3498DB',
+    color: '#c92a2a',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -1574,7 +1574,7 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     flex: 1,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     paddingVertical: 14,
     borderRadius: 6,
     alignItems: 'center',
@@ -1586,7 +1586,7 @@ const styles = StyleSheet.create({
   },
   deliveryButton: {
     flex: 1,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
     paddingVertical: 14,
     borderRadius: 6,
     alignItems: 'center',
@@ -1636,7 +1636,7 @@ const styles = StyleSheet.create({
   addressSectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E3A5F',
+    color: '#8b0000',
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
@@ -1670,8 +1670,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#3498DB',
-    borderColor: '#3498DB',
+    backgroundColor: '#c92a2a',
+    borderColor: '#c92a2a',
   },
   checkmark: {
     color: '#FFFFFF',
@@ -1742,19 +1742,19 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#3498DB',
+    borderColor: '#c92a2a',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   radioButtonSelected: {
-    borderColor: '#3498DB',
+    borderColor: '#c92a2a',
   },
   radioButtonInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#3498DB',
+    backgroundColor: '#c92a2a',
   },
   shippingInfo: {
     flex: 1,
@@ -1794,7 +1794,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   termsLink: {
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '600',
   },
   addressActionButtons: {
@@ -1816,13 +1816,13 @@ const styles = StyleSheet.create({
   },
   proceedButton: {
     flex: 1,
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#8b0000',
     paddingVertical: 14,
     borderRadius: 6,
     alignItems: 'center',
   },
   proceedButtonDisabled: {
-    backgroundColor: '#B0C4DE',
+    backgroundColor: '#d4a5a5',
   },
   proceedButtonText: {
     color: '#FFFFFF',
@@ -1834,7 +1834,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   paymentHeader: {
-    backgroundColor: '#E8F4FD',
+    backgroundColor: '#FDF2F2',
     padding: 16,
     marginHorizontal: 16,
     borderRadius: 4,
@@ -1842,7 +1842,7 @@ const styles = StyleSheet.create({
   },
   paymentHeaderText: {
     fontSize: 14,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '500',
   },
   orderSummarySection: {
@@ -1909,7 +1909,7 @@ const styles = StyleSheet.create({
   deliveryAddressTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1E3A5F',
+    color: '#8b0000',
     marginBottom: 8,
   },
   deliveryAddressText: {
@@ -1936,7 +1936,7 @@ const styles = StyleSheet.create({
   },
   priceLineValue: {
     fontSize: 13,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '600',
   },
   grandTotalRow: {
@@ -1957,7 +1957,7 @@ const styles = StyleSheet.create({
   grandTotalValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#3498DB',
+    color: '#c92a2a',
   },
   roundedOffText: {
     fontSize: 10,
@@ -1976,7 +1976,7 @@ const styles = StyleSheet.create({
   promoCodeTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E3A5F',
+    color: '#8b0000',
     marginBottom: 10,
   },
   promoCodeInputRow: {
@@ -2000,7 +2000,7 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   applyPromoButton: {
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#8b0000',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 4,
@@ -2089,7 +2089,7 @@ const styles = StyleSheet.create({
   deliveryOptionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1E3A5F',
+    color: '#8b0000',
     marginBottom: 8,
   },
   deliveryOptionText: {
@@ -2119,7 +2119,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   payButton: {
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#8b0000',
     paddingVertical: 16,
     borderRadius: 6,
     alignItems: 'center',
@@ -2144,14 +2144,14 @@ const styles = StyleSheet.create({
   // Payment Modal Styles
   paymentModalContainer: {
     flex: 1,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
   },
   paymentModalHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#a10000',
   },
   closePaymentButton: {
     paddingHorizontal: 16,

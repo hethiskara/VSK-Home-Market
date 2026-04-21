@@ -15,7 +15,7 @@ import { productAPI } from '../services/api';
 import api from '../services/api';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#4A90D9';
+const THEME_COLOR = '#a10000';
 
 // Custom Thumb Component
 const Thumb = () => (
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
   },
   backButton: {
     paddingVertical: 4,
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 16,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '500',
   },
   headerTitle: {
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   breadcrumbLink: {
-    color: '#3498DB',
+    color: '#c92a2a',
   },
   listContent: {
     padding: 16,
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 12,
-    color: '#3498DB',
+    color: '#c92a2a',
   },
   productCode: {
     fontSize: 12,
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   filterButtonActive: {
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
   },
   sortDropdown: {
     backgroundColor: '#FFFFFF',
@@ -675,14 +675,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   sortOptionActive: {
-    backgroundColor: '#E8F4FD',
+    backgroundColor: '#FDF2F2',
   },
   sortOptionText: {
     fontSize: 14,
     color: '#2C3E50',
   },
   sortOptionTextActive: {
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '600',
   },
   priceFilterContainer: {

@@ -22,7 +22,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { orderAPI, tokenManager } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const OrderDetailScreen = ({ navigation, route }) => {
@@ -1220,7 +1220,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   dropdownItemSelected: {
-    backgroundColor: '#E8F4FD',
+    backgroundColor: '#FDF2F2',
   },
   dropdownItemText: {
     fontSize: 14,

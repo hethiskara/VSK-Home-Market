@@ -26,7 +26,7 @@ import { garmentAPI, cartAPI, tokenManager, wishlistAPI, advanceOrderAPI } from 
 const CART_STORAGE_KEY = '@vsk_cart';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 const GarmentProductDetailScreen = ({ navigation, route }) => {
@@ -711,7 +711,7 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
                 disabled={addingToCart || buyingNow}
               >
                 {addingToCart ? (
-                  <ActivityIndicator color="#1a4a7c" size="small" />
+                  <ActivityIndicator color="#a10000" size="small" />
                 ) : (
                   <Text style={styles.addToCartText}>Add to Cart</Text>
                 )}
@@ -1012,7 +1012,7 @@ const styles = StyleSheet.create({
   },
   ratingsLabel: {
     fontSize: 14,
-    color: '#3498DB',
+    color: '#c92a2a',
     fontWeight: '500',
   },
   wishlistButton: {
@@ -1104,7 +1104,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
   },
   tagText: {
     fontSize: 12,
@@ -1118,12 +1118,12 @@ const styles = StyleSheet.create({
   },
   shareIcon: {
     fontSize: 16,
-    color: '#3498DB',
+    color: '#c92a2a',
     marginRight: 6,
   },
   shareText: {
     fontSize: 14,
-    color: '#3498DB',
+    color: '#c92a2a',
     textDecorationLine: 'underline',
   },
   quantitySection: {

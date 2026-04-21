@@ -15,7 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { contentAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#2C4A6B';
+const THEME_COLOR = '#a10000';
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 
 // HTML parser helper
@@ -53,7 +53,7 @@ const parseHtmlContent = (html) => {
 };
 
 const TABS = [
-  { id: 'terms', label: 'Terms & Conditions', icon: '📋', color: '#3498DB' },
+  { id: 'terms', label: 'Terms & Conditions', icon: '📋', color: '#c92a2a' },
   { id: 'privacy', label: 'Privacy Policy', icon: '🔒', color: '#9B59B6' },
   { id: 'sales', label: 'Terms of Sales', icon: '🛒', color: '#27AE60' },
   { id: 'refund', label: 'Cancellation & Refund', icon: '↩️', color: '#E67E22' },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FDF5F5',
     borderRadius: 12,
     padding: 4,
     position: 'relative',

@@ -108,7 +108,7 @@ const SearchResultsScreen = ({ route, navigation }) => {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1a4a7c" />
+          <ActivityIndicator size="large" color="#a10000" />
           <Text style={styles.loadingText}>Searching...</Text>
         </View>
       ) : products.length === 0 ? (
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#1a4a7c',
+    backgroundColor: '#a10000',
   },
   backButton: {
     padding: 4,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1a4a7c',
+    color: '#a10000',
   },
   mrp: {
     fontSize: 12,

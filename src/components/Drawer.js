@@ -201,7 +201,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#FFFFFF" />
+          <ActivityIndicator size="small" color="#a10000" />
         </View>
       );
     }
@@ -237,7 +237,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#FFFFFF" />
+          <ActivityIndicator size="small" color="#a10000" />
         </View>
       );
     }
@@ -268,7 +268,7 @@ const Drawer = ({ visible, onClose, navigation }) => {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#FFFFFF" />
+          <ActivityIndicator size="small" color="#a10000" />
         </View>
       );
     }
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   drawer: {
     width: DRAWER_WIDTH,
-    backgroundColor: '#2C4A6B',
+    backgroundColor: '#FDF8F3',
     height: '100%',
   },
   container: {
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     fontSize: 32,
-    color: '#FFFFFF',
+    color: '#a10000',
     fontWeight: '300',
   },
   headerSpacer: {
@@ -494,17 +494,17 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(161,0,0,0.1)',
   },
   menuLabel: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#333333',
     fontWeight: '500',
   },
   arrow: {
     fontSize: 18,
-    color: '#FFFFFF',
-    opacity: 0.6,
+    color: '#a10000',
+    opacity: 0.8,
   },
   categoryItem: {
     flexDirection: 'row',
@@ -513,36 +513,36 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingLeft: 36,
     paddingRight: 20,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: 'rgba(161,0,0,0.05)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: 'rgba(161,0,0,0.08)',
   },
   categoryLabel: {
     fontSize: 15,
-    color: '#FFFFFF',
+    color: '#444444',
     fontWeight: '400',
   },
   subcategoryItem: {
     paddingVertical: 11,
     paddingLeft: 52,
     paddingRight: 20,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(161,0,0,0.08)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.03)',
+    borderBottomColor: 'rgba(161,0,0,0.05)',
   },
   subcategoryLabel: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#555555',
     fontWeight: '400',
   },
   showAllLabel: {
     fontSize: 14,
-    color: '#FFD700',
+    color: '#a10000',
     fontWeight: '600',
   },
   divider: {
     height: 12,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgba(161,0,0,0.08)',
   },
   loadingContainer: {
     padding: 16,
