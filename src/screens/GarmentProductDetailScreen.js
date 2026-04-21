@@ -158,13 +158,30 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Call add to cart API
+      // Calculate new total quantity
+      const newTotalQuantity = existingQtyInCart + quantity;
+      
+      // If item exists in cart, delete it first then add with total quantity
+      if (existingItem && existingItem.cart_id) {
+        try {
+          await cartAPI.deleteFromCart(existingItem.cart_id);
+          console.log('Deleted existing cart item before re-adding with new quantity');
+        } catch (deleteError) {
+          console.log('Delete before re-add error (continuing):', deleteError);
+        }
+      }
+
+      // Get user name for cart API
+      const userName = `${userData.firstname || ''} ${userData.lastname || ''}`.trim();
+
+      // Call add to cart API with the total quantity
       const response = await cartAPI.addToCart(
         product.bcode,
         userData.userid,
         product.id,
-        quantity,
-        'garments'
+        newTotalQuantity,
+        'garments',
+        userName
       );
 
       if (response.status === true) {
@@ -176,7 +193,7 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           productimage: product.productimage1,
           productprice: product.productprice,
           mrp: product.mrp,
-          quantity: quantity,
+          quantity: newTotalQuantity,
           cgst: product.cgst,
           sgst: product.sgst,
           discount: product.discount || '0',
@@ -186,11 +203,13 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           stockinhand: product.stockinhand,
         };
 
-        // Check if item already exists
+        // Check if item already exists in local cart
         const existingIndex = cartItems.findIndex(item => item.bcode === product.bcode);
         if (existingIndex >= 0) {
-          cartItems[existingIndex].quantity += quantity;
-          cartItems[existingIndex].cart_id = response.cart_id;
+          cartItems[existingIndex].quantity = newTotalQuantity;
+          if (response.cart_id) {
+            cartItems[existingIndex].cart_id = response.cart_id;
+          }
         } else {
           cartItems.push(cartItem);
         }
@@ -254,13 +273,30 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Call add to cart API
+      // Calculate new total quantity
+      const newTotalQuantity = existingQtyInCart + quantity;
+      
+      // If item exists in cart, delete it first then add with total quantity
+      if (existingItem && existingItem.cart_id) {
+        try {
+          await cartAPI.deleteFromCart(existingItem.cart_id);
+          console.log('Deleted existing cart item before re-adding with new quantity (Buy Now)');
+        } catch (deleteError) {
+          console.log('Delete before re-add error (continuing):', deleteError);
+        }
+      }
+
+      // Get user name for cart API
+      const userName = `${userData.firstname || ''} ${userData.lastname || ''}`.trim();
+
+      // Call add to cart API with the total quantity
       const response = await cartAPI.addToCart(
         product.bcode,
         userData.userid,
         product.id,
-        quantity,
-        'garments'
+        newTotalQuantity,
+        'garments',
+        userName
       );
 
       if (response.status === true) {
@@ -272,7 +308,7 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           productimage: product.productimage1,
           productprice: product.productprice,
           mrp: product.mrp,
-          quantity: quantity,
+          quantity: newTotalQuantity,
           cgst: product.cgst,
           sgst: product.sgst,
           discount: product.discount || '0',
@@ -282,11 +318,13 @@ const GarmentProductDetailScreen = ({ navigation, route }) => {
           stockinhand: product.stockinhand,
         };
 
-        // Check if item already exists
+        // Check if item already exists in local cart
         const existingIndex = cartItems.findIndex(item => item.bcode === product.bcode);
         if (existingIndex >= 0) {
-          cartItems[existingIndex].quantity += quantity;
-          cartItems[existingIndex].cart_id = response.cart_id;
+          cartItems[existingIndex].quantity = newTotalQuantity;
+          if (response.cart_id) {
+            cartItems[existingIndex].cart_id = response.cart_id;
+          }
         } else {
           cartItems.push(cartItem);
         }

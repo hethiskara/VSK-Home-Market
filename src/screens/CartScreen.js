@@ -144,16 +144,72 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  const updateQuantity = (cartId, delta) => {
-    const updatedItems = cartItems.map(item => {
-      if (item.cart_id === cartId) {
-        const newQty = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQty };
+  const [updatingQuantity, setUpdatingQuantity] = useState(null);
+
+  const updateQuantity = async (itemBcode, delta) => {
+    const item = cartItems.find(i => i.bcode === itemBcode);
+    if (!item) return;
+
+    const newQty = item.quantity + delta;
+    
+    if (newQty < 1) return;
+    
+    const stockQty = parseInt(item.stockinhand) || 0;
+    if (stockQty > 0 && newQty > stockQty) {
+      Alert.alert('Stock Limit', `Only ${stockQty} items available in stock.`);
+      return;
+    }
+
+    setUpdatingQuantity(itemBcode);
+
+    try {
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        
+        // Only delete if we have a valid cart_id
+        if (item.cart_id) {
+          await cartAPI.deleteFromCart(item.cart_id);
+        }
+        
+        // Get user name for cart API
+        const userName = `${parsed.firstname || ''} ${parsed.lastname || ''}`.trim();
+        
+        // Add the item with the new quantity
+        const response = await cartAPI.addToCart(
+          item.bcode,
+          parsed.userid,
+          item.prod_id,
+          newQty,
+          item.carttype || 'pathanjali',
+          userName
+        );
+        
+        console.log('UPDATE QUANTITY - Response:', response);
+        
+        if (response.status === true) {
+          const updatedItems = cartItems.map(cartItem => {
+            if (cartItem.bcode === itemBcode) {
+              return { 
+                ...cartItem, 
+                quantity: newQty, 
+                cart_id: response.cart_id || cartItem.cart_id 
+              };
+            }
+            return cartItem;
+          });
+          setCartItems(updatedItems);
+          saveCart(updatedItems);
+        } else {
+          Alert.alert('Error', response.message || 'Failed to update quantity');
+        }
       }
-      return item;
-    });
-    setCartItems(updatedItems);
-    saveCart(updatedItems);
+    } catch (error) {
+      console.log('Update quantity error:', error);
+      Alert.alert('Error', 'Failed to update quantity. Please try again.');
+    } finally {
+      setUpdatingQuantity(null);
+    }
   };
 
   const removeItem = (cartId) => {
@@ -705,6 +761,8 @@ const CartScreen = ({ navigation }) => {
     const cgst = parseFloat(item.cgst?.replace('%', '') || 0);
     const sgst = parseFloat(item.sgst?.replace('%', '') || 0);
     const totalTax = cgst + sgst;
+    const stockQty = parseInt(item.stockinhand) || 0;
+    const isUpdating = updatingQuantity === item.bcode;
     
     // Calculate: Apply discount first, then add tax
     const priceAfterDiscount = unitPrice - (unitPrice * discount / 100);
@@ -726,9 +784,34 @@ const CartScreen = ({ navigation }) => {
             <Text style={styles.discountInfo}>Discount: {discount}%</Text>
           )}
           <Text style={styles.taxInfo}>Tax: {totalTax}%</Text>
+          {stockQty > 0 && (
+            <Text style={styles.stockInfo}>{stockQty} in stock</Text>
+          )}
 
           <View style={styles.quantityRow}>
-            <Text style={styles.qtyLabel}>Qty: {item.quantity}</Text>
+            <View style={styles.quantityControls}>
+              <TouchableOpacity
+                style={[styles.qtyButton, item.quantity <= 1 && styles.qtyButtonDisabled]}
+                onPress={() => updateQuantity(item.bcode, -1)}
+                disabled={item.quantity <= 1 || isUpdating}
+              >
+                <Text style={[styles.qtyButtonText, item.quantity <= 1 && styles.qtyButtonTextDisabled]}>−</Text>
+              </TouchableOpacity>
+              {isUpdating ? (
+                <View style={styles.qtyValueContainer}>
+                  <ActivityIndicator size="small" color="#3498DB" />
+                </View>
+              ) : (
+                <Text style={styles.qtyValue}>{item.quantity}</Text>
+              )}
+              <TouchableOpacity
+                style={[styles.qtyButton, (stockQty > 0 && item.quantity >= stockQty) && styles.qtyButtonDisabled]}
+                onPress={() => updateQuantity(item.bcode, 1)}
+                disabled={(stockQty > 0 && item.quantity >= stockQty) || isUpdating}
+              >
+                <Text style={[styles.qtyButtonText, (stockQty > 0 && item.quantity >= stockQty) && styles.qtyButtonTextDisabled]}>+</Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.itemTotal}>Rs. {itemTotal.toFixed(2)}</Text>
           </View>
         </View>
@@ -736,8 +819,9 @@ const CartScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => removeItem(item.cart_id)}
+          disabled={isUpdating}
         >
-          <Text style={styles.deleteIcon}>×</Text>
+          <Text style={[styles.deleteIcon, isUpdating && { opacity: 0.5 }]}>×</Text>
         </TouchableOpacity>
       </View>
     );
@@ -1384,37 +1468,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginTop: 2,
+    marginBottom: 4,
+  },
+  stockInfo: {
+    fontSize: 11,
+    color: '#27AE60',
     marginBottom: 6,
+    fontWeight: '500',
   },
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 4,
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    borderRadius: 4,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
   },
   qtyButton: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
   },
+  qtyButtonDisabled: {
+    backgroundColor: '#F0F0F0',
+  },
   qtyButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#3498DB',
     fontWeight: '600',
   },
+  qtyButtonTextDisabled: {
+    color: '#CCCCCC',
+  },
   qtyValue: {
-    width: 32,
+    width: 40,
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
+    color: '#333',
+  },
+  qtyValueContainer: {
+    width: 40,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   qtyLabel: {
     fontSize: 14,

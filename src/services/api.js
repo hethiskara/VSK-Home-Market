@@ -454,17 +454,23 @@ export const garmentAPI = {
 // Cart APIs
 export const cartAPI = {
   // Add item to cart
-  addToCart: async (bcode, userId, prodId, quantity, carttype = 'pathanjali') => {
-    const params = `?bcode=${encodeURIComponent(bcode)}&user_id=${userId}&prod_id=${prodId}&quantity=${quantity}&carttype=${encodeURIComponent(carttype)}`;
-    const response = await api.get('/my-save-cart-json' + params);
-    console.log('ADD TO CART RESPONSE:', response.data);
+  addToCart: async (bcode, userId, prodId, quantity, carttype = 'pathanjali', userName = '') => {
+    const params = `?bcode=${encodeURIComponent(bcode)}&user_id=${userId}&prod_id=${prodId}&quantity=${quantity}&carttype=${encodeURIComponent(carttype)}&user_name=${encodeURIComponent(userName)}`;
+    const url = '/my-save-cart-json' + params;
+    console.log('ADD TO CART REQUEST URL:', url);
+    console.log('ADD TO CART PARAMS - bcode:', bcode, 'userId:', userId, 'prodId:', prodId, 'quantity:', quantity, 'userName:', userName);
+    const response = await api.get(url);
+    console.log('ADD TO CART RESPONSE (full):', JSON.stringify(response.data));
     return response.data;
   },
 
   // Delete item from cart
   deleteFromCart: async (cartId) => {
     // Backend expects id as query parameter with GET request
-    const response = await api.get(`/cart-delete-json?id=${cartId}`);
+    console.log('DELETE CART REQUEST - cart_id:', cartId);
+    const url = `/cart-delete-json?id=${cartId}`;
+    console.log('DELETE CART URL:', url);
+    const response = await api.get(url);
     console.log('DELETE CART RESPONSE:', response.data);
     return response.data;
   },
