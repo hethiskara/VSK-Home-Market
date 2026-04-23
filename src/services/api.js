@@ -474,6 +474,15 @@ export const cartAPI = {
     console.log('DELETE CART RESPONSE:', response.data);
     return response.data;
   },
+
+  // Get cart items from server
+  getCartItems: async (guestId, userId) => {
+    const url = `/my-cart-view-json?guest_id=${guestId}&user_id=${userId}`;
+    console.log('GET CART ITEMS URL:', url);
+    const response = await api.get(url);
+    console.log('GET CART ITEMS RESPONSE:', response.data);
+    return response.data;
+  },
 };
 
 // Checkout APIs

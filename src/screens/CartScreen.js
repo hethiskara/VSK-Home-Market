@@ -65,8 +65,7 @@ const CartScreen = ({ navigation }) => {
   });
 
   useEffect(() => {
-    loadCart();
-    loadUserData();
+    loadCartFromServer();
     fetchShippingCost();
   }, []);
 
@@ -86,23 +85,17 @@ const CartScreen = ({ navigation }) => {
   };
 
   const loadUserData = async () => {
+    // This function is now handled by loadCartFromServer
+    // Keeping for backward compatibility if called elsewhere
     try {
       const userData = await AsyncStorage.getItem('userData');
       if (userData) {
         const parsed = JSON.parse(userData);
         setUserId(parsed.userid);
         
-        // Try to load existing guest_id from cart session
         const storedGuestId = await AsyncStorage.getItem('cartGuestId');
         if (storedGuestId) {
-          console.log('Using stored guest_id:', storedGuestId);
           setGuestId(storedGuestId);
-        } else {
-          // Generate new guest_id only if none exists
-          const newGuestId = generateGuestId();
-          setGuestId(newGuestId);
-          await AsyncStorage.setItem('cartGuestId', newGuestId);
-          console.log('Generated new guest_id:', newGuestId);
         }
       }
     } catch (error) {
@@ -124,6 +117,69 @@ const CartScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.log('Error loading cart:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCartFromServer = async () => {
+    try {
+      // First load user data to get userId and guestId
+      const userData = await AsyncStorage.getItem('userData');
+      if (!userData) {
+        setLoading(false);
+        return;
+      }
+      
+      const parsed = JSON.parse(userData);
+      const currentUserId = parsed.userid;
+      setUserId(currentUserId);
+      
+      // Get or generate guest_id
+      let currentGuestId = await AsyncStorage.getItem('cartGuestId');
+      if (!currentGuestId) {
+        currentGuestId = generateGuestId();
+        await AsyncStorage.setItem('cartGuestId', currentGuestId);
+        console.log('Generated new guest_id:', currentGuestId);
+      }
+      setGuestId(currentGuestId);
+      console.log('Using guest_id for cart fetch:', currentGuestId);
+
+      // Fetch cart from server
+      const serverCart = await cartAPI.getCartItems(currentGuestId, currentUserId);
+      
+      if (Array.isArray(serverCart) && serverCart.length > 0) {
+        // Map server response to local cart format
+        const mappedCart = serverCart.map(item => ({
+          cart_id: item.id,
+          bcode: item.bcode,  // Use actual bcode from server (e.g., "W2SA28-17-22")
+          productcode: item.productcode,
+          productname: item.productname,
+          productimage: item.productimage,
+          productprice: item.unitprice,
+          quantity: parseInt(item.qty) || 1,
+          stockinhand: item.stockinhand,
+          discount: item.discount?.replace('%', '') || '0',
+          cgst: item.tax ? (parseFloat(item.tax.replace('%', '')) / 2).toFixed(2) + '%' : '0%',
+          sgst: item.tax ? (parseFloat(item.tax.replace('%', '')) / 2).toFixed(2) + '%' : '0%',
+          prod_id: item.productid,  // Product ID from server
+        }));
+        
+        console.log('Cart loaded from server:', mappedCart.length, 'items');
+        setCartItems(mappedCart);
+        
+        // Update local storage with server data
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(mappedCart));
+      } else {
+        // No items on server, clear local cart too
+        console.log('No cart items on server');
+        setCartItems([]);
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify([]));
+      }
+    } catch (error) {
+      console.log('Error loading cart from server:', error);
+      // Fallback to local cart if server fails
+      loadCart();
     } finally {
       setLoading(false);
     }
@@ -166,16 +222,17 @@ const CartScreen = ({ navigation }) => {
       const userData = await AsyncStorage.getItem('userData');
       if (userData) {
         const parsed = JSON.parse(userData);
+        const userName = `${parsed.firstname || ''} ${parsed.lastname || ''}`.trim();
         
-        // Only delete if we have a valid cart_id
+        // DELETE-THEN-ADD approach: Backend returns -1 when updating existing items
+        // So we must delete first, then add fresh with the new quantity
+        
+        // Step 1: Delete existing cart entry if it exists
         if (item.cart_id) {
           await cartAPI.deleteFromCart(item.cart_id);
         }
         
-        // Get user name for cart API
-        const userName = `${parsed.firstname || ''} ${parsed.lastname || ''}`.trim();
-        
-        // Add the item with the new quantity
+        // Step 2: Add with new quantity
         const response = await cartAPI.addToCart(
           item.bcode,
           parsed.userid,
@@ -201,12 +258,16 @@ const CartScreen = ({ navigation }) => {
           setCartItems(updatedItems);
           saveCart(updatedItems);
         } else {
+          // Add failed after delete - reload cart from server to get correct state
           Alert.alert('Error', response.message || 'Failed to update quantity');
+          loadCartFromServer();
         }
       }
     } catch (error) {
       console.log('Update quantity error:', error);
       Alert.alert('Error', 'Failed to update quantity. Please try again.');
+      // Reload cart from server to get correct state after error
+      loadCartFromServer();
     } finally {
       setUpdatingQuantity(null);
     }
@@ -831,9 +892,22 @@ const CartScreen = ({ navigation }) => {
   const renderSummaryStep = () => (
     <>
       <View style={styles.itemsCountContainer}>
-        <Text style={styles.itemsCount}>
-          Your shopping cart contains: <Text style={styles.itemsCountBold}>{getTotalItems()} Products</Text>
-        </Text>
+        <View style={styles.cartSummaryRow}>
+          <View style={styles.cartSummaryItem}>
+            <Text style={styles.cartSummaryNumber}>{cartItems.length}</Text>
+            <Text style={styles.cartSummaryLabel}>{cartItems.length === 1 ? 'Item' : 'Items'}</Text>
+          </View>
+          <View style={styles.cartSummaryDivider} />
+          <View style={styles.cartSummaryItem}>
+            <Text style={styles.cartSummaryNumber}>{getTotalItems()}</Text>
+            <Text style={styles.cartSummaryLabel}>Total Qty</Text>
+          </View>
+          <View style={styles.cartSummaryDivider} />
+          <View style={styles.cartSummaryItem}>
+            <Text style={styles.cartSummaryNumber}>Rs {calculateTotal()}</Text>
+            <Text style={styles.cartSummaryLabel}>Total</Text>
+          </View>
+        </View>
       </View>
 
       <View style={styles.tableHeader}>
@@ -1402,6 +1476,37 @@ const styles = StyleSheet.create({
   itemsCountBold: {
     fontWeight: '600',
     color: '#c92a2a',
+  },
+  cartSummaryRow: {
+    flexDirection: 'row',
+    backgroundColor: '#FDF8F3',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    borderWidth: 1,
+    borderColor: 'rgba(161, 0, 0, 0.15)',
+  },
+  cartSummaryItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  cartSummaryNumber: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#a10000',
+    marginBottom: 4,
+  },
+  cartSummaryLabel: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  cartSummaryDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: 'rgba(161, 0, 0, 0.2)',
   },
   tableHeader: {
     paddingHorizontal: 16,
